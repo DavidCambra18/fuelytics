@@ -1,0 +1,99 @@
+package com.fuelytics.backend.dto;
+
+import com.fuelytics.backend.entity.enums.*;
+import java.math.BigDecimal;
+
+public class VehicleDTO {
+
+    private VehicleType vehicleType;
+    private String brand;
+    private String model;
+    private int power;
+    private int cc;
+    private int year;
+    private Integer odometer;
+
+    private FuelType fuelType;
+    private BigDecimal tankCapacity;
+    private GearboxType gearbox;
+
+    public VehicleType getVehicleType() {
+        return vehicleType;
+    }
+
+    public void setVehicleType(VehicleType vehicleType) {
+        this.vehicleType = vehicleType;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public int getPower() {
+        return power;
+    }
+
+    public void setPower(int power) {
+        this.power = power;
+    }
+
+    public int getCc() {
+        return cc;
+    }
+
+    public void setCc(int cc) {
+        this.cc = cc;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public void setYear(int year) {
+        this.year = year;
+    }
+
+    public Integer getOdometer() {
+        return odometer;
+    }
+
+    public void setOdometer(Integer odometer) {
+        this.odometer = odometer;
+    }
+
+    public FuelType getFuelType() {
+        return fuelType;
+    }
+
+    public void setFuelType(FuelType fuelType) {
+        this.fuelType = fuelType;
+    }
+
+    public BigDecimal getTankCapacity() {
+        return tankCapacity;
+    }
+
+    public void setTankCapacity(BigDecimal tankCapacity) {
+        this.tankCapacity = tankCapacity;
+    }
+
+    public GearboxType getGearbox() {
+        return gearbox;
+    }
+
+    public void setGearbox(GearboxType gearbox) {
+        this.gearbox = gearbox;
+    }
+}

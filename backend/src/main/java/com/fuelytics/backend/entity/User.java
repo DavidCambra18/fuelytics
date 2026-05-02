@@ -11,10 +11,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true, length = 15)
+    @Column(unique = true, nullable = false, length = 15)
     private String username;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(unique = true, nullable = false, length = 50)
     private String email;
 
     @Column(nullable = false)
