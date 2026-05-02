@@ -1,0 +1,80 @@
+package com.fuelytics.backend.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.fuelytics.backend.dto.VehicleDTO;
+import com.fuelytics.backend.dto.VehicleResponseDTO;
+import com.fuelytics.backend.entity.User;
+import com.fuelytics.backend.entity.Vehicle;
+import com.fuelytics.backend.repository.UserRepository;
+import com.fuelytics.backend.repository.VehicleRepository;
+
+@Service
+public class VehicleService {
+
+    private final VehicleRepository vehicleRepository;
+    private final UserRepository userRepository;
+
+    public VehicleService(VehicleRepository vehicleRepository,
+                          UserRepository userRepository) {
+        this.vehicleRepository = vehicleRepository;
+        this.userRepository = userRepository;
+    }
+
+    public VehicleResponseDTO createVehicle(VehicleDTO dto, String email) {
+
+        User user = userRepository.findByEmail(email);
+
+        Vehicle v = new Vehicle();
+
+        v.setUser(user);
+        v.setVehicleType(dto.getVehicleType());
+        v.setBrand(dto.getBrand());
+        v.setModel(dto.getModel());
+        v.setPower(dto.getPower());
+        v.setCc(dto.getCc());
+        v.setYear(dto.getYear());
+        v.setOdometer(dto.getOdometer());
+
+        v.setFuelType(dto.getFuelType());
+        v.setTankCapacity(dto.getTankCapacity());
+        v.setGearbox(dto.getGearbox());
+
+        v.setIsPublic(false);
+        v.setShowFuelData(true);
+        v.setShowExpenses(false);
+        v.setShowStatistics(true);
+
+        System.out.println("EMAIL FROM JWT: [" + email + "]");
+
+        Vehicle saved = vehicleRepository.save(v);
+
+        return mapToDTO(saved);
+    }
+
+    public List<VehicleResponseDTO> getVehicles(String email) {
+
+        User user = userRepository.findByEmail(email);
+
+        return vehicleRepository.findByUserId(user.getId())
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    private VehicleResponseDTO mapToDTO(Vehicle v) {
+
+        VehicleResponseDTO dto = new VehicleResponseDTO();
+
+        dto.setId(v.getId());
+        dto.setBrand(v.getBrand());
+        dto.setModel(v.getModel());
+        dto.setPower(v.getPower());
+        dto.setCc(v.getCc());
+        dto.setYear(v.getYear());
+
+        return dto;
+    }
+}
