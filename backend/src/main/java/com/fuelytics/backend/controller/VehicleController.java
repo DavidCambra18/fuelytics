@@ -1,9 +1,12 @@
 package com.fuelytics.backend.controller;
 
+import java.security.Principal;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,5 +44,11 @@ public class VehicleController {
                 .getName();
 
         return vehicleService.getVehicles(email);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<VehicleResponseDTO> getVehicleById(@PathVariable Integer id, Principal principal) {
+        VehicleResponseDTO response = vehicleService.getVehicleById(id, principal.getName());
+        return ResponseEntity.ok(response);
     }
 }

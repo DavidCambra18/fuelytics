@@ -2,7 +2,9 @@ package com.fuelytics.backend.service;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fuelytics.backend.dto.VehicleDTO;
 import com.fuelytics.backend.dto.VehicleResponseDTO;
@@ -18,7 +20,7 @@ public class VehicleService {
     private final UserRepository userRepository;
 
     public VehicleService(VehicleRepository vehicleRepository,
-                          UserRepository userRepository) {
+            UserRepository userRepository) {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
     }
@@ -47,8 +49,6 @@ public class VehicleService {
         v.setShowExpenses(false);
         v.setShowStatistics(true);
 
-        System.out.println("EMAIL FROM JWT: [" + email + "]");
-
         Vehicle saved = vehicleRepository.save(v);
 
         return mapToDTO(saved);
@@ -76,5 +76,24 @@ public class VehicleService {
         dto.setYear(v.getYear());
 
         return dto;
+    }
+
+    public VehicleResponseDTO getVehicleById(Integer id, String email) {
+
+        User user = userRepository.findByEmail(email);
+
+        Vehicle v = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Vehiculo no encontrado"));
+
+        if (!v.getIsPublic() && !v.getUser().getId().equals(user.getId())) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Este vehiculo es privado");
+        }
+
+        return mapToDTO(v);
     }
 }
