@@ -8,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fuelytics.backend.dto.VehicleDTO;
 import com.fuelytics.backend.dto.VehicleResponseDTO;
+import com.fuelytics.backend.dto.VehicleUpdateDTO;
 import com.fuelytics.backend.entity.User;
 import com.fuelytics.backend.entity.Vehicle;
 import com.fuelytics.backend.repository.UserRepository;
@@ -95,5 +96,66 @@ public class VehicleService {
         }
 
         return mapToDTO(v);
+    }
+
+    public VehicleResponseDTO updateVehicle(
+            Integer id,
+            VehicleUpdateDTO dto,
+            String email) {
+
+        User user = userRepository.findByEmail(email);
+
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Vehicle not found"));
+
+        if (!vehicle.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Forbidden");
+        }
+
+        if (dto.getBrand() != null) {
+            vehicle.setBrand(dto.getBrand());
+        }
+
+        if (dto.getModel() != null) {
+            vehicle.setModel(dto.getModel());
+        }
+
+        if (dto.getPower() != null) {
+            vehicle.setPower(dto.getPower());
+        }
+
+        if (dto.getCc() != null) {
+            vehicle.setCc(dto.getCc());
+        }
+
+        if (dto.getYear() != null) {
+            vehicle.setYear(dto.getYear());
+        }
+
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+
+        return mapToDTO(savedVehicle);
+    }
+
+    public void deleteVehicle(Integer id, String email) {
+
+        User user = userRepository.findByEmail(email);
+
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Vehicle not found"));
+
+        if (!vehicle.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Forbidden");
+        }
+
+        vehicleRepository.delete(vehicle);
     }
 }
