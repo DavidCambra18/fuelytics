@@ -70,11 +70,20 @@ public class VehicleService {
         VehicleResponseDTO dto = new VehicleResponseDTO();
 
         dto.setId(v.getId());
+        dto.setVehicleType(v.getVehicleType());
         dto.setBrand(v.getBrand());
         dto.setModel(v.getModel());
         dto.setPower(v.getPower());
         dto.setCc(v.getCc());
         dto.setYear(v.getYear());
+        dto.setOdometer(v.getOdometer());
+        dto.setFuelType(v.getFuelType());
+        dto.setTankCapacity(v.getTankCapacity());
+        dto.setGearbox(v.getGearbox());
+        dto.setOfficialConsumption(v.getOfficialConsumption());
+        dto.setShowFuelData(v.getShowFuelData());
+        dto.setShowExpenses(v.getShowExpenses());
+        dto.setShowStatistics(v.getShowStatistics());
 
         return dto;
     }

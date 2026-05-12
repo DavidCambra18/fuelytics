@@ -60,6 +60,9 @@ public class UserService {
 
         String token = jwtService.generateToken(user.getEmail());
 
-        return Map.of("token", token);
+        return Map.of(
+            "token", token,
+            "username", user.getUsername(),
+            "email", user.getEmail());
     }
 }
