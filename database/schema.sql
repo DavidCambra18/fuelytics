@@ -79,7 +79,7 @@ CREATE TABLE vehicles (
   brand VARCHAR NOT NULL,
   model VARCHAR NOT NULL,
   power INT NOT NULL,
-  cc INT NOT NULL,
+  cc INT,
   year INT NOT NULL,
   odometer INT,
   fuel_type fuel_type NOT NULL,
