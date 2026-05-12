@@ -33,7 +33,6 @@ public class Vehicle {
     @Column(nullable = false)
     private int power;
 
-    @Column(nullable = false)
     private int cc;
 
     @Column(nullable = false)
