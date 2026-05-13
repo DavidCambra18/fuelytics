@@ -15,6 +15,7 @@ public class VehicleDTO {
 
     private FuelType fuelType;
     private BigDecimal tankCapacity;
+    private BigDecimal officialConsumption;
     private GearboxType gearbox;
 
     public VehicleType getVehicleType() {
@@ -87,6 +88,14 @@ public class VehicleDTO {
 
     public void setTankCapacity(BigDecimal tankCapacity) {
         this.tankCapacity = tankCapacity;
+    }
+
+    public BigDecimal getOfficialConsumption() {
+        return officialConsumption;
+    }
+
+    public void setOfficialConsumption(BigDecimal officialConsumption) {
+        this.officialConsumption = officialConsumption;
     }
 
     public GearboxType getGearbox() {

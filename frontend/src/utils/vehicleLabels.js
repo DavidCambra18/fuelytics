@@ -29,6 +29,24 @@ const GEARBOX_LABELS = {
   manual: "Manual",
 };
 
+const REFUELING_TYPE_LABELS = {
+  complete: "Repostaje completo",
+  partial: "Repostaje parcial",
+  initial: "Repostaje inicial",
+};
+
+const DRIVING_TYPE_LABELS = {
+  slow: "Conducción lenta",
+  normal: "Conducción normal",
+  fast: "Conducción rápida",
+};
+
+const TIRE_TYPE_LABELS = {
+  summer: "Neumáticos de verano",
+  winter: "Neumáticos de invierno",
+  allseason: "Neumáticos todo terreno",
+};
+
 export const VEHICLE_TYPE_OPTIONS = [
   { value: "car", label: "Coche" },
   { value: "bike", label: "Moto" },
@@ -60,6 +78,24 @@ export const GEARBOX_OPTIONS = [
   { value: "manual", label: "Manual" },
 ];
 
+export const REFUELING_TYPE_OPTIONS = [
+  { value: "complete", label: "Repostaje completo" },
+  { value: "partial", label: "Repostaje parcial" },
+  { value: "initial", label: "Repostaje inicial" },
+];
+
+export const DRIVING_TYPE_OPTIONS = [
+  { value: "slow", label: "Conducción lenta" },
+  { value: "normal", label: "Conducción normal" },
+  { value: "fast", label: "Conducción rápida" },
+];
+
+export const TIRE_TYPE_OPTIONS = [
+  { value: "summer", label: "Neumáticos de verano" },
+  { value: "winter", label: "Neumáticos de invierno" },
+  { value: "allseason", label: "Neumáticos todo terreno" },
+];
+
 function toReadableLabel(value) {
   if (!value) {
     return "No definido";
@@ -82,4 +118,16 @@ export function formatFuelType(value) {
 
 export function formatGearboxType(value) {
   return GEARBOX_LABELS[value] || toReadableLabel(value);
+}
+
+export function formatRefuelingType(value) {
+  return REFUELING_TYPE_LABELS[value] || toReadableLabel(value);
+}
+
+export function formatDrivingType(value) {
+  return DRIVING_TYPE_LABELS[value] || toReadableLabel(value);
+}
+
+export function formatTireType(value) {
+  return TIRE_TYPE_LABELS[value] || toReadableLabel(value);
 }
