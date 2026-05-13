@@ -43,6 +43,7 @@ public class VehicleService {
 
         v.setFuelType(dto.getFuelType());
         v.setTankCapacity(dto.getTankCapacity());
+        v.setOfficialConsumption(dto.getOfficialConsumption());
         v.setGearbox(dto.getGearbox());
 
         v.setIsPublic(false);

@@ -17,6 +17,7 @@ const initialForm = {
   odometer: "",
   fuelType: "",
   tankCapacity: "",
+  officialConsumption: "",
   gearbox: "",
 };
 
@@ -76,6 +77,7 @@ export default function VehicleCreate() {
           odometer: form.odometer ? Number(form.odometer) : null,
           fuelType: form.fuelType,
           tankCapacity: form.tankCapacity ? Number(form.tankCapacity) : null,
+            officialConsumption: form.officialConsumption ? Number(form.officialConsumption) : null,
           gearbox: form.gearbox,
         }),
       });
@@ -266,6 +268,21 @@ export default function VehicleCreate() {
             </label>
 
             <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-300">
+                Consumo oficial <span className="text-slate-500">(opcional)</span>
+              </span>
+              <input
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+                placeholder="5.8"
+                type="number"
+                min="0"
+                step="0.1"
+                value={form.officialConsumption}
+                onChange={handleChange("officialConsumption")}
+              />
+            </label>
+
+            <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-300">Cambio *</span>
               <CustomSelect
                 options={GEARBOX_OPTIONS}
@@ -297,12 +314,6 @@ export default function VehicleCreate() {
               className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
               Volver al selector
-            </Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center rounded-full border border-transparent px-5 py-3 text-sm font-semibold text-slate-300 transition hover:text-white"
-            >
-              Ir al inicio de sesión
             </Link>
           </div>
         </form>

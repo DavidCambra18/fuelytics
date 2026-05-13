@@ -1,21 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { username, clearAuth } = useAuth();
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    clearAuth();
-    navigate("/login");
-  };
 
   useEffect(() => {
     const loadVehicles = async () => {
@@ -46,42 +35,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen text-slate-100">
-      <div className="fixed left-5 top-5 z-30">
-        <button
-          type="button"
-          onClick={() => setUserMenuOpen((current) => !current)}
-          className="flex items-center gap-3 rounded-full border border-white/10 bg-slate-950/80 px-3 py-2 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-400/15 text-sm font-semibold text-teal-200 ring-1 ring-teal-300/20">
-            {(username || "U").slice(0, 1).toUpperCase()}
-          </span>
-          <span className="hidden pr-2 text-sm font-medium text-white sm:block">
-            {username || "Usuario"}
-          </span>
-        </button>
-
-        {userMenuOpen ? (
-          <div className="mt-3 w-72 rounded-3xl border border-white/10 bg-slate-950/90 p-3 shadow-2xl shadow-black/30 backdrop-blur-xl">
-
-            <div className="mt-3 grid gap-2">
-              <button
-                type="button"
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-medium text-white transition hover:bg-white/10"
-              >
-                Ajustes
-              </button>
-              <button
-                type="button"
-                onClick={logout}
-                className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-left text-sm font-medium text-rose-100 transition hover:bg-rose-400/15"
-              >
-                Cerrar sesión
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </div>
-
       <main className="pb-10 pt-20 lg:pb-16">
         <div className="section-shell">
           <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
@@ -108,7 +61,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
                   <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Vehículos registrados</p>
-                  <p className="mt-2 text-xl font-semibold text-white">Inventario personal</p>
+                  <p className="mt-2 text-xl font-semibold text-white">Garaje Personal</p>
                 </div>
               </div>
 

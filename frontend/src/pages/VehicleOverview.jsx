@@ -4,26 +4,35 @@ import { formatFuelType, formatGearboxType, formatVehicleType } from "../utils/v
 export default function VehicleOverview() {
   const { selectedVehicle } = useOutletContext();
 
-  return (
-    <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-      <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Resumen</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white">Estado general del vehículo</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-          Esta vista reúne la información principal del coche seleccionado y sirve como punto de partida para sus secciones específicas.
-        </p>
+  const vehicleInfo = [
+    { label: "Marca", value: selectedVehicle.brand || "No definido" },
+    { label: "Modelo", value: selectedVehicle.model || "No definido" },
+    { label: "Año", value: selectedVehicle.year || "No definido" },
+    { label: "Potencia", value: selectedVehicle.power ? `${selectedVehicle.power} CV` : "No definido" },
+    { label: "Cilindrada", value: selectedVehicle.cc ? `${selectedVehicle.cc} cc` : "No definido" },
+    { label: "Combustible", value: formatFuelType(selectedVehicle.fuelType) },
+    { label: "Cambio", value: formatGearboxType(selectedVehicle.gearbox) },
+    { label: "Capacidad depósito", value: selectedVehicle.tankCapacity ? `${selectedVehicle.tankCapacity} L` : "No definido" },
+    { label: "Consumo oficial", value: selectedVehicle.officialConsumption ? `${selectedVehicle.officialConsumption} L/100km` : "No definido" },
+    { label: "Odómetro", value: selectedVehicle.odometer ? `${selectedVehicle.odometer.toLocaleString("es-ES")} km` : "No definido" },
+  ];
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {[
-            ["Año", selectedVehicle.year || "No definido"],
-            ["Potencia", selectedVehicle.power ? `${selectedVehicle.power} CV` : "No definido"],
-            ["Cilindrada", selectedVehicle.cc ? `${selectedVehicle.cc} cc` : "No definido"],
-            ["Combustible", formatFuelType(selectedVehicle.fuelType)],
-            ["Cambio", formatGearboxType(selectedVehicle.gearbox)],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-sm uppercase tracking-[0.18em] text-slate-400">{label}</p>
-              <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+  return (
+    <section className="w-full">
+      <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
+        <div className="space-y-2 mb-10">
+          <p className="text-xs uppercase tracking-[0.3em] text-teal-400 font-semibold">Resumen</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">Estado general del vehículo</h2>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {vehicleInfo.map(({ label, value }) => (
+            <div key={label} className="group relative rounded-2xl border border-teal-300/20 bg-gradient-to-br from-teal-300/10 via-slate-900/40 to-slate-950/40 p-5 hover:border-teal-300/40 transition duration-300">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-400/0 via-transparent to-teal-400/0 group-hover:from-teal-400/5 group-hover:to-teal-400/5 transition duration-300" />
+              <div className="relative">
+                <p className="text-xs uppercase tracking-[0.2em] text-teal-300/50 font-semibold">{label}</p>
+                <p className="mt-2 text-lg sm:text-xl font-bold text-white break-words">{value}</p>
+              </div>
             </div>
           ))}
         </div>
