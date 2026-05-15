@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import {
-  FUEL_TYPE_OPTIONS,
   GEARBOX_OPTIONS,
+  VEHICLE_ENERGY_TYPE_OPTIONS,
   VEHICLE_TYPE_OPTIONS,
 } from "../utils/vehicleLabels";
 import CustomSelect from "../components/CustomSelect";
@@ -11,15 +11,16 @@ export default function VehicleEdit() {
   const navigate = useNavigate();
   const { selectedVehicle } = useOutletContext();
   const [form, setForm] = useState({
+    vehicleType: selectedVehicle?.vehicleType || "",
     brand: selectedVehicle?.brand || "",
     model: selectedVehicle?.model || "",
     power: selectedVehicle?.power || "",
     cc: selectedVehicle?.cc || "",
     year: selectedVehicle?.year || "",
     odometer: selectedVehicle?.odometer || "",
-    vehicleType: selectedVehicle?.vehicleType || "",
-    fuelType: selectedVehicle?.fuelType || "",
+    vehicleEnergyType: selectedVehicle?.vehicleEnergyType || "",
     tankCapacity: selectedVehicle?.tankCapacity || "",
+    officialConsumption: selectedVehicle?.officialConsumption || "",
     gearbox: selectedVehicle?.gearbox || "",
   });
   const [fieldErrors, setFieldErrors] = useState({});
@@ -39,12 +40,12 @@ export default function VehicleEdit() {
 
     // validate required fields
     const errors = {};
+    if (!form.vehicleType) errors.vehicleType = "required";
     if (!form.brand || !form.brand.trim()) errors.brand = "required";
     if (!form.model || !form.model.trim()) errors.model = "required";
     if (!form.power || Number(form.power) <= 0) errors.power = "required";
     if (!form.year || Number(form.year) < 1900 || Number(form.year) > 2100) errors.year = "required";
-    if (!form.vehicleType) errors.vehicleType = "required";
-    if (!form.fuelType) errors.fuelType = "required";
+    if (!form.vehicleEnergyType) errors.vehicleEnergyType = "required";
     if (!form.tankCapacity || Number(form.tankCapacity) <= 0) errors.tankCapacity = "required";
     if (!form.gearbox) errors.gearbox = "required";
 
@@ -66,14 +67,15 @@ export default function VehicleEdit() {
         },
         body: JSON.stringify({
           vehicleType: form.vehicleType,
+          vehicleEnergyType: form.vehicleEnergyType,
           brand: form.brand.trim(),
           model: form.model.trim(),
           power: Number(form.power),
           cc: form.cc ? Number(form.cc) : null,
           year: Number(form.year),
           odometer: form.odometer ? Number(form.odometer) : null,
-          fuelType: form.fuelType,
           tankCapacity: form.tankCapacity ? Number(form.tankCapacity) : null,
+          officialConsumption: form.officialConsumption ? Number(form.officialConsumption) : null,
           gearbox: form.gearbox,
         }),
       });
@@ -219,15 +221,15 @@ export default function VehicleEdit() {
             </label>
 
             <label className="block sm:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Combustible *</span>
+              <span className="mb-2 block text-sm font-medium text-slate-300">Tipo de energía *</span>
               <CustomSelect
-                options={FUEL_TYPE_OPTIONS}
-                value={form.fuelType}
-                onChange={(val) => setForm((c) => ({ ...c, fuelType: val }))}
+                options={VEHICLE_ENERGY_TYPE_OPTIONS}
+                value={form.vehicleEnergyType}
+                onChange={(val) => setForm((c) => ({ ...c, vehicleEnergyType: val }))}
                 placeholder="---"
-                error={!!fieldErrors.fuelType}
+                error={!!fieldErrors.vehicleEnergyType}
               />
-              {fieldErrors.fuelType ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
+              {fieldErrors.vehicleEnergyType ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
             </label>
 
             <label className="block">
@@ -246,6 +248,19 @@ export default function VehicleEdit() {
                 required
               />
               {fieldErrors.tankCapacity ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-300">Consumo oficial <span className="text-slate-500">(opcional)</span></span>
+              <input
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+                placeholder="5.6"
+                type="number"
+                min="0"
+                step="0.1"
+                value={form.officialConsumption}
+                onChange={handleChange("officialConsumption")}
+              />
             </label>
 
             <label className="block">

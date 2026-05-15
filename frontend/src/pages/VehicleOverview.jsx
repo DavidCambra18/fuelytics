@@ -1,6 +1,6 @@
 import { Link, useOutletContext, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { formatFuelType, formatGearboxType, formatVehicleType } from "../utils/vehicleLabels";
+import { formatGearboxType, formatVehicleEnergyType, formatVehicleType } from "../utils/vehicleLabels";
 
 export default function VehicleOverview() {
   const { selectedVehicle } = useOutletContext();
@@ -9,16 +9,16 @@ export default function VehicleOverview() {
   const [error, setError] = useState("");
 
   const vehicleInfo = [
-    { label: "Marca", value: selectedVehicle.brand || "No definido" },
-    { label: "Modelo", value: selectedVehicle.model || "No definido" },
-    { label: "Año", value: selectedVehicle.year || "No definido" },
-    { label: "Potencia", value: selectedVehicle.power ? `${selectedVehicle.power} CV` : "No definido" },
-    { label: "Cilindrada", value: selectedVehicle.cc ? `${selectedVehicle.cc} cc` : "No definido" },
-    { label: "Combustible", value: formatFuelType(selectedVehicle.fuelType) },
+    { label: "Energía", value: formatVehicleEnergyType(selectedVehicle.vehicleEnergyType) },
+    { label: "Marca", value: selectedVehicle.brand || "---" },
+    { label: "Modelo", value: selectedVehicle.model || "---" },
+    { label: "Año", value: selectedVehicle.year || "---" },
+    { label: "Potencia", value: selectedVehicle.power ? `${selectedVehicle.power} CV` : "---" },
+    { label: "Cilindrada", value: selectedVehicle.cc ? `${selectedVehicle.cc} cc` : "---" },
     { label: "Cambio", value: formatGearboxType(selectedVehicle.gearbox) },
-    { label: "Capacidad depósito", value: selectedVehicle.tankCapacity ? `${selectedVehicle.tankCapacity} L` : "No definido" },
-    { label: "Consumo oficial", value: selectedVehicle.officialConsumption ? `${selectedVehicle.officialConsumption} L/100km` : "No definido" },
-    { label: "Odómetro", value: selectedVehicle.odometer ? `${selectedVehicle.odometer.toLocaleString("es-ES")} km` : "No definido" },
+    { label: "Capacidad depósito", value: selectedVehicle.tankCapacity ? `${selectedVehicle.tankCapacity} L` : "---" },
+    { label: "Consumo oficial", value: selectedVehicle.officialConsumption ? `${selectedVehicle.officialConsumption} L/100km` : "---" },
+    { label: "Odómetro", value: selectedVehicle.odometer ? `${selectedVehicle.odometer.toLocaleString("es-ES")} km` : "---" },
   ];
 
   return (
@@ -26,7 +26,6 @@ export default function VehicleOverview() {
       <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
         <div className="space-y-2 mb-6 flex items-start justify-between">
           <p className="text-xs uppercase tracking-[0.3em] text-teal-400 font-semibold">Resumen</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">Estado general del vehículo</h2>
           <div className="ml-auto flex items-center gap-3">
             <Link
               to={`/vehicles/${selectedVehicle.id}/edit`}

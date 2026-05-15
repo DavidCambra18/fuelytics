@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  FUEL_TYPE_OPTIONS,
   GEARBOX_OPTIONS,
+  VEHICLE_ENERGY_TYPE_OPTIONS,
   VEHICLE_TYPE_OPTIONS,
 } from "../utils/vehicleLabels";
 import CustomSelect from "../components/CustomSelect";
 
 const initialForm = {
   vehicleType: "",
+  vehicleEnergyType: "",
   brand: "",
   model: "",
   power: "",
   cc: "",
   year: "",
   odometer: "",
-  fuelType: "",
   tankCapacity: "",
   officialConsumption: "",
   gearbox: "",
@@ -41,12 +41,12 @@ export default function VehicleCreate() {
 
     // validate required fields
     const errors = {};
+    if (!form.vehicleType) errors.vehicleType = "required";
     if (!form.brand || !form.brand.trim()) errors.brand = "required";
     if (!form.model || !form.model.trim()) errors.model = "required";
     if (!form.power || Number(form.power) <= 0) errors.power = "required";
     if (!form.year || Number(form.year) < 1900 || Number(form.year) > 2100) errors.year = "required";
-    if (!form.vehicleType) errors.vehicleType = "required";
-    if (!form.fuelType) errors.fuelType = "required";
+    if (!form.vehicleEnergyType) errors.vehicleEnergyType = "required";
     if (!form.tankCapacity || Number(form.tankCapacity) <= 0) errors.tankCapacity = "required";
     if (!form.gearbox) errors.gearbox = "required";
 
@@ -69,13 +69,13 @@ export default function VehicleCreate() {
         },
         body: JSON.stringify({
           vehicleType: form.vehicleType,
+          vehicleEnergyType: form.vehicleEnergyType,
           brand: form.brand.trim(),
           model: form.model.trim(),
           power: Number(form.power),
           cc: Number(form.cc),
           year: Number(form.year),
           odometer: form.odometer ? Number(form.odometer) : null,
-          fuelType: form.fuelType,
           tankCapacity: form.tankCapacity ? Number(form.tankCapacity) : null,
             officialConsumption: form.officialConsumption ? Number(form.officialConsumption) : null,
           gearbox: form.gearbox,
@@ -237,15 +237,15 @@ export default function VehicleCreate() {
             </label>
 
             <label className="block sm:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Combustible *</span>
+              <span className="mb-2 block text-sm font-medium text-slate-300">Tipo de combustible *</span>
               <CustomSelect
-                options={FUEL_TYPE_OPTIONS}
-                value={form.fuelType}
-                onChange={(val) => setForm((c) => ({ ...c, fuelType: val }))}
+                options={VEHICLE_ENERGY_TYPE_OPTIONS}
+                value={form.vehicleEnergyType}
+                onChange={(val) => setForm((c) => ({ ...c, vehicleEnergyType: val }))}
                 placeholder="---"
-                error={!!fieldErrors.fuelType}
+                error={!!fieldErrors.vehicleEnergyType}
               />
-              {fieldErrors.fuelType ? (
+              {fieldErrors.vehicleEnergyType ? (
                 <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p>
               ) : null}
             </label>
