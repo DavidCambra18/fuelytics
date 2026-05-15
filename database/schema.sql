@@ -1,15 +1,16 @@
 -- ENUMS
-CREATE TYPE fuel_type AS ENUM (
-  'diesel_a',
-  'diesel_a_plus',
-  'biodiesel',
-  'gasoline_95',
-  'gasoline_98',
-  'gasoline_e85',
+CREATE TYPE vehicle_energy_type AS ENUM (
+  'gasoline',
+  'diesel',
+  'electric',
+  'hybrid_gasoline',
+  'hybrid_diesel',
+  'plug_in_hybrid_gasoline',
+  'plug_in_hybrid_diesel',
   'glp',
   'gnc',
-  'electric',
-  'hybrid'
+  'hydrogen',
+  'ethanol'
 );
 
 CREATE TYPE gearbox_type AS ENUM (
@@ -34,6 +35,17 @@ CREATE TYPE driving_type AS ENUM (
   'slow',
   'normal',
   'fast'
+);
+
+CREATE TYPE fuel_type AS ENUM (
+  'gasoline_95',
+  'gasoline_98',
+  'diesel',
+  'diesel_premium',
+  'biodiesel',
+  'electricity',
+  'e85',
+  'hydrogen'
 );
 
 CREATE TYPE refueling_type AS ENUM (
@@ -88,7 +100,7 @@ CREATE TABLE vehicles (
   year INT NOT NULL,
   odometer INT,
   plate VARCHAR(20),
-  fuel_type fuel_type NOT NULL,
+  vehicle_energy_type vehicle_energy_type NOT NULL,
   tank_capacity DECIMAL(5,2) NOT NULL,
   gearbox gearbox_type NOT NULL,
   official_consumption DECIMAL(5,2),

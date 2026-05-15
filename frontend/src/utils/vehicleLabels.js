@@ -1,3 +1,17 @@
+const VEHICLE_ENERGY_TYPE_LABELS = {
+  gasoline: "Gasolina",
+  diesel: "Diésel",
+  electric: "Eléctrico",
+  hybrid_gasoline: "Híbrido gasolina",
+  hybrid_diesel: "Híbrido diésel",
+  plug_in_hybrid_gasoline: "Híbrido enchufable gasolina",
+  plug_in_hybrid_diesel: "Híbrido enchufable diésel",
+  glp: "GLP",
+  gnc: "GNC",
+  hydrogen: "Hidrógeno",
+  ethanol: "Etanol",
+};
+
 const VEHICLE_TYPE_LABELS = {
   car: "Coche",
   bike: "Moto",
@@ -8,16 +22,14 @@ const VEHICLE_TYPE_LABELS = {
 };
 
 const FUEL_TYPE_LABELS = {
-  diesel_a: "Diésel A",
-  diesel_a_plus: "Diésel A+",
-  biodiesel: "Biodiésel",
   gasoline_95: "Gasolina 95",
   gasoline_98: "Gasolina 98",
-  gasoline_e85: "Gasolina E85",
-  glp: "GLP",
-  gnc: "GNC",
-  electric: "Eléctrico",
-  hybrid: "Híbrido",
+  diesel: "Diésel",
+  diesel_premium: "Diésel premium",
+  biodiesel: "Biodiésel",
+  electricity: "Electricidad",
+  e85: "E85",
+  hydrogen: "Hidrógeno",
 };
 
 const GEARBOX_LABELS = {
@@ -47,6 +59,20 @@ const TIRE_TYPE_LABELS = {
   allseason: "Neumáticos todo terreno",
 };
 
+export const VEHICLE_ENERGY_TYPE_OPTIONS = [
+  { value: "gasoline", label: "Gasolina" },
+  { value: "diesel", label: "Diésel" },
+  { value: "electric", label: "Eléctrico" },
+  { value: "hybrid_gasoline", label: "Híbrido gasolina" },
+  { value: "hybrid_diesel", label: "Híbrido diésel" },
+  { value: "plug_in_hybrid_gasoline", label: "Híbrido enchufable gasolina" },
+  { value: "plug_in_hybrid_diesel", label: "Híbrido enchufable diésel" },
+  { value: "glp", label: "GLP" },
+  { value: "gnc", label: "GNC" },
+  { value: "hydrogen", label: "Hidrógeno" },
+  { value: "ethanol", label: "Etanol" },
+];
+
 export const VEHICLE_TYPE_OPTIONS = [
   { value: "car", label: "Coche" },
   { value: "bike", label: "Moto" },
@@ -57,16 +83,14 @@ export const VEHICLE_TYPE_OPTIONS = [
 ];
 
 export const FUEL_TYPE_OPTIONS = [
-  { value: "diesel_a", label: "Diésel A" },
-  { value: "diesel_a_plus", label: "Diésel A+" },
-  { value: "biodiesel", label: "Biodiésel" },
   { value: "gasoline_95", label: "Gasolina 95" },
   { value: "gasoline_98", label: "Gasolina 98" },
-  { value: "gasoline_e85", label: "Gasolina E85" },
-  { value: "glp", label: "GLP" },
-  { value: "gnc", label: "GNC" },
-  { value: "electric", label: "Eléctrico" },
-  { value: "hybrid", label: "Híbrido" },
+  { value: "diesel", label: "Diésel" },
+  { value: "diesel_premium", label: "Diésel premium" },
+  { value: "biodiesel", label: "Biodiésel" },
+  { value: "electricity", label: "Electricidad" },
+  { value: "e85", label: "E85" },
+  { value: "hydrogen", label: "Hidrógeno" },
 ];
 
 export const GEARBOX_OPTIONS = [
@@ -106,6 +130,10 @@ function toReadableLabel(value) {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+export function formatVehicleEnergyType(value) {
+  return VEHICLE_ENERGY_TYPE_LABELS[value] || toReadableLabel(value);
 }
 
 export function formatVehicleType(value) {
