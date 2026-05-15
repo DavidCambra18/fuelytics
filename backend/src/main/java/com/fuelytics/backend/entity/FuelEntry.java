@@ -82,6 +82,9 @@ public class FuelEntry {
     @Column(nullable = false)
     private Boolean trailer = false;
 
+    @Column(nullable = false)
+    private Boolean heating = false;
+
     @Column(name = "board_consumption")
     private BigDecimal boardConsumption;
 
@@ -225,6 +228,14 @@ public class FuelEntry {
 
     public void setTrailer(Boolean trailer) {
         this.trailer = trailer;
+    }
+
+    public Boolean getHeating() {
+        return heating;
+    }
+
+    public void setHeating(Boolean heating) {
+        this.heating = heating;
     }
 
     public BigDecimal getBoardConsumption() {

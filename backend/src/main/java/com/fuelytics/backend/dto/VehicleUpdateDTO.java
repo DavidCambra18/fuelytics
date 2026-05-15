@@ -15,6 +15,7 @@ public class VehicleUpdateDTO {
     private GearboxType gearbox;
     private VehicleType vehicleType;
     private Integer odometer;
+    private String plate;
 
     public FuelType getFuelType() {
         return fuelType;
@@ -46,6 +47,14 @@ public class VehicleUpdateDTO {
 
     public void setOdometer(Integer odometer) {
         this.odometer = odometer;
+    }
+
+    public String getPlate() {
+        return plate;
+    }
+
+    public void setPlate(String plate) {
+        this.plate = plate;
     }
 
     public String getBrand() {

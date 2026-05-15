@@ -16,6 +16,7 @@ public class VehicleResponseDTO {
     private int cc;
     private int year;
     private Integer odometer;
+    private String plate;
     private FuelType fuelType;
     private BigDecimal tankCapacity;
     private GearboxType gearbox;
@@ -86,6 +87,14 @@ public class VehicleResponseDTO {
 
     public void setOdometer(Integer odometer) {
         this.odometer = odometer;
+    }
+
+    public String getPlate() {
+        return plate;
+    }
+
+    public void setPlate(String plate) {
+        this.plate = plate;
     }
 
     public FuelType getFuelType() {

@@ -24,6 +24,7 @@ public class FuelingDTO {
     private Boolean road;
     private Boolean ac;
     private Boolean trailer;
+    private Boolean heating;
     private BigDecimal boardConsumption;
     private Integer averageSpeed;
     private String notes;
@@ -146,6 +147,14 @@ public class FuelingDTO {
 
     public void setTrailer(Boolean trailer) {
         this.trailer = trailer;
+    }
+
+    public Boolean getHeating() {
+        return heating;
+    }
+
+    public void setHeating(Boolean heating) {
+        this.heating = heating;
     }
 
     public BigDecimal getBoardConsumption() {

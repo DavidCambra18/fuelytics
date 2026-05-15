@@ -26,6 +26,7 @@ function createInitialFormData(vehicle) {
     road: false,
     ac: false,
     trailer: false,
+    heating: false,
     boardConsumption: "",
     averageSpeed: "",
     notes: "",
@@ -48,6 +49,7 @@ function toFormData(fueling) {
     road: Boolean(fueling?.road),
     ac: Boolean(fueling?.ac),
     trailer: Boolean(fueling?.trailer),
+    heating: Boolean(fueling?.heating),
     boardConsumption: fueling?.boardConsumption ?? "",
     averageSpeed: fueling?.averageSpeed ?? "",
     notes: fueling?.notes ?? "",
@@ -187,6 +189,7 @@ export default function Fuelings() {
         road: formData.road,
         ac: formData.ac,
         trailer: formData.trailer,
+        heating: formData.heating,
         boardConsumption: toNumber(formData.boardConsumption),
         averageSpeed: toNumber(formData.averageSpeed),
         notes: formData.notes,
@@ -543,11 +546,12 @@ export default function Fuelings() {
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 {[
-                  ["highway", "Autopista"],
-                  ["city", "Ciudad"],
-                  ["road", "Carretera"],
-                  ["ac", "A/C activado"],
-                  ["trailer", "Con remolque"],
+                    ["highway", "Autopista"],
+                    ["city", "Ciudad"],
+                    ["road", "Carretera"],
+                    ["ac", "A/C activado"],
+                    ["trailer", "Con remolque"],
+                    ["heating", "Calefacción activada"],
                 ].map(([key, label]) => (
                   <label key={key} className="flex items-center gap-2">
                     <input

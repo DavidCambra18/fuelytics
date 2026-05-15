@@ -40,6 +40,9 @@ public class Vehicle {
 
     private Integer odometer;
 
+    @Column(length = 20)
+    private String plate;
+
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "fuel_type", columnDefinition = "fuel_type")
     private FuelType fuelType;
@@ -131,6 +134,14 @@ public class Vehicle {
 
     public void setOdometer(Integer odometer) {
         this.odometer = odometer;
+    }
+
+    public String getPlate() {
+        return plate;
+    }
+
+    public void setPlate(String plate) {
+        this.plate = plate;
     }
 
     public FuelType getFuelType() {
