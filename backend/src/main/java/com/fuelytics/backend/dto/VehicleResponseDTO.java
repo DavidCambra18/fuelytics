@@ -2,14 +2,15 @@ package com.fuelytics.backend.dto;
 
 import java.math.BigDecimal;
 
-import com.fuelytics.backend.entity.enums.FuelType;
 import com.fuelytics.backend.entity.enums.GearboxType;
+import com.fuelytics.backend.entity.enums.VehicleEnergyType;
 import com.fuelytics.backend.entity.enums.VehicleType;
 
 public class VehicleResponseDTO {
 
     private Integer id;
     private VehicleType vehicleType;
+    private VehicleEnergyType vehicleEnergyType;
     private String brand;
     private String model;
     private int power;
@@ -17,7 +18,6 @@ public class VehicleResponseDTO {
     private int year;
     private Integer odometer;
     private String plate;
-    private FuelType fuelType;
     private BigDecimal tankCapacity;
     private GearboxType gearbox;
     private BigDecimal officialConsumption;
@@ -39,6 +39,14 @@ public class VehicleResponseDTO {
 
     public void setVehicleType(VehicleType vehicleType) {
         this.vehicleType = vehicleType;
+    }
+
+    public VehicleEnergyType getVehicleEnergyType() {
+        return vehicleEnergyType;
+    }
+
+    public void setVehicleEnergyType(VehicleEnergyType vehicleEnergyType) {
+        this.vehicleEnergyType = vehicleEnergyType;
     }
 
     public String getBrand() {
@@ -95,14 +103,6 @@ public class VehicleResponseDTO {
 
     public void setPlate(String plate) {
         this.plate = plate;
-    }
-
-    public FuelType getFuelType() {
-        return fuelType;
-    }
-
-    public void setFuelType(FuelType fuelType) {
-        this.fuelType = fuelType;
     }
 
     public BigDecimal getTankCapacity() {

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { formatVehicleType } from "../utils/vehicleLabels";
 
 export default function VehicleLayout() {
     const { vehicleId } = useParams();

@@ -34,6 +34,7 @@ public class VehicleService {
 
         v.setUser(user);
         v.setVehicleType(dto.getVehicleType());
+        v.setVehicleEnergyType(dto.getVehicleEnergyType());
         v.setBrand(dto.getBrand());
         v.setModel(dto.getModel());
         v.setPower(dto.getPower());
@@ -41,8 +42,6 @@ public class VehicleService {
         v.setYear(dto.getYear());
         v.setOdometer(dto.getOdometer());
         v.setPlate(dto.getPlate());
-
-        v.setFuelType(dto.getFuelType());
         v.setTankCapacity(dto.getTankCapacity());
         v.setOfficialConsumption(dto.getOfficialConsumption());
         v.setGearbox(dto.getGearbox());
@@ -73,13 +72,13 @@ public class VehicleService {
 
         dto.setId(v.getId());
         dto.setVehicleType(v.getVehicleType());
+        dto.setVehicleEnergyType(v.getVehicleEnergyType());
         dto.setBrand(v.getBrand());
         dto.setModel(v.getModel());
         dto.setPower(v.getPower());
         dto.setCc(v.getCc());
         dto.setYear(v.getYear());
         dto.setOdometer(v.getOdometer());
-        dto.setFuelType(v.getFuelType());
         dto.setTankCapacity(v.getTankCapacity());
         dto.setGearbox(v.getGearbox());
         dto.setOfficialConsumption(v.getOfficialConsumption());
@@ -132,6 +131,14 @@ public class VehicleService {
             vehicle.setBrand(dto.getBrand());
         }
 
+        if (dto.getVehicleType() != null) {
+            vehicle.setVehicleType(dto.getVehicleType());
+        }
+
+        if (dto.getVehicleEnergyType() != null) {
+            vehicle.setVehicleEnergyType(dto.getVehicleEnergyType());
+        }
+
         if (dto.getModel() != null) {
             vehicle.setModel(dto.getModel());
         }
@@ -148,8 +155,24 @@ public class VehicleService {
             vehicle.setYear(dto.getYear());
         }
 
+        if (dto.getOdometer() != null) {
+            vehicle.setOdometer(dto.getOdometer());
+        }
+
         if (dto.getPlate() != null) {
             vehicle.setPlate(dto.getPlate());
+        }
+
+        if (dto.getTankCapacity() != null) {
+            vehicle.setTankCapacity(dto.getTankCapacity());
+        }
+
+        if (dto.getGearbox() != null) {
+            vehicle.setGearbox(dto.getGearbox());
+        }
+
+        if (dto.getOfficialConsumption() != null) {
+            vehicle.setOfficialConsumption(dto.getOfficialConsumption());
         }
 
         Vehicle savedVehicle = vehicleRepository.save(vehicle);

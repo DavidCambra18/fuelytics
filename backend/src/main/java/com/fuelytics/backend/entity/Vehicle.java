@@ -24,6 +24,10 @@ public class Vehicle {
     @Column(name = "vehicle_type", columnDefinition = "vehicle_type")
     private VehicleType vehicleType;
 
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "vehicle_energy_type", columnDefinition = "vehicle_energy_type")
+    private VehicleEnergyType vehicleEnergyType;
+
     @Column(nullable = false)
     private String brand;
 
@@ -42,10 +46,6 @@ public class Vehicle {
 
     @Column(length = 20)
     private String plate;
-
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "fuel_type", columnDefinition = "fuel_type")
-    private FuelType fuelType;
 
     @Column(name = "tank_capacity", nullable = false)
     private BigDecimal tankCapacity;
@@ -86,6 +86,14 @@ public class Vehicle {
 
     public void setVehicleType(VehicleType vehicleType) {
         this.vehicleType = vehicleType;
+    }
+
+    public VehicleEnergyType getVehicleEnergyType() {
+        return vehicleEnergyType;
+    }
+
+    public void setVehicleEnergyType(VehicleEnergyType vehicleEnergyType) {
+        this.vehicleEnergyType = vehicleEnergyType;
     }
 
     public String getBrand() {
@@ -142,14 +150,6 @@ public class Vehicle {
 
     public void setPlate(String plate) {
         this.plate = plate;
-    }
-
-    public FuelType getFuelType() {
-        return fuelType;
-    }
-
-    public void setFuelType(FuelType fuelType) {
-        this.fuelType = fuelType;
     }
 
     public BigDecimal getTankCapacity() {

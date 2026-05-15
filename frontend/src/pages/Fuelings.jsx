@@ -15,7 +15,7 @@ function createInitialFormData(vehicle) {
     date: new Date().toISOString().split("T")[0],
     odometer: "",
     refueling: "complete",
-    fuelType: vehicle?.fuelType || "diesel_a",
+    fuelType: vehicle?.fuelType || "diesel",
     distance: "",
     liters: "",
     priceTotal: "",
@@ -38,7 +38,7 @@ function toFormData(fueling) {
     date: fueling?.date || new Date().toISOString().split("T")[0],
     odometer: fueling?.odometer ?? "",
     refueling: fueling?.refueling || "complete",
-    fuelType: fueling?.fuelType || "diesel_a",
+    fuelType: fueling?.fuelType || "diesel",
     distance: fueling?.distance ?? "",
     liters: fueling?.liters ?? "",
     priceTotal: fueling?.priceTotal ?? "",
@@ -89,6 +89,7 @@ export default function Fuelings() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [editingFueling, setEditingFueling] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -269,6 +270,21 @@ export default function Fuelings() {
   const consumo = totalDistance > 0 ? ((totalLiters / totalDistance) * 100).toFixed(2) : "0.00";
   const costPerKm = totalDistance > 0 ? (totalPrice / totalDistance).toFixed(3) : "0.000";
 
+  const fuelingHelpItems = [
+    {
+      title: "Repostaje completo",
+      text: "Úsalo cuando llenas el depósito hasta arriba. Es la opción más útil para calcular consumo real.",
+    },
+    {
+      title: "Repostaje parcial",
+      text: "Úsalo si solo echas una parte del depósito. Sirve para registrar un gasto intermedio, no para medir consumo exacto.",
+    },
+    {
+      title: "Repostaje inicial",
+      text: "Úsalo en el primer registro si quieres arrancar el historial desde un depósito recién empezado.",
+    },
+  ];
+
   return (
     <section className="w-full space-y-6">
       <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
@@ -280,6 +296,16 @@ export default function Fuelings() {
           <p className="mt-3 text-sm leading-6 text-slate-300 max-w-2xl">
             Historial detallado de repostajes, litros, costes y eficiencia.
           </p>
+        </div>
+
+        <div className="mb-6 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowHelp(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2 text-sm font-semibold text-teal-100 transition hover:border-teal-300/35 hover:bg-teal-300/15 hover:text-white"
+          >
+            Ayuda de repostaje
+          </button>
         </div>
 
         <button
@@ -586,6 +612,47 @@ export default function Fuelings() {
                 {submitting ? "Guardando..." : editingFueling ? "Guardar cambios" : "Guardar repostaje"}
               </button>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {showHelp ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/75 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-teal-300">Ayuda rápida</p>
+                <h3 className="mt-2 text-xl font-semibold text-white">Cómo registrar el repostaje</h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowHelp(false)}
+                className="rounded-full border border-white/10 px-3 py-1.5 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm leading-6 text-slate-300">
+              Elige el tipo de repostaje según cómo hayas llenado el depósito. Si lo haces al revés, el consumo puede salir engañoso.
+            </p>
+
+            <div className="mt-5 space-y-3">
+              {fuelingHelpItems.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-300">{item.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-amber-400/15 bg-amber-400/5 p-4">
+              <p className="text-sm font-semibold text-amber-100">Regla simple</p>
+              <p className="mt-1 text-sm leading-6 text-amber-50/90">
+                Si llenas el depósito por completo, usa completo. Si no lo llenas del todo, usa parcial. El inicial es solo para el primer registro.
+              </p>
+            </div>
           </div>
         </div>
       ) : null}

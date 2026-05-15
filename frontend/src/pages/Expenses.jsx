@@ -94,6 +94,22 @@ function formatMonthYear(date) {
   }).format(date);
 }
 
+function getMonthSpan(expensesList) {
+  const dates = expensesList
+    .map((expense) => parseExpenseDate(expense.date))
+    .filter(Boolean)
+    .sort((left, right) => left - right);
+
+  if (dates.length === 0) {
+    return 0;
+  }
+
+  const firstDate = dates[0];
+  const lastDate = dates[dates.length - 1];
+
+  return (lastDate.getFullYear() - firstDate.getFullYear()) * 12 + (lastDate.getMonth() - firstDate.getMonth()) + 1;
+}
+
 export default function Expenses() {
   const { selectedVehicle } = useOutletContext();
   const [expenses, setExpenses] = useState([]);
@@ -263,19 +279,8 @@ export default function Expenses() {
   };
 
   const totalCost = expenses.reduce((acc, expense) => acc + Number(expense.cost || 0), 0);
-  const monthlyCost = expenses.reduce((acc, expense) => {
-    const expenseDate = parseExpenseDate(expense.date);
-
-    if (!expenseDate) {
-      return acc;
-    }
-
-    if (expenseDate.getFullYear() === currentYear && expenseDate.getMonth() === currentMonth) {
-      return acc + Number(expense.cost || 0);
-    }
-
-    return acc;
-  }, 0);
+  const monthSpan = getMonthSpan(expenses);
+  const monthlyAverageCost = monthSpan > 0 ? totalCost / monthSpan : 0;
   const yearlyCost = expenses.reduce((acc, expense) => {
     const expenseDate = parseExpenseDate(expense.date);
 
@@ -333,9 +338,9 @@ export default function Expenses() {
               </div>
 
               <div className="rounded-xl border border-slate-700/50 bg-slate-950/30 p-4">
-                <p className="text-xs uppercase tracking-[0.15em] text-slate-400 font-semibold">Gasto mensual</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-slate-400 font-semibold">Gasto mensual promedio</p>
                 <p className="mt-2 text-2xl font-bold text-white">
-                  {formatMoney(monthlyCost)} €
+                  {formatMoney(monthlyAverageCost)} €
                 </p>
               </div>
 

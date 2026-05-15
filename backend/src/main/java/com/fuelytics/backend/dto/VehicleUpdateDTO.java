@@ -1,8 +1,9 @@
 package com.fuelytics.backend.dto;
 
-import com.fuelytics.backend.entity.enums.FuelType;
 import com.fuelytics.backend.entity.enums.GearboxType;
+import com.fuelytics.backend.entity.enums.VehicleEnergyType;
 import com.fuelytics.backend.entity.enums.VehicleType;
+import java.math.BigDecimal;
 
 public class VehicleUpdateDTO {
 
@@ -11,19 +12,13 @@ public class VehicleUpdateDTO {
     private Integer power;
     private Integer cc;
     private Integer year;
-    private FuelType fuelType;
-    private GearboxType gearbox;
     private VehicleType vehicleType;
+    private GearboxType gearbox;
+    private VehicleEnergyType vehicleEnergyType;
     private Integer odometer;
     private String plate;
-
-    public FuelType getFuelType() {
-        return fuelType;
-    }
-
-    public void setFuelType(FuelType fuelType) {
-        this.fuelType = fuelType;
-    }
+    private BigDecimal tankCapacity;
+    private BigDecimal officialConsumption;
 
     public GearboxType getGearbox() {
         return gearbox;
@@ -33,12 +28,12 @@ public class VehicleUpdateDTO {
         this.gearbox = gearbox;
     }
 
-    public VehicleType getVehicleType() {
-        return vehicleType;
+    public VehicleEnergyType getVehicleEnergyType() {
+        return vehicleEnergyType;
     }
 
-    public void setVehicleType(VehicleType vehicleType) {
-        this.vehicleType = vehicleType;
+    public void setVehicleEnergyType(VehicleEnergyType vehicleEnergyType) {
+        this.vehicleEnergyType = vehicleEnergyType;
     }
 
     public Integer getOdometer() {
@@ -55,6 +50,14 @@ public class VehicleUpdateDTO {
 
     public void setPlate(String plate) {
         this.plate = plate;
+    }
+
+    public BigDecimal getOfficialConsumption() {
+        return officialConsumption;
+    }
+
+    public void setOfficialConsumption(BigDecimal officialConsumption) {
+        this.officialConsumption = officialConsumption;
     }
 
     public String getBrand() {
@@ -95,6 +98,22 @@ public class VehicleUpdateDTO {
 
     public void setYear(Integer year) {
         this.year = year;
+    }
+
+    public VehicleType getVehicleType() {
+        return vehicleType;
+    }
+
+    public void setVehicleType(VehicleType vehicleType) {
+        this.vehicleType = vehicleType;
+    }
+
+    public BigDecimal getTankCapacity() {
+        return tankCapacity;
+    }
+
+    public void setTankCapacity(BigDecimal tankCapacity) {
+        this.tankCapacity = tankCapacity;
     }
 
 }

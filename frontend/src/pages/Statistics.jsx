@@ -53,6 +53,7 @@ export default function Statistics() {
   const [fuelings, setFuelings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedMetric, setSelectedMetric] = useState("consumption");
 
   useEffect(() => {
     const loadFuelings = async () => {
@@ -122,32 +123,81 @@ export default function Statistics() {
     };
   }, [fuelings]);
 
-  const chartData = useMemo(
-    () => ({
-      labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
-      datasets: [
-        {
-          label: "Media acumulada (L/100km)",
-          data: chartFuelings.map((_, index) => {
-            const subset = chartFuelings.slice(0, index + 1);
-            const subsetDistance = subset.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
-            const subsetLiters = subset.reduce((acc, fueling) => acc + Number(fueling.liters || 0), 0);
+  const chartData = useMemo(() => {
+    if (selectedMetric === "consumption") {
+      return {
+        labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
+        datasets: [
+          {
+            label: "Media acumulada (L/100km)",
+            data: chartFuelings.map((_, index) => {
+              const subset = chartFuelings.slice(0, index + 1);
+              const subsetDistance = subset.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
+              const subsetLiters = subset.reduce((acc, fueling) => acc + Number(fueling.liters || 0), 0);
 
-            return subsetDistance > 0 ? (subsetLiters / subsetDistance) * 100 : 0;
-          }),
-          borderColor: "#f8fafc",
-          backgroundColor: "rgba(248, 250, 252, 0.12)",
-          pointBackgroundColor: "#e2e8f0",
-          pointBorderColor: "#ffffff",
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          tension: 0.35,
-          fill: true,
-        },
-      ],
-    }),
-    [chartFuelings]
-  );
+              return subsetDistance > 0 ? (subsetLiters / subsetDistance) * 100 : 0;
+            }),
+            borderColor: "#f8fafc",
+            backgroundColor: "rgba(248, 250, 252, 0.12)",
+            pointBackgroundColor: "#e2e8f0",
+            pointBorderColor: "#ffffff",
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.35,
+            fill: true,
+          },
+        ],
+      };
+    } else if (selectedMetric === "costPer100Km") {
+      return {
+        labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
+        datasets: [
+          {
+            label: "Coste por 100km (€)",
+            data: chartFuelings.map((_, index) => {
+              const subset = chartFuelings.slice(0, index + 1);
+              const subsetDistance = subset.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
+              const subsetPrice = subset.reduce((acc, fueling) => acc + Number(fueling.priceTotal || 0), 0);
+
+              return subsetDistance > 0 ? (subsetPrice / subsetDistance) * 100 : 0;
+            }),
+            borderColor: "#fbbf24",
+            backgroundColor: "rgba(251, 191, 36, 0.12)",
+            pointBackgroundColor: "#fcd34d",
+            pointBorderColor: "#ffffff",
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.35,
+            fill: true,
+          },
+        ],
+      };
+    } else if (selectedMetric === "fuelPrice") {
+      return {
+        labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
+        datasets: [
+          {
+            label: "Precio medio combustible (€/L)",
+            data: chartFuelings.map((_, index) => {
+              const subset = chartFuelings.slice(0, index + 1);
+              const subsetPrice = subset.reduce((acc, fueling) => acc + Number(fueling.priceTotal || 0), 0);
+              const subsetLiters = subset.reduce((acc, fueling) => acc + Number(fueling.liters || 0), 0);
+
+              return subsetLiters > 0 ? subsetPrice / subsetLiters : 0;
+            }),
+            borderColor: "#10b981",
+            backgroundColor: "rgba(16, 185, 129, 0.12)",
+            pointBackgroundColor: "#6ee7b7",
+            pointBorderColor: "#ffffff",
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.35,
+            fill: true,
+          },
+        ],
+      };
+    }
+  }, [chartFuelings, selectedMetric]);
 
   const chartOptions = useMemo(
     () => ({
@@ -164,7 +214,15 @@ export default function Statistics() {
           padding: 12,
           displayColors: false,
           callbacks: {
-            label: (context) => `${Number(context.raw || 0).toFixed(2)} L/100km`,
+            label: (context) => {
+              if (selectedMetric === "consumption") {
+                return `${Number(context.raw || 0).toFixed(2)} L/100km`;
+              } else if (selectedMetric === "costPer100Km") {
+                return `${Number(context.raw || 0).toFixed(2)} €`;
+              } else if (selectedMetric === "fuelPrice") {
+                return `${Number(context.raw || 0).toFixed(3)} €/L`;
+              }
+            },
           },
         },
       },
@@ -191,7 +249,7 @@ export default function Statistics() {
         },
       },
     }),
-    []
+    [selectedMetric]
   );
 
   const cards = [
@@ -236,20 +294,39 @@ export default function Statistics() {
         ) : (
           <>
             <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {cards.map((card) => (
-                <article key={card.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{card.label}</p>
-                  <p className="mt-3 text-2xl font-semibold text-white">{card.value}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-400">{card.note}</p>
-                </article>
-              ))}
+              {cards.map((card, index) => {
+                const cardMetricKey = index === 0 ? "consumption" : index === 1 ? "costPer100Km" : "fuelPrice";
+                const isSelected = selectedMetric === cardMetricKey;
+
+                return (
+                  <button
+                    key={card.label}
+                    onClick={() => setSelectedMetric(cardMetricKey)}
+                    className={`rounded-3xl border p-5 transition-all ${
+                      isSelected
+                        ? "border-blue-400/50 bg-blue-500/15"
+                        : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                    }`}
+                  >
+                    <p className="text-left text-xs uppercase tracking-[0.18em] text-slate-400">{card.label}</p>
+                    <p className="mt-3 text-left text-2xl font-semibold text-white">{card.value}</p>
+                    <p className="mt-2 text-left text-sm leading-6 text-slate-400">{card.note}</p>
+                  </button>
+                );
+              })}
             </div>
 
             <article className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/50 p-5 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Gráfica</p>
-                  <h3 className="mt-2 text-xl font-semibold text-white">Consumo medio total</h3>
+                  <h3 className="mt-2 text-xl font-semibold text-white">
+                    {selectedMetric === "consumption"
+                      ? "Consumo medio acumulado"
+                      : selectedMetric === "costPer100Km"
+                        ? "Coste por 100km acumulado"
+                        : "Precio medio combustible acumulado"}
+                  </h3>
                 </div>
               </div>
 
