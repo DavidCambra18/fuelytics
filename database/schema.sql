@@ -59,7 +59,12 @@ CREATE TYPE expense_type AS ENUM (
   'taxes',
   'inspection',
   'homologation',
-  'tuning'
+  'tuning',
+  'tire_change',
+  'financing',
+  'spare_parts',
+  'parking',
+  'matriculation'
 );
 
 -- USERS
@@ -82,6 +87,7 @@ CREATE TABLE vehicles (
   cc INT,
   year INT NOT NULL,
   odometer INT,
+  plate VARCHAR(20),
   fuel_type fuel_type NOT NULL,
   tank_capacity DECIMAL(5,2) NOT NULL,
   gearbox gearbox_type NOT NULL,
@@ -113,6 +119,7 @@ CREATE TABLE fuel_entries (
   city BOOLEAN DEFAULT FALSE,
   road BOOLEAN DEFAULT FALSE,
   ac BOOLEAN DEFAULT FALSE,
+  heating BOOLEAN DEFAULT FALSE,
   trailer BOOLEAN DEFAULT FALSE,
   board_consumption DECIMAL(5,2),
   average_speed INT,

@@ -40,6 +40,7 @@ public class VehicleService {
         v.setCc(dto.getCc());
         v.setYear(dto.getYear());
         v.setOdometer(dto.getOdometer());
+        v.setPlate(dto.getPlate());
 
         v.setFuelType(dto.getFuelType());
         v.setTankCapacity(dto.getTankCapacity());
@@ -85,6 +86,7 @@ public class VehicleService {
         dto.setShowFuelData(v.getShowFuelData());
         dto.setShowExpenses(v.getShowExpenses());
         dto.setShowStatistics(v.getShowStatistics());
+        dto.setPlate(v.getPlate());
 
         return dto;
     }
@@ -144,6 +146,10 @@ public class VehicleService {
 
         if (dto.getYear() != null) {
             vehicle.setYear(dto.getYear());
+        }
+
+        if (dto.getPlate() != null) {
+            vehicle.setPlate(dto.getPlate());
         }
 
         Vehicle savedVehicle = vehicleRepository.save(vehicle);

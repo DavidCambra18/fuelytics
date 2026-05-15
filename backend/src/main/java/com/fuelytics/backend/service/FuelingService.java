@@ -72,6 +72,7 @@ public class FuelingService {
         fuelEntry.setRoad(dto.getRoad() != null ? dto.getRoad() : false);
         fuelEntry.setAc(dto.getAc() != null ? dto.getAc() : false);
         fuelEntry.setTrailer(dto.getTrailer() != null ? dto.getTrailer() : false);
+        fuelEntry.setHeating(dto.getHeating() != null ? dto.getHeating() : false);
         
         fuelEntry.setBoardConsumption(dto.getBoardConsumption());
         fuelEntry.setAverageSpeed(dto.getAverageSpeed());
@@ -113,6 +114,7 @@ public class FuelingService {
         fuelEntry.setRoad(dto.getRoad() != null ? dto.getRoad() : false);
         fuelEntry.setAc(dto.getAc() != null ? dto.getAc() : false);
         fuelEntry.setTrailer(dto.getTrailer() != null ? dto.getTrailer() : false);
+        fuelEntry.setHeating(dto.getHeating() != null ? dto.getHeating() : false);
         fuelEntry.setBoardConsumption(dto.getBoardConsumption());
         fuelEntry.setAverageSpeed(dto.getAverageSpeed());
         fuelEntry.setNotes(dto.getNotes());
@@ -188,6 +190,7 @@ public class FuelingService {
         dto.setRoad(fuelEntry.getRoad());
         dto.setAc(fuelEntry.getAc());
         dto.setTrailer(fuelEntry.getTrailer());
+        dto.setHeating(fuelEntry.getHeating());
         dto.setBoardConsumption(fuelEntry.getBoardConsumption());
         dto.setAverageSpeed(fuelEntry.getAverageSpeed());
         dto.setNotes(fuelEntry.getNotes());
