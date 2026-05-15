@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { API_BASE } from "../config/api";
 import CustomSelect from "../components/CustomSelect";
 import {
   REFUELING_TYPE_OPTIONS,
@@ -109,7 +110,7 @@ export default function Fuelings() {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:8080/api/fuelings/vehicle/${selectedVehicle.id}`,
+          `${API_BASE}/api/fuelings/vehicle/${selectedVehicle.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -198,8 +199,8 @@ export default function Fuelings() {
 
       const response = await fetch(
         editingFueling
-          ? `http://localhost:8080/api/fuelings/${editingFueling.id}`
-          : "http://localhost:8080/api/fuelings",
+          ? `${API_BASE}/api/fuelings/${editingFueling.id}`
+          : `${API_BASE}/api/fuelings`,
         {
           method: editingFueling ? "PUT" : "POST",
           headers: {
@@ -243,7 +244,7 @@ export default function Fuelings() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:8080/api/fuelings/${fueling.id}`, {
+      const response = await fetch(`${API_BASE}/api/fuelings/${fueling.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

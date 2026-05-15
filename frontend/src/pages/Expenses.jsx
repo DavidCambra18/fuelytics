@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import CustomSelect from "../components/CustomSelect";
+import { API_BASE } from "../config/api";
 
 const EXPENSE_TYPE_OPTIONS = [
   { value: "maintenance", label: "Mantenimiento" },
@@ -138,7 +139,7 @@ export default function Expenses() {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:8080/api/expenses/vehicle/${selectedVehicle.id}`,
+          `${API_BASE}/api/expenses/vehicle/${selectedVehicle.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -213,8 +214,8 @@ export default function Expenses() {
 
       const response = await fetch(
         editingExpense
-          ? `http://localhost:8080/api/expenses/${editingExpense.id}`
-          : "http://localhost:8080/api/expenses",
+          ? `${API_BASE}/api/expenses/${editingExpense.id}`
+          : `${API_BASE}/api/expenses`,
         {
           method: editingExpense ? "PUT" : "POST",
           headers: {
@@ -258,7 +259,7 @@ export default function Expenses() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:8080/api/expenses/${expense.id}`, {
+      const response = await fetch(`${API_BASE}/api/expenses/${expense.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

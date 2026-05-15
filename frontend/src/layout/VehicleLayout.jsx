@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import { API_BASE } from "../config/api";
 
 export default function VehicleLayout() {
     const { vehicleId } = useParams();
@@ -12,7 +13,7 @@ export default function VehicleLayout() {
             try {
                 const token = localStorage.getItem("token");
 
-                const response = await fetch("http://localhost:8080/api/vehicles", {
+                const response = await fetch(`${API_BASE}/api/vehicles`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

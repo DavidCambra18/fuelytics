@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import { API_BASE } from "../config/api";
 import {
   GEARBOX_OPTIONS,
   VEHICLE_ENERGY_TYPE_OPTIONS,
@@ -59,7 +60,7 @@ export default function VehicleEdit() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:8080/api/vehicles/${selectedVehicle.id}`, {
+      const response = await fetch(`${API_BASE}/api/vehicles/${selectedVehicle.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

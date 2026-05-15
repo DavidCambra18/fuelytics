@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { API_BASE } from "../config/api";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -67,7 +68,7 @@ export default function Statistics() {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:8080/api/fuelings/vehicle/${selectedVehicle.id}`,
+          `${API_BASE}/api/fuelings/vehicle/${selectedVehicle.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -1,4 +1,5 @@
 import { Link, useOutletContext, useNavigate } from "react-router-dom";
+import { API_BASE } from "../config/api";
 import { useState } from "react";
 import { formatGearboxType, formatVehicleEnergyType, formatVehicleType } from "../utils/vehicleLabels";
 
@@ -45,7 +46,7 @@ export default function VehicleOverview() {
 
                 try {
                   const token = localStorage.getItem("token");
-                  const resp = await fetch(`http://localhost:8080/api/vehicles/${selectedVehicle.id}`, {
+                  const resp = await fetch(`${API_BASE}/api/vehicles/${selectedVehicle.id}`, {
                     method: "DELETE",
                     headers: { Authorization: `Bearer ${token}` },
                   });

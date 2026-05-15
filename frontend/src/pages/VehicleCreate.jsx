@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE } from "../config/api";
 import {
   GEARBOX_OPTIONS,
   VEHICLE_ENERGY_TYPE_OPTIONS,
@@ -61,7 +62,7 @@ export default function VehicleCreate() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8080/api/vehicles", {
+      const response = await fetch(`${API_BASE}/api/vehicles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
