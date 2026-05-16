@@ -222,7 +222,7 @@ export default function VehicleEdit() {
             </label>
 
             <label className="block sm:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Tipo de energía *</span>
+              <span className="mb-2 block text-sm font-medium text-slate-300">Tipo de combustible *</span>
               <CustomSelect
                 options={VEHICLE_ENERGY_TYPE_OPTIONS}
                 value={form.vehicleEnergyType}

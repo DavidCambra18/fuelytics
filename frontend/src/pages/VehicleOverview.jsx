@@ -10,7 +10,7 @@ export default function VehicleOverview() {
   const [error, setError] = useState("");
 
   const vehicleInfo = [
-    { label: "Energía", value: formatVehicleEnergyType(selectedVehicle.vehicleEnergyType) },
+    { label: "Combustible", value: formatVehicleEnergyType(selectedVehicle.vehicleEnergyType) },
     { label: "Marca", value: selectedVehicle.brand || "---" },
     { label: "Modelo", value: selectedVehicle.model || "---" },
     { label: "Año", value: selectedVehicle.year || "---" },
