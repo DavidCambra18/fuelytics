@@ -12,11 +12,12 @@ import Statistics from "../pages/Statistics";
 import VehicleLayout from "../layout/VehicleLayout";
 import VehicleOverview from "../pages/VehicleOverview";
 import ProtectedLayout from "../layout/ProtectedLayout";
+import { isTokenValid, useAuth } from "../context/AuthContext";
 
 function PublicOnlyRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const { token } = useAuth();
 
-  if (token) {
+  if (isTokenValid(token)) {
     return <Navigate to="/dashboard" replace />;
   }
 

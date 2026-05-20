@@ -1,10 +1,11 @@
 import { Navigate, Outlet } from "react-router-dom";
 import UserMenu from "../components/UserMenu";
+import { isTokenValid, useAuth } from "../context/AuthContext";
 
 export default function ProtectedLayout() {
-  const token = localStorage.getItem("token");
+  const { token } = useAuth();
 
-  if (!token) {
+  if (!isTokenValid(token)) {
     return <Navigate to="/login" replace />;
   }
 
