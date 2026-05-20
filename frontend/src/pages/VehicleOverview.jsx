@@ -1,7 +1,7 @@
 import { Link, useOutletContext, useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { useState } from "react";
-import { formatGearboxType, formatVehicleEnergyType, formatVehicleType } from "../utils/vehicleLabels";
+import { formatGearboxType, formatVehicleEnergyType, formatVehicleType, getConsumptionUnit, getOdometerLabel, getOdometerUnit } from "../utils/vehicleLabels";
 
 export default function VehicleOverview() {
   const { selectedVehicle } = useOutletContext();
@@ -18,8 +18,8 @@ export default function VehicleOverview() {
     { label: "Cilindrada", value: selectedVehicle.cc ? `${selectedVehicle.cc} cc` : "---" },
     { label: "Cambio", value: formatGearboxType(selectedVehicle.gearbox) },
     { label: "Capacidad depósito", value: selectedVehicle.tankCapacity ? `${selectedVehicle.tankCapacity} L` : "---" },
-    { label: "Consumo oficial", value: selectedVehicle.officialConsumption ? `${selectedVehicle.officialConsumption} L/100km` : "---" },
-    { label: "Odómetro", value: selectedVehicle.odometer ? `${selectedVehicle.odometer.toLocaleString("es-ES")} km` : "---" },
+    { label: "Consumo oficial", value: selectedVehicle.officialConsumption ? `${selectedVehicle.officialConsumption} ${getConsumptionUnit(selectedVehicle.vehicleType, selectedVehicle.vehicleEnergyType)}` : "---" },
+    { label: getOdometerLabel(selectedVehicle.vehicleType), value: selectedVehicle.odometer ? `${selectedVehicle.odometer.toLocaleString("es-ES")} ${getOdometerUnit(selectedVehicle.vehicleType)}` : "---" },
   ];
 
   return (

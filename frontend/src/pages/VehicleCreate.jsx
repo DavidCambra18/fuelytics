@@ -5,6 +5,9 @@ import {
   GEARBOX_OPTIONS,
   VEHICLE_ENERGY_TYPE_OPTIONS,
   VEHICLE_TYPE_OPTIONS,
+  getConsumptionUnit,
+  getOdometerLabel,
+  getOdometerUnit,
 } from "../utils/vehicleLabels";
 import CustomSelect from "../components/CustomSelect";
 
@@ -225,10 +228,10 @@ export default function VehicleCreate() {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Kilometraje actual <span className="text-slate-500">(opcional)</span></span>
+              <span className="mb-2 block text-sm font-medium text-slate-300">{getOdometerLabel(form.vehicleType)} actual <span className="text-slate-500">(opcional)</span></span>
               <input
                 className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
-                placeholder="184000"
+                placeholder={form.vehicleType === "agricultural" ? "1200" : "184000"}
                 type="number"
                 min="0"
                 step="1"
@@ -274,7 +277,7 @@ export default function VehicleCreate() {
               </span>
               <input
                 className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
-                placeholder="5.8"
+                placeholder={`5.8 ${getConsumptionUnit(form.vehicleType, form.vehicleEnergyType)}`}
                 type="number"
                 min="0"
                 step="0.1"

@@ -9,6 +9,7 @@ import {
   TIRE_TYPE_OPTIONS,
   formatRefuelingType,
   formatFuelType,
+  getConsumptionUnit,
 } from "../utils/vehicleLabels";
 
 function createInitialFormData(vehicle) {
@@ -403,7 +404,7 @@ export default function Fuelings() {
 
                     <div>
                       <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Consumo real</p>
-                      <p className="mt-1 text-white font-medium">{realConsumption} L/100km</p>
+                      <p className="mt-1 text-white font-medium">{realConsumption} {getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)}</p>
                     </div>
                   </div>
 
@@ -547,7 +548,7 @@ export default function Fuelings() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Consumo display (opcional)</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">Consumo display (opcional) <span className="text-slate-500">({getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)})</span></label>
                   <input
                     type="number"
                     step="0.01"
@@ -555,7 +556,7 @@ export default function Fuelings() {
                     value={formData.boardConsumption}
                     onChange={handleInputChange}
                     className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
-                    placeholder="L/100km"
+                    placeholder={getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)}
                   />
                 </div>
                 <div>

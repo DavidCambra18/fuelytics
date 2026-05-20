@@ -159,3 +159,21 @@ export function formatDrivingType(value) {
 export function formatTireType(value) {
   return TIRE_TYPE_LABELS[value] || toReadableLabel(value);
 }
+
+export function getConsumptionUnit(vehicleType, vehicleEnergyType) {
+  if (vehicleType === "agricultural") {
+    return "L/h";
+  }
+  if (vehicleEnergyType === "electric") {
+    return "kWh/100km";
+  }
+  return "L/100km";
+}
+
+export function getOdometerLabel(vehicleType) {
+  return vehicleType === "agricultural" ? "Horometro" : "Odómetro";
+}
+
+export function getOdometerUnit(vehicleType) {
+  return vehicleType === "agricultural" ? "h" : "km";
+}

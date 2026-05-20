@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { API_BASE } from "../config/api";
+import { getConsumptionUnit } from "../utils/vehicleLabels";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -130,7 +131,7 @@ export default function Statistics() {
         labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
         datasets: [
           {
-            label: "Media acumulada (L/100km)",
+            label: `Media acumulada (${consumptionUnit})`,
             data: chartFuelings.map((_, index) => {
               const subset = chartFuelings.slice(0, index + 1);
               const subsetDistance = subset.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
@@ -217,7 +218,7 @@ export default function Statistics() {
           callbacks: {
             label: (context) => {
               if (selectedMetric === "consumption") {
-                return `${Number(context.raw || 0).toFixed(2)} L/100km`;
+                return `${Number(context.raw || 0).toFixed(2)} ${consumptionUnit}`;
               } else if (selectedMetric === "costPer100Km") {
                 return `${Number(context.raw || 0).toFixed(2)} €`;
               } else if (selectedMetric === "fuelPrice") {
@@ -250,13 +251,15 @@ export default function Statistics() {
         },
       },
     }),
-    [selectedMetric]
+    [selectedMetric, consumptionUnit]
   );
+
+  const consumptionUnit = getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType);
 
   const cards = [
     {
       label: "Consumo medio",
-      value: `${metrics.averageConsumption.toFixed(2)} L/100km`,
+      value: `${metrics.averageConsumption.toFixed(2)} ${consumptionUnit}`,
       note: "Litros totales divididos entre kilómetros recorridos",
     },
     {
@@ -383,7 +386,7 @@ export default function Statistics() {
                       <td className="px-4 py-4">{liters.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
                       <td className="px-4 py-4">{priceTotal.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</td>
                       <td className="px-4 py-4">{distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} km</td>
-                      <td className="rounded-r-2xl px-4 py-4">{consumption} L/100km</td>
+                      <td className="rounded-r-2xl px-4 py-4">{consumption} {consumptionUnit}</td>
                     </tr>
                   );
                 })}
