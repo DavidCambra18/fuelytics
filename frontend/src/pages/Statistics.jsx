@@ -50,6 +50,89 @@ function formatFullDate(value) {
   }).format(date);
 }
 
+function buildFuelingRows(fuelings) {
+  const sortedFuelings = [...fuelings].sort((left, right) => {
+    const leftDate = new Date(`${left.date}T00:00:00`).getTime();
+    const rightDate = new Date(`${right.date}T00:00:00`).getTime();
+
+    if (leftDate !== rightDate) {
+      return leftDate - rightDate;
+    }
+
+    return Number(left.id || 0) - Number(right.id || 0);
+  });
+
+  let accumulatedDistance = 0;
+  let accumulatedLiters = 0;
+  let accumulatedPrice = 0;
+  let hasBaseline = false;
+
+  return sortedFuelings.map((fueling) => {
+    const liters = Number(fueling.liters || 0);
+    const distance = Number(fueling.distance || 0);
+    const priceTotal = Number(fueling.priceTotal || 0);
+    const refuelingType = fueling.refueling;
+
+    if (!hasBaseline) {
+      hasBaseline = true;
+
+      if (refuelingType === "partial") {
+        accumulatedDistance = distance;
+        accumulatedLiters = liters;
+        accumulatedPrice = priceTotal;
+
+        return {
+          ...fueling,
+          displayState: "partial",
+          displayConsumption: distance > 0 ? (liters / distance) * 100 : null,
+        };
+      }
+
+      accumulatedDistance = 0;
+      accumulatedLiters = 0;
+      accumulatedPrice = 0;
+
+      return {
+        ...fueling,
+        displayState: "start",
+        displayConsumption: null,
+      };
+    }
+
+    accumulatedDistance += distance;
+    accumulatedLiters += liters;
+    accumulatedPrice += priceTotal;
+
+    if (refuelingType === "complete") {
+      const verifiedConsumption = accumulatedDistance > 0 ? (accumulatedLiters / accumulatedDistance) * 100 : null;
+      const verifiedPricePerLiter = accumulatedLiters > 0 ? accumulatedPrice / accumulatedLiters : null;
+      const verifiedDistance = accumulatedDistance;
+      const verifiedLiters = accumulatedLiters;
+      const verifiedPrice = accumulatedPrice;
+
+      accumulatedDistance = 0;
+      accumulatedLiters = 0;
+      accumulatedPrice = 0;
+
+      return {
+        ...fueling,
+        displayState: "verified",
+        displayConsumption: verifiedConsumption,
+        displayPricePerLiter: verifiedPricePerLiter,
+        verifiedDistance,
+        verifiedLiters,
+        verifiedPrice,
+      };
+    }
+
+    return {
+      ...fueling,
+      displayState: refuelingType === "initial" ? "start" : "estimated",
+      displayConsumption: accumulatedDistance > 0 ? (accumulatedLiters / accumulatedDistance) * 100 : null,
+    };
+  });
+}
+
 export default function Statistics() {
   const { selectedVehicle } = useOutletContext();
   const [fuelings, setFuelings] = useState([]);
@@ -104,14 +187,22 @@ export default function Statistics() {
     [fuelings]
   );
 
+  const fuelingRows = useMemo(() => buildFuelingRows(fuelings), [fuelings]);
+
   const metrics = useMemo(() => {
     const totalDistance = fuelings.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
     const totalLiters = fuelings.reduce((acc, fueling) => acc + Number(fueling.liters || 0), 0);
     const totalPrice = fuelings.reduce((acc, fueling) => acc + Number(fueling.priceTotal || 0), 0);
     const totalEntries = fuelings.length;
-    const averageConsumption = totalDistance > 0 ? (totalLiters / totalDistance) * 100 : 0;
-    const costPer100Km = totalDistance > 0 ? (totalPrice / totalDistance) * 100 : 0;
-    const averageFuelPrice = totalLiters > 0 ? totalPrice / totalLiters : 0;
+
+    const verifiedRows = fuelingRows.filter((r) => r.displayState === "verified");
+    const verifiedDistance = verifiedRows.reduce((acc, r) => acc + Number(r.verifiedDistance || 0), 0);
+    const verifiedLiters = verifiedRows.reduce((acc, r) => acc + Number(r.verifiedLiters || 0), 0);
+    const verifiedPrice = verifiedRows.reduce((acc, r) => acc + Number(r.verifiedPrice || 0), 0);
+
+    const averageConsumption = verifiedDistance > 0 ? (verifiedLiters / verifiedDistance) * 100 : 0;
+    const costPer100Km = verifiedDistance > 0 ? (verifiedPrice / verifiedDistance) * 100 : 0;
+    const averageFuelPrice = verifiedLiters > 0 ? verifiedPrice / verifiedLiters : 0;
     const averageDistance = totalEntries > 0 ? totalDistance / totalEntries : 0;
 
     return {
@@ -128,18 +219,32 @@ export default function Statistics() {
 
   const chartData = useMemo(() => {
     if (selectedMetric === "consumption") {
+      const consumptionLabels = [];
+      const consumptionData = [];
+      const cumulativeFuelings = [];
+
+      for (const fueling of chartFuelings) {
+        cumulativeFuelings.push(fueling);
+
+        if (fueling.refueling !== "complete") {
+          continue;
+        }
+
+        const subsetRows = buildFuelingRows(cumulativeFuelings);
+        const verifiedSubset = subsetRows.filter((r) => r.displayState === "verified");
+        const subsetDistance = verifiedSubset.reduce((acc, r) => acc + Number(r.verifiedDistance || 0), 0);
+        const subsetLiters = verifiedSubset.reduce((acc, r) => acc + Number(r.verifiedLiters || 0), 0);
+
+        consumptionLabels.push(formatDateLabel(fueling.date));
+        consumptionData.push(subsetDistance > 0 ? (subsetLiters / subsetDistance) * 100 : 0);
+      }
+
       return {
-        labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
+        labels: consumptionLabels,
         datasets: [
           {
             label: `Media acumulada (${consumptionUnit})`,
-            data: chartFuelings.map((_, index) => {
-              const subset = chartFuelings.slice(0, index + 1);
-              const subsetDistance = subset.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
-              const subsetLiters = subset.reduce((acc, fueling) => acc + Number(fueling.liters || 0), 0);
-
-              return subsetDistance > 0 ? (subsetLiters / subsetDistance) * 100 : 0;
-            }),
+            data: consumptionData,
             borderColor: "#f8fafc",
             backgroundColor: "rgba(248, 250, 252, 0.12)",
             pointBackgroundColor: "#e2e8f0",
@@ -273,7 +378,9 @@ export default function Statistics() {
     },
   ];
 
-  const recentFuelings = fuelings.slice(0, 5);
+  const recentFuelings = useMemo(() => {
+    return [...fuelingRows].reverse().slice(0, 5);
+  }, [fuelingRows]);
 
   return (
     <section className="space-y-8">
@@ -377,7 +484,10 @@ export default function Statistics() {
                   const liters = Number(fueling.liters || 0);
                   const distance = Number(fueling.distance || 0);
                   const priceTotal = Number(fueling.priceTotal || 0);
-                  const consumption = distance > 0 ? ((liters / distance) * 100).toFixed(2) : "0.00";
+                  const isVerified = fueling.displayState === "verified";
+                  const consumption = isVerified && fueling.displayConsumption != null
+                    ? Number(fueling.displayConsumption).toFixed(2)
+                    : null;
 
                   return (
                     <tr key={fueling.id} className="rounded-2xl bg-white/5 text-sm text-slate-200">
@@ -385,7 +495,7 @@ export default function Statistics() {
                       <td className="px-4 py-4">{liters.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
                       <td className="px-4 py-4">{priceTotal.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</td>
                       <td className="px-4 py-4">{distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} km</td>
-                      <td className="rounded-r-2xl px-4 py-4">{consumption} {consumptionUnit}</td>
+                      <td className="rounded-r-2xl px-4 py-4">{consumption !== null ? `${consumption} ${consumptionUnit}` : "—"}</td>
                     </tr>
                   );
                 })}
