@@ -1,7 +1,7 @@
 # 🏎️ Fuelytics
 
 ![Status](https://img.shields.io/badge/Status-En%20Desarrollo-orange?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-0.2.0--beta-blue?style=for-the-badge)
+![Version](https://img.shields.io/github/v/release/davidcambra18/fuelytics?include_prereleases&style=for-the-badge&color=blue)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 [![React](https://img.shields.io/badge/React-19.2.5-61DAFB?logo=react)](https://reactjs.org/)
