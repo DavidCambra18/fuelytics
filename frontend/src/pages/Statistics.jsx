@@ -56,6 +56,7 @@ export default function Statistics() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedMetric, setSelectedMetric] = useState("consumption");
+  const consumptionUnit = getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType);
 
   useEffect(() => {
     const loadFuelings = async () => {
@@ -253,8 +254,6 @@ export default function Statistics() {
     }),
     [selectedMetric, consumptionUnit]
   );
-
-  const consumptionUnit = getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType);
 
   const cards = [
     {
