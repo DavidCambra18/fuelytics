@@ -56,7 +56,7 @@ const DRIVING_TYPE_LABELS = {
 const TIRE_TYPE_LABELS = {
   summer: "Neumáticos de verano",
   winter: "Neumáticos de invierno",
-  allseason: "Neumáticos todo terreno",
+  allseason: "Neumáticos 4 estaciones",
 };
 
 export const VEHICLE_ENERGY_TYPE_OPTIONS = [
