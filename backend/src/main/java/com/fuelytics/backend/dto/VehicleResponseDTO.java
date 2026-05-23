@@ -17,10 +17,10 @@ public class VehicleResponseDTO {
     private int cc;
     private int year;
     private Integer odometer;
-    private String plate;
     private BigDecimal tankCapacity;
     private GearboxType gearbox;
     private BigDecimal officialConsumption;
+    private Boolean isPublic;
     private Boolean showFuelData;
     private Boolean showExpenses;
     private Boolean showStatistics;
@@ -97,14 +97,6 @@ public class VehicleResponseDTO {
         this.odometer = odometer;
     }
 
-    public String getPlate() {
-        return plate;
-    }
-
-    public void setPlate(String plate) {
-        this.plate = plate;
-    }
-
     public BigDecimal getTankCapacity() {
         return tankCapacity;
     }
@@ -127,6 +119,14 @@ public class VehicleResponseDTO {
 
     public void setOfficialConsumption(BigDecimal officialConsumption) {
         this.officialConsumption = officialConsumption;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
     public Boolean getShowFuelData() {

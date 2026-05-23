@@ -41,7 +41,6 @@ public class VehicleService {
         v.setCc(dto.getCc());
         v.setYear(dto.getYear());
         v.setOdometer(dto.getOdometer());
-        v.setPlate(dto.getPlate());
         v.setTankCapacity(dto.getTankCapacity());
         v.setOfficialConsumption(dto.getOfficialConsumption());
         v.setGearbox(dto.getGearbox());
@@ -82,10 +81,10 @@ public class VehicleService {
         dto.setTankCapacity(v.getTankCapacity());
         dto.setGearbox(v.getGearbox());
         dto.setOfficialConsumption(v.getOfficialConsumption());
+        dto.setIsPublic(v.getIsPublic());
         dto.setShowFuelData(v.getShowFuelData());
         dto.setShowExpenses(v.getShowExpenses());
         dto.setShowStatistics(v.getShowStatistics());
-        dto.setPlate(v.getPlate());
 
         return dto;
     }
@@ -159,10 +158,6 @@ public class VehicleService {
             vehicle.setOdometer(dto.getOdometer());
         }
 
-        if (dto.getPlate() != null) {
-            vehicle.setPlate(dto.getPlate());
-        }
-
         if (dto.getTankCapacity() != null) {
             vehicle.setTankCapacity(dto.getTankCapacity());
         }
@@ -173,6 +168,30 @@ public class VehicleService {
 
         if (dto.getOfficialConsumption() != null) {
             vehicle.setOfficialConsumption(dto.getOfficialConsumption());
+        }
+
+        if (dto.getIsPublic() != null) {
+            vehicle.setIsPublic(dto.getIsPublic());
+
+            if (!dto.getIsPublic()) {
+                vehicle.setShowFuelData(false);
+                vehicle.setShowExpenses(false);
+                vehicle.setShowStatistics(false);
+            }
+        }
+
+        if (Boolean.TRUE.equals(vehicle.getIsPublic())) {
+            if (dto.getShowFuelData() != null) {
+                vehicle.setShowFuelData(dto.getShowFuelData());
+            }
+
+            if (dto.getShowExpenses() != null) {
+                vehicle.setShowExpenses(dto.getShowExpenses());
+            }
+
+            if (dto.getShowStatistics() != null) {
+                vehicle.setShowStatistics(dto.getShowStatistics());
+            }
         }
 
         Vehicle savedVehicle = vehicleRepository.save(vehicle);

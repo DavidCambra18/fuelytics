@@ -9,6 +9,8 @@ import VehicleEdit from "../pages/VehicleEdit";
 import Fuelings from "../pages/Fuelings";
 import Expenses from "../pages/Expenses";
 import Statistics from "../pages/Statistics";
+import Settings from "../pages/Settings";
+import UserProfile from "../pages/UserProfile";
 import VehicleLayout from "../layout/VehicleLayout";
 import VehicleOverview from "../pages/VehicleOverview";
 import ProtectedLayout from "../layout/ProtectedLayout";
@@ -48,9 +50,12 @@ export default function AppRouter() {
           }
         />
 
+        <Route path="/users/:username" element={<UserProfile />} />
+
         {/* Private */}
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/vehicles/new" element={<VehicleCreate />} />
           <Route path="/vehicles/:vehicleId" element={<VehicleLayout />}>
             <Route index element={<VehicleOverview />} />
