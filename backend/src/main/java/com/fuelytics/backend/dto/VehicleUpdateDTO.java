@@ -19,6 +19,10 @@ public class VehicleUpdateDTO {
     private String plate;
     private BigDecimal tankCapacity;
     private BigDecimal officialConsumption;
+    private Boolean isPublic;
+    private Boolean showFuelData;
+    private Boolean showExpenses;
+    private Boolean showStatistics;
 
     public GearboxType getGearbox() {
         return gearbox;
@@ -114,6 +118,38 @@ public class VehicleUpdateDTO {
 
     public void setTankCapacity(BigDecimal tankCapacity) {
         this.tankCapacity = tankCapacity;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    public Boolean getShowFuelData() {
+        return showFuelData;
+    }
+
+    public void setShowFuelData(Boolean showFuelData) {
+        this.showFuelData = showFuelData;
+    }
+
+    public Boolean getShowExpenses() {
+        return showExpenses;
+    }
+
+    public void setShowExpenses(Boolean showExpenses) {
+        this.showExpenses = showExpenses;
+    }
+
+    public Boolean getShowStatistics() {
+        return showStatistics;
+    }
+
+    public void setShowStatistics(Boolean showStatistics) {
+        this.showStatistics = showStatistics;
     }
 
 }

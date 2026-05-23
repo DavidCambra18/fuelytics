@@ -85,6 +85,9 @@ CREATE TABLE users (
   username VARCHAR(15) UNIQUE NOT NULL,
   email VARCHAR(50) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
+  profile_public BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
