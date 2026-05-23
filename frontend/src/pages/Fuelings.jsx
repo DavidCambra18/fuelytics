@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { CircleAlert, Fuel, Gauge, Sparkles } from "lucide-react";
+import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck } from "lucide-react";
 import { API_BASE } from "../config/api";
 import CustomSelect from "../components/CustomSelect";
 import {
@@ -359,6 +359,51 @@ export default function Fuelings() {
     },
   ];
 
+  const drivingConditionOptions = [
+    {
+      key: "highway",
+      label: "Autopista",
+      hint: "Tramos rápidos y continuos.",
+      accent: "from-cyan-400/25 to-teal-400/20",
+      Icon: Route,
+    },
+    {
+      key: "city",
+      label: "Ciudad",
+      hint: "Paradas frecuentes y tráfico denso.",
+      accent: "from-amber-400/20 to-orange-400/15",
+      Icon: Building2,
+    },
+    {
+      key: "road",
+      label: "Carretera",
+      hint: "Trayectos mixtos fuera de ciudad.",
+      accent: "from-sky-400/20 to-indigo-400/15",
+      Icon: Gauge,
+    },
+    {
+      key: "ac",
+      label: "A/C activado",
+      hint: "Aire acondicionado durante el trayecto.",
+      accent: "from-sky-300/20 to-cyan-300/15",
+      Icon: Snowflake,
+    },
+    {
+      key: "trailer",
+      label: "Con remolque",
+      hint: "Carga o arrastre adicional.",
+      accent: "from-rose-400/20 to-red-400/15",
+      Icon: Truck,
+    },
+    {
+      key: "heating",
+      label: "Calefacción activada",
+      hint: "Uso de calefacción en marcha.",
+      accent: "from-violet-400/20 to-fuchsia-400/15",
+      Icon: Flame,
+    },
+  ];
+
   const displayFuelings = [...fuelingRows].reverse();
 
   return (
@@ -697,23 +742,45 @@ export default function Fuelings() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                {[
-                    ["highway", "Autopista"],
-                    ["city", "Ciudad"],
-                    ["road", "Carretera"],
-                    ["ac", "A/C activado"],
-                    ["trailer", "Con remolque"],
-                    ["heating", "Calefacción activada"],
-                ].map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2">
+                {drivingConditionOptions.map(({ key, label, hint, accent, Icon }) => (
+                  <label
+                    key={key}
+                    className={`group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-[1.35rem] border px-4 py-4 transition duration-200 ${
+                      formData[key]
+                        ? "border-teal-300/35 bg-gradient-to-br from-teal-300/15 via-slate-950/80 to-slate-950/70 shadow-[0_10px_30px_rgba(8,145,178,0.12)]"
+                        : "border-white/10 bg-slate-950/45 hover:border-white/20 hover:bg-white/[0.04]"
+                    }`}
+                  >
                     <input
                       type="checkbox"
                       name={key}
                       checked={formData[key]}
                       onChange={handleInputChange}
-                      className="rounded border-slate-600 text-teal-600 focus:ring-teal-500"
+                      className="sr-only"
                     />
-                    <span className="text-sm text-slate-300">{label}</span>
+
+                    <span
+                      className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r opacity-70 ${accent}`}
+                      aria-hidden="true"
+                    />
+
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition ${
+                            formData[key]
+                              ? "border-teal-300/30 bg-teal-300/15 text-teal-100"
+                              : "border-white/10 bg-white/[0.03] text-slate-300 group-hover:border-white/20"
+                          }`}>
+                            <Icon className="h-4.5 w-4.5" />
+                          </span>
+                          <span className="text-sm font-semibold text-white">{label}</span>
+                        </div>
+                        <p className="text-xs leading-5 text-slate-400">{hint}</p>
+                      </div>
+
+                      
+                    </div>
                   </label>
                 ))}
               </div>
