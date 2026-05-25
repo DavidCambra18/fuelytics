@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 
 export default function VehicleLayout() {
     const { vehicleId } = useParams();
@@ -11,13 +11,7 @@ export default function VehicleLayout() {
     useEffect(() => {
         const loadVehicles = async () => {
             try {
-                const token = localStorage.getItem("token");
-
-                const response = await fetch(`${API_BASE}/api/vehicles`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await apiFetch("/api/vehicles");
 
                 if (!response.ok) {
                     throw new Error("No se pudieron cargar los vehículos");

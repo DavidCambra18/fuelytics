@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import CustomSelect from "../components/CustomSelect";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 
 const EXPENSE_TYPE_OPTIONS = [
   { value: "maintenance", label: "Mantenimiento" },
@@ -137,15 +137,7 @@ export default function Expenses() {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `${API_BASE}/api/expenses/vehicle/${selectedVehicle.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await apiFetch(`/api/expenses/vehicle/${selectedVehicle.id}`);
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar los gastos");
@@ -203,7 +195,6 @@ export default function Expenses() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
       const payload = {
         vehicleId: selectedVehicle.id,
         date: formData.date,
@@ -212,17 +203,13 @@ export default function Expenses() {
         cost: toNumber(formData.cost),
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         editingExpense
-          ? `${API_BASE}/api/expenses/${editingExpense.id}`
-          : `${API_BASE}/api/expenses`,
+          ? `/api/expenses/${editingExpense.id}`
+          : "/api/expenses",
         {
           method: editingExpense ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
+          body: payload,
         }
       );
 
@@ -258,12 +245,8 @@ export default function Expenses() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/api/expenses/${expense.id}`, {
+      const response = await apiFetch(`/api/expenses/${expense.id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {

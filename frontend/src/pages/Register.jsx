@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -24,10 +24,9 @@ export default function Register() {
     setSubmitting(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/users/register`, {
+      const res = await apiFetch("/api/users/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: { username, email, password },
       });
 
       if (!res.ok) {

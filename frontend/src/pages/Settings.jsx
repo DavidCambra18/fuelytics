@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 import { ArrowLeft, ChevronDown, Search } from "lucide-react";
 
 function createToast(message, tone = "success") {
@@ -39,7 +39,7 @@ function Toggle({ checked, disabled, onChange, label, hint }) {
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { username, setAuth } = useAuth();
+  const { token, username, setAuth } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -72,15 +72,9 @@ export default function Settings() {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
-
         const [profileResponse, vehiclesResponse] = await Promise.all([
-          fetch(`${API_BASE}/api/users/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_BASE}/api/vehicles`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          apiFetch("/api/users/profile"),
+          apiFetch("/api/vehicles"),
         ]);
 
         if (!profileResponse.ok) {
@@ -127,7 +121,7 @@ export default function Settings() {
       toastTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
       toastTimersRef.current = [];
     };
-  }, []);
+  }, [username]);
 
   const tabs = useMemo(
     () => [
@@ -178,18 +172,13 @@ export default function Settings() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/api/users/profile`, {
+      const response = await apiFetch("/api/users/profile", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+        body: {
           username: profileForm.username.trim(),
           firstName: profileForm.firstName.trim(),
           lastName: profileForm.lastName.trim(),
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -198,14 +187,13 @@ export default function Settings() {
       }
 
       const savedProfile = await response.json();
-      const currentToken = localStorage.getItem("token") || "";
 
       setProfileForm({
         username: savedProfile.username || "",
         firstName: savedProfile.firstName || "",
         lastName: savedProfile.lastName || "",
       });
-      setAuth({ token: currentToken, username: savedProfile.username || "" });
+      setAuth({ token: token || "", username: savedProfile.username || "" });
       pushToast("Perfil actualizado correctamente");
     } catch (saveError) {
       setError(saveError.message || "No se pudo guardar el perfil");
@@ -253,15 +241,9 @@ export default function Settings() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-
-      const accountResponse = await fetch(`${API_BASE}/api/users/privacy`, {
+      const accountResponse = await apiFetch("/api/users/privacy", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ profilePublic: accountPrivacy }),
+        body: { profilePublic: accountPrivacy },
       });
 
       if (!accountResponse.ok) {
@@ -278,13 +260,9 @@ export default function Settings() {
           showStatistics: isPublic ? Boolean(vehicle.showStatistics) : false,
         };
 
-        return fetch(`${API_BASE}/api/vehicles/${vehicle.id}`, {
+        return apiFetch(`/api/vehicles/${vehicle.id}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
+          body: payload,
         }).then(async (response) => {
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));

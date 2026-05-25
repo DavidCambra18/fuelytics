@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,10 +17,9 @@ export default function Login() {
     setErrorMessage("");
     setSubmitting(true);
 
-    const res = await fetch(`${API_BASE}/api/users/login`, {
+    const res = await apiFetch("/api/users/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: { email, password },
     });
     try {
       const data = await res.json().catch(() => ({}));
@@ -34,7 +33,7 @@ export default function Login() {
       // Successful login — set auth and go to dashboard
       setAuth({ token: data.token, username: data.username });
       navigate("/dashboard");
-    } catch (err) {
+    } catch {
       setErrorMessage("No se pudo conectar con el servidor.");
     } finally {
       setSubmitting(false);

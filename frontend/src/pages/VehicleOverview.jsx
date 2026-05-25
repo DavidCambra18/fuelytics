@@ -1,7 +1,7 @@
 import { Link, useOutletContext, useNavigate } from "react-router-dom";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 import { useState } from "react";
-import { formatGearboxType, formatVehicleEnergyType, formatVehicleType, getConsumptionUnit, getOdometerLabel, getOdometerUnit } from "../utils/vehicleLabels";
+import { formatGearboxType, formatVehicleEnergyType, getConsumptionUnit, getOdometerLabel, getOdometerUnit } from "../utils/vehicleLabels";
 
 export default function VehicleOverview() {
   const { selectedVehicle } = useOutletContext();
@@ -45,10 +45,8 @@ export default function VehicleOverview() {
                 setError("");
 
                 try {
-                  const token = localStorage.getItem("token");
-                  const resp = await fetch(`${API_BASE}/api/vehicles/${selectedVehicle.id}`, {
+                  const resp = await apiFetch(`/api/vehicles/${selectedVehicle.id}`, {
                     method: "DELETE",
-                    headers: { Authorization: `Bearer ${token}` },
                   });
 
                   if (!resp.ok) {

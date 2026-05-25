@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 import {
   GEARBOX_OPTIONS,
   VEHICLE_ENERGY_TYPE_OPTIONS,
   VEHICLE_TYPE_OPTIONS,
   getConsumptionUnit,
   getOdometerLabel,
-  getOdometerUnit,
 } from "../utils/vehicleLabels";
 import CustomSelect from "../components/CustomSelect";
 
@@ -62,14 +61,9 @@ export default function VehicleEdit() {
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/api/vehicles/${selectedVehicle.id}`, {
+      const response = await apiFetch(`/api/vehicles/${selectedVehicle.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+        body: {
           vehicleType: form.vehicleType,
           vehicleEnergyType: form.vehicleEnergyType,
           brand: form.brand.trim(),
@@ -81,7 +75,7 @@ export default function VehicleEdit() {
           tankCapacity: form.tankCapacity ? Number(form.tankCapacity) : null,
           officialConsumption: form.officialConsumption ? Number(form.officialConsumption) : null,
           gearbox: form.gearbox,
-        }),
+        },
       });
 
       if (!response.ok) {

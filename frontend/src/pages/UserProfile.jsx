@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 
 export default function UserProfile() {
   const { username } = useParams();
-  const { token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -16,15 +14,7 @@ export default function UserProfile() {
       setError("");
 
       try {
-        const headers = {};
-
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
-
-        const response = await fetch(`${API_BASE}/api/users/public/${encodeURIComponent(username)}`, {
-          headers,
-        });
+        const response = await apiFetch(`/api/users/public/${encodeURIComponent(username)}`);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -43,7 +33,7 @@ export default function UserProfile() {
     if (username) {
       loadProfile();
     }
-  }, [username, token]);
+  }, [username]);
 
   if (loading) {
     return (

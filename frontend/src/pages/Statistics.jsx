@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 import { getConsumptionUnit } from "../utils/vehicleLabels";
 import {
   Chart as ChartJS,
@@ -151,15 +151,7 @@ export default function Statistics() {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `${API_BASE}/api/fuelings/vehicle/${selectedVehicle.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`);
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar las estadísticas");

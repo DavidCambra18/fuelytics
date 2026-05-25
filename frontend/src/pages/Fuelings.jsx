@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck } from "lucide-react";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 import CustomSelect from "../components/CustomSelect";
 import {
   REFUELING_TYPE_OPTIONS,
@@ -188,15 +188,7 @@ export default function Fuelings() {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `${API_BASE}/api/fuelings/vehicle/${selectedVehicle.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`);
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar los repostajes");
@@ -254,7 +246,6 @@ export default function Fuelings() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
       const payload = {
         vehicleId: selectedVehicle.id,
         date: formData.date,
@@ -277,17 +268,13 @@ export default function Fuelings() {
         notes: formData.notes,
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         editingFueling
-          ? `${API_BASE}/api/fuelings/${editingFueling.id}`
-          : `${API_BASE}/api/fuelings`,
+          ? `/api/fuelings/${editingFueling.id}`
+          : "/api/fuelings",
         {
           method: editingFueling ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
+          body: payload,
         }
       );
 
@@ -323,12 +310,8 @@ export default function Fuelings() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/api/fuelings/${fueling.id}`, {
+      const response = await apiFetch(`/api/fuelings/${fueling.id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {

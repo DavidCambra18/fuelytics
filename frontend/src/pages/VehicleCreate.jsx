@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { API_BASE } from "../config/api";
+import { apiFetch } from "../services/api";
 import {
   GEARBOX_OPTIONS,
   VEHICLE_ENERGY_TYPE_OPTIONS,
   VEHICLE_TYPE_OPTIONS,
   getConsumptionUnit,
   getOdometerLabel,
-  getOdometerUnit,
 } from "../utils/vehicleLabels";
 import CustomSelect from "../components/CustomSelect";
 
@@ -64,14 +63,9 @@ export default function VehicleCreate() {
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/api/vehicles`, {
+      const response = await apiFetch("/api/vehicles", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+        body: {
           vehicleType: form.vehicleType,
           vehicleEnergyType: form.vehicleEnergyType,
           brand: form.brand.trim(),
@@ -81,9 +75,9 @@ export default function VehicleCreate() {
           year: Number(form.year),
           odometer: form.odometer ? Number(form.odometer) : null,
           tankCapacity: form.tankCapacity ? Number(form.tankCapacity) : null,
-            officialConsumption: form.officialConsumption ? Number(form.officialConsumption) : null,
+          officialConsumption: form.officialConsumption ? Number(form.officialConsumption) : null,
           gearbox: form.gearbox,
-        }),
+        },
       });
 
       if (!response.ok) {
