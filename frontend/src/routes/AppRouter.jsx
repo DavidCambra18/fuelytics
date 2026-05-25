@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import PageTransition from "../components/PageTransition";
 
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -29,15 +31,25 @@ function PublicOnlyRoute({ children }) {
 export default function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
+      <InnerRoutes />
+    </BrowserRouter>
+  );
+}
+
+function InnerRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={location.pathname}>
 
         {/* Public */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
         <Route
           path="/login"
           element={
             <PublicOnlyRoute>
-              <Login />
+              <PageTransition><Login /></PageTransition>
             </PublicOnlyRoute>
           }
         />
@@ -45,24 +57,24 @@ export default function AppRouter() {
           path="/register"
           element={
             <PublicOnlyRoute>
-              <Register />
+              <PageTransition><Register /></PageTransition>
             </PublicOnlyRoute>
           }
         />
 
-        <Route path="/users/:username" element={<UserProfile />} />
+        <Route path="/users/:username" element={<PageTransition><UserProfile /></PageTransition>} />
 
         {/* Private */}
         <Route element={<ProtectedLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/vehicles/new" element={<VehicleCreate />} />
+          <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+          <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+          <Route path="/vehicles/new" element={<PageTransition><VehicleCreate /></PageTransition>} />
           <Route path="/vehicles/:vehicleId" element={<VehicleLayout />}>
-            <Route index element={<VehicleOverview />} />
-            <Route path="edit" element={<VehicleEdit />} />
-            <Route path="fuelings" element={<Fuelings />} />
-            <Route path="expenses" element={<Expenses />} />
-            <Route path="statistics" element={<Statistics />} />
+            <Route index element={<PageTransition><VehicleOverview /></PageTransition>} />
+            <Route path="edit" element={<PageTransition><VehicleEdit /></PageTransition>} />
+            <Route path="fuelings" element={<PageTransition><Fuelings /></PageTransition>} />
+            <Route path="expenses" element={<PageTransition><Expenses /></PageTransition>} />
+            <Route path="statistics" element={<PageTransition><Statistics /></PageTransition>} />
           </Route>
         </Route>
 
@@ -70,6 +82,6 @@ export default function AppRouter() {
         <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>
-    </BrowserRouter>
+    </AnimatePresence>
   );
 }
