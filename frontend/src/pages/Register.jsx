@@ -7,6 +7,8 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -24,9 +26,15 @@ export default function Register() {
     setSubmitting(true);
 
     try {
+      const body = { username, email, password };
+      const fn = firstName?.trim();
+      const ln = lastName?.trim();
+      if (fn) body.firstName = fn;
+      if (ln) body.lastName = ln;
+
       const res = await apiFetch("/api/users/register", {
         method: "POST",
-        body: { username, email, password },
+        body,
       });
 
       if (!res.ok) {
@@ -89,6 +97,26 @@ export default function Register() {
                 type="email"
                 required
                 onChange={(e) => setEmail(e.target.value)}
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-300">Nombre (opcional)</span>
+              <input
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+                placeholder="Tu nombre"
+                onChange={(e) => setFirstName(e.target.value)}
+                value={firstName}
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-300">Apellido (opcional)</span>
+              <input
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+                placeholder="Tu apellido"
+                onChange={(e) => setLastName(e.target.value)}
+                value={lastName}
               />
             </label>
 
