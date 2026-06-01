@@ -13,6 +13,7 @@ import Expenses from "../pages/Expenses";
 import Statistics from "../pages/Statistics";
 import Settings from "../pages/Settings";
 import UserProfile from "../pages/UserProfile";
+import GasStations from "../pages/GasStations";
 import VehicleLayout from "../layout/VehicleLayout";
 import VehicleOverview from "../pages/VehicleOverview";
 import ProtectedLayout from "../layout/ProtectedLayout";
@@ -45,6 +46,14 @@ function InnerRoutes() {
 
         {/* Public */}
         <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+        <Route 
+        path="/gas-stations"
+        element={
+        <PageTransition>
+          <GasStations />
+          </PageTransition>
+        } 
+        />
         <Route
           path="/login"
           element={

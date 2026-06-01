@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Settings as SettingsIcon } from "lucide-react";
+import { Fuel, Settings as SettingsIcon } from "lucide-react";
 
 export default function UserMenu() {
   const navigate = useNavigate();
@@ -61,6 +61,14 @@ export default function UserMenu() {
           className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
         >
           <SettingsIcon className="h-5 w-5 text-teal-200" aria-hidden="true" />
+        </Link>
+        <Link
+          to="/gas-stations"
+          aria-label="Ir al mapa de gasolineras"
+          title="Gasolineras"
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+        >
+          <Fuel className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
         <Link
           to="/dashboard"

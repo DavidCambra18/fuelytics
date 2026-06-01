@@ -11,6 +11,9 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3 text-sm">
+          <Link to="/gas-stations" className="rounded-full border border-white/10 bg-white/5 px-4 py-3 text-white transition hover:bg-white/10">
+            Ver gasolineras
+          </Link>
           <Link to="/login" className="rounded-full px-4 py-2 text-slate-300 transition hover:bg-white/5 hover:text-white">
             Iniciar sesión
           </Link>
@@ -46,7 +49,7 @@ export default function Home() {
               {[
                 ["Vehículos", "Inventario y seguimiento de cada coche"],
                 ["Control", "Repostajes y costes en un mismo flujo"],
-                ["Visión", "Preparado para estadísticas y evolución"],
+                ["Visión", "Preparado para estadísticas, evolución y precios cercanos"],
               ].map(([title, description]) => (
                 <div key={title} className="glass-panel rounded-2xl p-5">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-200/80">{title}</p>
