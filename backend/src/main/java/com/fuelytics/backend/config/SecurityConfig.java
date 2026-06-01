@@ -40,6 +40,8 @@ public class SecurityConfig {
 
                     .requestMatchers("/api/users/register", "/api/users/login", "/api/users/public/**", "/api/health").permitAll()
 
+                    .requestMatchers("/api/external/**").permitAll()
+
                     .requestMatchers("/api/users/**").authenticated()
 
                         .requestMatchers("/api/vehicles/**").authenticated()
