@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { Download, ReceiptText } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
 import { apiFetch } from "../services/api";
+import ExportReportModal from "../components/ExportReportModal";
 
 const EXPENSE_TYPE_OPTIONS = [
   { value: "maintenance", label: "Mantenimiento" },
@@ -120,10 +122,30 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(createInitialFormData());
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
+  const exportDateRange = useMemo(() => {
+    if (expenses.length === 0) {
+      return {};
+    }
+
+    const dates = expenses
+      .map((expense) => expense.date)
+      .filter(Boolean)
+      .sort();
+
+    if (dates.length === 0) {
+      return {};
+    }
+
+    return {
+      startDate: dates[0],
+      endDate: dates[dates.length - 1],
+    };
+  }, [expenses]);
 
   useEffect(() => {
     setFormData(createInitialFormData());
@@ -292,12 +314,24 @@ export default function Expenses() {
           </p>
         </div>
 
-        <button
-          onClick={openCreateForm}
-          className="mb-6 inline-flex rounded-full bg-amber-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-amber-700"
-        >
-          + Nuevo gasto
-        </button>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <button
+            onClick={openCreateForm}
+            className="inline-flex rounded-full bg-amber-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-amber-700"
+          >
+            + Nuevo gasto
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setExportTarget({ reportType: "expenses", vehicle: selectedVehicle })}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-amber-300/40 hover:bg-white/10 hover:text-white"
+            aria-label="Exportar gastos"
+            title="Exportar gastos"
+          >
+            <Download className="h-5 w-5" />
+          </button>
+        </div>
 
         {error ? (
           <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/20 p-4 text-sm text-red-300">
@@ -481,6 +515,17 @@ export default function Expenses() {
             </form>
           </div>
         </div>
+      ) : null}
+
+      {exportTarget ? (
+        <ExportReportModal
+          open={Boolean(exportTarget)}
+          reportType={exportTarget.reportType}
+          vehicle={exportTarget.vehicle}
+          defaultStartDate={exportDateRange.startDate || ""}
+          defaultEndDate={exportDateRange.endDate || ""}
+          onClose={() => setExportTarget(null)}
+        />
       ) : null}
     </section>
   );
