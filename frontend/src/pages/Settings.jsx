@@ -2,7 +2,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiFetch } from "../services/api";
-import { ArrowLeft, ChevronDown, Search } from "lucide-react";
+import { 
+  ArrowLeft, 
+  ChevronDown, 
+  Search, 
+  ChevronRight, 
+  User, 
+  Shield, 
+  Save, 
+  Eye, 
+  Car, 
+  CheckCircle2, 
+  AlertCircle 
+} from "lucide-react";
 
 function createToast(message, tone = "success") {
   return {
@@ -125,8 +137,8 @@ export default function Settings() {
 
   const tabs = useMemo(
     () => [
-      { id: "profile", label: "Perfil" },
-      { id: "privacy", label: "Privacidad" },
+      { id: "profile", label: "Perfil", icon: User },
+      { id: "privacy", label: "Privacidad", icon: Shield },
     ],
     []
   );
@@ -330,7 +342,8 @@ export default function Settings() {
             </div>
 
             {error ? (
-              <div className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                <AlertCircle className="h-5 w-5 text-rose-400" />
                 {error}
               </div>
             ) : null}
@@ -338,17 +351,23 @@ export default function Settings() {
             <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr]">
               <aside className="rounded-3xl border border-white/10 bg-slate-950/40 p-3">
                 <div className="space-y-2">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${activeTab === tab.id ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/[0.05] hover:text-white"}`}
-                    >
-                      <span>{tab.label}</span>
-                      <span className="text-slate-500">›</span>
-                    </button>
-                  ))}
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${activeTab === tab.id ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/[0.05] hover:text-white"}`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <Icon className="h-4 w-4" />
+                          {tab.label}
+                        </span>
+                        <ChevronRight className={`h-4 w-4 transition ${activeTab === tab.id ? "text-white" : "text-slate-500"}`} />
+                      </button>
+                    );
+                  })}
                 </div>
               </aside>
 
@@ -397,8 +416,9 @@ export default function Settings() {
                       <div className="sm:col-span-2 flex gap-3 pt-2">
                         <button
                           disabled={savingProfile}
-                          className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          className="flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
                         >
+                          <Save className="h-4 w-4" />
                           {savingProfile ? "Guardando..." : "Guardar perfil"}
                         </button>
                       </div>
@@ -414,13 +434,14 @@ export default function Settings() {
                         <h2 className="mt-2 text-2xl font-semibold text-white">Control de visibilidad</h2>
                       </div>
 
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
                         <button
                           type="button"
                           onClick={savePrivacy}
                           disabled={savingPrivacy}
-                          className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          className="flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
                         >
+                          <Save className="h-4 w-4" />
                           {savingPrivacy ? "Guardando..." : "Guardar privacidad"}
                         </button>
                       </div>
@@ -428,8 +449,11 @@ export default function Settings() {
 
                     <div className="mt-6 space-y-5">
                       <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-5">
-                        <p className="text-sm font-semibold text-white">Nivel de cuenta</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-400">
+                        <div className="flex items-center gap-3">
+                          <Eye className="h-5 w-5 text-teal-400" />
+                          <p className="text-sm font-semibold text-white">Privacidad de la cuenta</p>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-400">
                           Define si tu perfil aparece en la comunidad.
                         </p>
 
@@ -444,8 +468,11 @@ export default function Settings() {
                       </div>
 
                       <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-5">
-                        <p className="text-sm font-semibold text-white">Nivel de vehículos</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-400">
+                        <div className="flex items-center gap-3">
+                          <Car className="h-5 w-5 text-teal-400" />
+                          <p className="text-sm font-semibold text-white">Privacidad de los vehículos</p>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-400">
                           Ajusta la visibilidad de cada vehículo de forma independiente.
                         </p>
 
@@ -552,8 +579,17 @@ export default function Settings() {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto min-w-[280px] rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-xl ${toast.tone === "error" ? "border-rose-400/20 bg-rose-500/15 text-rose-50" : "border-teal-300/20 bg-teal-400/15 text-teal-50"}`}
+            className={`pointer-events-auto flex items-center gap-3 min-w-[280px] rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-xl ${
+              toast.tone === "error" 
+                ? "border-rose-400/20 bg-rose-500/15 text-rose-50" 
+                : "border-teal-300/20 bg-teal-400/15 text-teal-50"
+            }`}
           >
+            {toast.tone === "error" ? (
+              <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
+            ) : (
+              <CheckCircle2 className="h-5 w-5 text-teal-400 shrink-0" />
+            )}
             <p className="text-sm font-medium">{toast.message}</p>
           </div>
         ))}

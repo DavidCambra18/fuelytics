@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Fuel, Settings as SettingsIcon } from "lucide-react";
+import { 
+  Fuel, 
+  Settings as SettingsIcon, 
+  Warehouse, 
+  User, 
+  LogOut, 
+  ChevronRight, 
+  ChevronDown 
+} from "lucide-react";
 
 export default function UserMenu() {
   const navigate = useNavigate();
@@ -45,15 +52,17 @@ export default function UserMenu() {
         <button
           type="button"
           onClick={() => setOpen((current) => !current)}
-          className="flex items-center gap-3 rounded-full border border-white/10 bg-slate-950/80 px-3 py-2 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+          className="flex items-center gap-3 rounded-full border border-white/10 bg-slate-950/80 pl-2 pr-4 py-2 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-400/15 text-sm font-semibold text-teal-200 ring-1 ring-teal-300/20">
             {(username || "U").slice(0, 1).toUpperCase()}
           </span>
-          <span className="hidden pr-2 text-sm font-medium text-white sm:block">
+          <span className="hidden text-sm font-medium text-white sm:block">
             {username || "Usuario"}
           </span>
+          <ChevronDown className={`hidden h-4 w-4 text-teal-200/70 transition-transform duration-200 sm:block ${open ? "rotate-180" : ""}`} />
         </button>
+        
         <Link
           to="/settings"
           aria-label="Editar perfil y ajustes"
@@ -62,6 +71,7 @@ export default function UserMenu() {
         >
           <SettingsIcon className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
+        
         <Link
           to="/gas-stations"
           aria-label="Ir al mapa de gasolineras"
@@ -70,19 +80,14 @@ export default function UserMenu() {
         >
           <Fuel className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
+        
         <Link
           to="/dashboard"
           aria-label="Ir al garaje"
           title="Garaje"
           className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5 text-teal-200" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M3 21h18" />
-            <path d="M5 21V8.5a1 1 0 0 1 .4-.8l6-4.5a1 1 0 0 1 1.2 0l6 4.5a1 1 0 0 1 .4.8V21" />
-            <path d="M8 21v-4h8v4" />
-            <path d="M9 11h6" />
-            <path d="M9 14h6" />
-          </svg>
+          <Warehouse className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
       </div>
 
@@ -95,7 +100,6 @@ export default function UserMenu() {
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">{username || "Usuario"}</p>
-                <p className="mt-0.5 text-xs text-slate-400">Sesión activa</p>
               </div>
             </div>
           </div>
@@ -105,25 +109,36 @@ export default function UserMenu() {
               <Link
                 to={`/users/${encodeURIComponent(username)}`}
                 onClick={() => setOpen(false)}
-                className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/15 hover:bg-white/[0.08]"
+                className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:border-white/15 hover:bg-white/[0.08]"
               >
-                <div>
-                  <p className="text-sm font-medium text-white">Mi perfil</p>
-                  <p className="mt-1 text-xs text-slate-400">Ver tu perfil público</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-slate-300 transition group-hover:bg-slate-700 group-hover:text-white">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Perfil</p>
+                    <p className="mt-0.5 text-xs text-slate-400">Ver tu perfil</p>
+                  </div>
                 </div>
-                <span className="text-slate-500 transition group-hover:text-slate-300">›</span>
+                <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-slate-300" />
               </Link>
             ) : null}
+            
             <button
               type="button"
               onClick={logout}
-              className="group flex items-center justify-between rounded-2xl border border-rose-400/20 bg-gradient-to-r from-rose-400/10 to-rose-500/10 px-4 py-3 text-left transition hover:border-rose-300/30 hover:from-rose-400/15 hover:to-rose-500/15"
+              className="group flex items-center justify-between rounded-2xl border border-rose-400/20 bg-gradient-to-r from-rose-400/10 to-rose-500/10 p-3 text-left transition hover:border-rose-300/30 hover:from-rose-400/15 hover:to-rose-500/15"
             >
-              <div>
-                <p className="text-sm font-medium text-rose-100">Cerrar sesión</p>
-                <p className="mt-1 text-xs text-rose-200/70">Salir de esta cuenta</p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/20 text-rose-300 transition group-hover:bg-rose-500/30 group-hover:text-rose-200">
+                  <LogOut className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-rose-100">Cerrar sesión</p>
+                  <p className="mt-0.5 text-xs text-rose-200/70">Salir de esta cuenta</p>
+                </div>
               </div>
-              <span className="text-rose-200/70 transition group-hover:text-rose-100">›</span>
+              <ChevronRight className="h-5 w-5 text-rose-200/70 transition group-hover:text-rose-100" />
             </button>
           </div>
         </div>
