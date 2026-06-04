@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { BarChart3, Download } from "lucide-react";
 import { apiFetch } from "../services/api";
 import { getConsumptionUnit } from "../utils/vehicleLabels";
+import ExportReportModal from "../components/ExportReportModal";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -139,6 +141,7 @@ export default function Statistics() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedMetric, setSelectedMetric] = useState("consumption");
+  const [exportTarget, setExportTarget] = useState(null);
   const consumptionUnit = getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType);
 
   useEffect(() => {
@@ -373,6 +376,25 @@ export default function Statistics() {
   const recentFuelings = useMemo(() => {
     return [...fuelingRows].reverse().slice(0, 5);
   }, [fuelingRows]);
+  const exportDateRange = useMemo(() => {
+    if (fuelings.length === 0) {
+      return {};
+    }
+
+    const dates = fuelings
+      .map((fueling) => fueling.date)
+      .filter(Boolean)
+      .sort();
+
+    if (dates.length === 0) {
+      return {};
+    }
+
+    return {
+      startDate: dates[0],
+      endDate: dates[dates.length - 1],
+    };
+  }, [fuelings]);
 
   return (
     <section className="space-y-8">
@@ -384,6 +406,18 @@ export default function Statistics() {
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
           Resumen rápido del comportamiento del vehículo a partir de sus repostajes.
         </p>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setExportTarget({ reportType: "summary", vehicle: selectedVehicle })}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-teal-300/40 hover:bg-white/10 hover:text-white"
+            aria-label="Exportar resumen"
+            title="Exportar resumen"
+          >
+            <Download className="h-5 w-5" />
+          </button>
+        </div>
 
         {error ? (
           <div className="mt-6 rounded-lg border border-red-500/30 bg-red-500/20 p-4 text-sm text-red-300">
@@ -404,11 +438,10 @@ export default function Statistics() {
                   <button
                     key={card.label}
                     onClick={() => setSelectedMetric(cardMetricKey)}
-                    className={`rounded-3xl border p-5 transition-all ${
-                      isSelected
+                    className={`rounded-3xl border p-5 transition-all ${isSelected
                         ? "border-blue-400/50 bg-blue-500/15"
                         : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
-                    }`}
+                      }`}
                   >
                     <p className="text-left text-xs uppercase tracking-[0.18em] text-slate-400">{card.label}</p>
                     <p className="mt-3 text-left text-2xl font-semibold text-white">{card.value}</p>
@@ -496,6 +529,17 @@ export default function Statistics() {
           </div>
         )}
       </article>
+
+      {exportTarget ? (
+        <ExportReportModal
+          open={Boolean(exportTarget)}
+          reportType={exportTarget.reportType}
+          vehicle={exportTarget.vehicle}
+          defaultStartDate={exportDateRange.startDate || ""}
+          defaultEndDate={exportDateRange.endDate || ""}
+          onClose={() => setExportTarget(null)}
+        />
+      ) : null}
     </section>
   );
 }

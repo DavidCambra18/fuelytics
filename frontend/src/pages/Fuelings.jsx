@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck } from "lucide-react";
+import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck, Download } from "lucide-react";
 import { apiFetch } from "../services/api";
 import CustomSelect from "../components/CustomSelect";
+import ExportReportModal from "../components/ExportReportModal";
 import {
   REFUELING_TYPE_OPTIONS,
   FUEL_TYPE_OPTIONS,
@@ -173,8 +174,28 @@ export default function Fuelings() {
   const [editingFueling, setEditingFueling] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(() => createInitialFormData(selectedVehicle));
   const fuelingRows = useMemo(() => buildFuelingRows(fuelings), [fuelings]);
+  const exportDateRange = useMemo(() => {
+    if (fuelings.length === 0) {
+      return {};
+    }
+
+    const dates = fuelings
+      .map((fueling) => fueling.date)
+      .filter(Boolean)
+      .sort();
+
+    if (dates.length === 0) {
+      return {};
+    }
+
+    return {
+      startDate: dates[0],
+      endDate: dates[dates.length - 1],
+    };
+  }, [fuelings]);
 
   useEffect(() => {
     setFormData(createInitialFormData(selectedVehicle));
@@ -402,7 +423,16 @@ export default function Fuelings() {
           </p>
         </div>
 
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setExportTarget({ reportType: "fuelings", vehicle: selectedVehicle })}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-teal-300/40 hover:bg-white/10 hover:text-white"
+            aria-label="Exportar repostajes"
+            title="Exportar repostajes"
+          >
+            <Download className="h-5 w-5" />
+          </button>
           <button
             type="button"
             onClick={() => setShowHelp(true)}
@@ -728,11 +758,10 @@ export default function Fuelings() {
                 {drivingConditionOptions.map(({ key, label, hint, accent, Icon }) => (
                   <label
                     key={key}
-                    className={`group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-[1.35rem] border px-4 py-4 transition duration-200 ${
-                      formData[key]
+                    className={`group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-[1.35rem] border px-4 py-4 transition duration-200 ${formData[key]
                         ? "border-teal-300/35 bg-gradient-to-br from-teal-300/15 via-slate-950/80 to-slate-950/70 shadow-[0_10px_30px_rgba(8,145,178,0.12)]"
                         : "border-white/10 bg-slate-950/45 hover:border-white/20 hover:bg-white/[0.04]"
-                    }`}
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -750,11 +779,10 @@ export default function Fuelings() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition ${
-                            formData[key]
+                          <span className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition ${formData[key]
                               ? "border-teal-300/30 bg-teal-300/15 text-teal-100"
                               : "border-white/10 bg-white/[0.03] text-slate-300 group-hover:border-white/20"
-                          }`}>
+                            }`}>
                             <Icon className="h-4.5 w-4.5" />
                           </span>
                           <span className="text-sm font-semibold text-white">{label}</span>
@@ -762,7 +790,7 @@ export default function Fuelings() {
                         <p className="text-xs leading-5 text-slate-400">{hint}</p>
                       </div>
 
-                      
+
                     </div>
                   </label>
                 ))}
@@ -835,6 +863,17 @@ export default function Fuelings() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {exportTarget ? (
+        <ExportReportModal
+          open={Boolean(exportTarget)}
+          reportType={exportTarget.reportType}
+          vehicle={exportTarget.vehicle}
+          defaultStartDate={exportDateRange.startDate || ""}
+          defaultEndDate={exportDateRange.endDate || ""}
+          onClose={() => setExportTarget(null)}
+        />
       ) : null}
     </section>
   );
