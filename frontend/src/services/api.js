@@ -57,11 +57,18 @@ export async function apiFetch(path, options = {}) {
 			? JSON.stringify(body)
 			: body;
 
-	return fetch(buildApiUrl(path), {
-		...restOptions,
-		headers: finalHeaders,
-		body: requestBody,
-	});
+	try {
+		return await fetch(buildApiUrl(path), {
+			...restOptions,
+			headers: finalHeaders,
+			body: requestBody,
+		});
+	} catch (error) {
+		if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
+			throw new Error("Error al conectar con el servidor.");
+		}
+		throw error;
+	}
 }
 
 export async function apiJson(path, options = {}) {

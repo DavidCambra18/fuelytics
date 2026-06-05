@@ -48,33 +48,24 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(objectUrl);
 }
 
-export async function exportReportFile({ reportType, vehicle, startDate, endDate, format = "csv" }) {
-  const params = new URLSearchParams();
+export async function exportReportFile(options) {
+  const res = await apiFetch("/api/export", {
+    method: "POST",
+    body: options,
+  });
 
-  if (startDate) {
-    params.set("startDate", startDate);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "No hay datos en las fechas seleccionadas");
   }
 
-  if (endDate) {
-    params.set("endDate", endDate);
-  }
-
-  if (format) {
-    params.set("format", format);
-  }
-
-  const query = params.toString();
-  const response = await apiFetch(`/api/export/${reportType}/${vehicle.id}${query ? `?${query}` : ""}`);
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.message || payload.error || "No se pudo generar la exportación");
-  }
-
-  const blob = await response.blob();
-  const filename = extractFilename(response.headers.get("content-disposition"))
-    || buildFallbackFilename(reportType, vehicle, startDate, endDate, format);
-
-  downloadBlob(blob, filename);
-  return filename;
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "exportacion.pdf";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 }

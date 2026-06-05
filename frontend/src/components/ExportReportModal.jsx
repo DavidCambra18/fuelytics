@@ -40,8 +40,13 @@ export default function ExportReportModal({
     event.preventDefault();
     setError("");
 
-    if (startDate && endDate && startDate > endDate) {
-      setError("La fecha de inicio no puede ser posterior a la fecha fin");
+    if (!startDate || !endDate) {
+      setError("Debes indicar una fecha de inicio y una fecha de fin.");
+      return;
+    }
+
+    if (startDate > endDate) {
+      setError("La fecha de inicio no puede ser posterior a la fecha fin.");
       return;
     }
 
@@ -51,13 +56,19 @@ export default function ExportReportModal({
       await exportReportFile({
         reportType,
         vehicle,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
+        startDate,
+        endDate,
         format: "pdf",
       });
       onClose();
     } catch (exportError) {
-      setError(exportError.message || "No se pudo generar la exportación");
+      const errorMsg = exportError.message || "";
+      
+      if (errorMsg.includes("404") || errorMsg.toLowerCase().includes("no data")) {
+        setError("No hay datos en las fechas seleccionadas.");
+      } else {
+        setError(errorMsg || "No se pudo generar la exportación.");
+      }
     } finally {
       setLoading(false);
     }
