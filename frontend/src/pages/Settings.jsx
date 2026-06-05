@@ -13,7 +13,10 @@ import {
   Eye, 
   Car, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Loader2,
+  Check,
+  X
 } from "lucide-react";
 
 function createToast(message, tone = "success") {
@@ -64,6 +67,10 @@ export default function Settings() {
     firstName: "",
     lastName: "",
   });
+  
+  const [usernameError, setUsernameError] = useState("");
+  const [usernameStatus, setUsernameStatus] = useState("idle");
+
   const [vehicleSearch, setVehicleSearch] = useState("");
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [accountPrivacy, setAccountPrivacy] = useState(true);
@@ -74,7 +81,6 @@ export default function Settings() {
       navigate(-1);
       return;
     }
-
     navigate("/dashboard");
   };
 
@@ -135,6 +141,35 @@ export default function Settings() {
     };
   }, [username]);
 
+  useEffect(() => {
+    const val = profileForm.username.trim();
+    if (!val || loading) return;
+
+    if (val === username) {
+      setUsernameStatus("success");
+      setUsernameError("");
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setUsernameStatus("checking");
+      try {
+        const res = await apiFetch(`/api/users/check-username?username=${encodeURIComponent(val)}`);
+        if (!res.ok) {
+          setUsernameError("El nombre de usuario ya está en uso");
+          setUsernameStatus("error");
+        } else {
+          setUsernameError("");
+          setUsernameStatus("success");
+        }
+      } catch {
+        setUsernameStatus("idle");
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [profileForm.username, username, loading]);
+
   const tabs = useMemo(
     () => [
       { id: "profile", label: "Perfil", icon: User },
@@ -180,6 +215,11 @@ export default function Settings() {
 
   const saveProfile = async (event) => {
     event.preventDefault();
+    
+    if (usernameError || usernameStatus === "checking") {
+      return;
+    }
+    
     setSavingProfile(true);
     setError("");
 
@@ -195,7 +235,12 @@ export default function Settings() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "No se pudo guardar el perfil");
+        
+        if (response.status === 409) {
+          throw new Error("El nombre de usuario ya está en uso. Por favor, elige otro.");
+        }
+        
+        throw new Error(errorData.message || errorData.error || "No se pudo guardar el perfil");
       }
 
       const savedProfile = await response.json();
@@ -280,7 +325,6 @@ export default function Settings() {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || `No se pudo guardar el vehículo ${vehicle.brand} ${vehicle.model}`);
           }
-
           return response.json();
         });
       });
@@ -404,18 +448,34 @@ export default function Settings() {
 
                       <label className="block sm:col-span-2">
                         <span className="mb-2 block text-sm font-medium text-slate-300">Nombre de usuario</span>
-                        <input
-                          className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
-                          placeholder="tu_usuario"
-                          value={profileForm.username}
-                          onChange={handleProfileChange("username")}
-                          required
-                        />
+                        <div className="relative">
+                          <input
+                            className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${
+                              usernameError 
+                                ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20" 
+                                : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
+                            }`}
+                            placeholder="tu_usuario"
+                            value={profileForm.username}
+                            onChange={(e) => {
+                              handleProfileChange("username")(e);
+                              setUsernameStatus("idle");
+                              setUsernameError("");
+                            }}
+                            required
+                          />
+                          <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center">
+                            {usernameStatus === "checking" && <Loader2 className="h-5 w-5 animate-spin text-teal-400" />}
+                            {usernameStatus === "success" && <Check className="h-5 w-5 text-teal-400" />}
+                            {usernameStatus === "error" && <X className="h-5 w-5 text-rose-500" />}
+                          </div>
+                        </div>
+                        {usernameError && <span className="mt-2 block text-sm text-rose-400">{usernameError}</span>}
                       </label>
 
                       <div className="sm:col-span-2 flex gap-3 pt-2">
                         <button
-                          disabled={savingProfile}
+                          disabled={savingProfile || !!usernameError || usernameStatus === "checking"}
                           className="flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
                         >
                           <Save className="h-4 w-4" />

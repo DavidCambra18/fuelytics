@@ -3,6 +3,7 @@ package com.fuelytics.backend.controller;
 import java.util.Map;
 import java.security.Principal;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,5 +52,21 @@ public class UserController {
     @PutMapping("/privacy")
     public UserProfileDTO updatePrivacy(Principal principal, @RequestBody UserPrivacyDTO dto) {
         return userService.updatePrivacy(principal.getName(), dto);
+    }
+
+    @GetMapping("/check-username")
+    public ResponseEntity<Void> checkUsername(@RequestParam String username) {
+        if (userService.usernameExists(username)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<Void> checkEmail(@RequestParam String email) {
+        if (userService.emailExists(email)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        return ResponseEntity.ok().build();
     }
 }

@@ -150,8 +150,16 @@ public class UserService {
         String token = jwtService.generateToken(user.getEmail());
 
         return Map.of(
-            "token", token,
-            "username", user.getUsername(),
-            "email", user.getEmail());
+                "token", token,
+                "username", user.getUsername(),
+                "email", user.getEmail());
+    }
+
+    public boolean usernameExists(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
     }
 }
