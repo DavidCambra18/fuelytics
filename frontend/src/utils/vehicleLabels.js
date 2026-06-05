@@ -117,7 +117,7 @@ export const DRIVING_TYPE_OPTIONS = [
 export const TIRE_TYPE_OPTIONS = [
   { value: "summer", label: "Neumáticos de verano" },
   { value: "winter", label: "Neumáticos de invierno" },
-  { value: "allseason", label: "Neumáticos todo terreno" },
+  { value: "allseason", label: "Neumáticos 4 estaciones" },
 ];
 
 function toReadableLabel(value) {
