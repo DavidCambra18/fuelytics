@@ -6,6 +6,25 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) y
 
 ## [Pre-release]
 
+## [0.3.0-beta] - 2026-06-05
+
+### Añadido
+
+- Generación y exportación de informes completos en formato PDF (gastos, repostajes y resumen global).
+- Mapa de gasolineras con comparador de precios en tiempo real.
+- Campos opcionales de nombre y apellidos en el registro de usuarios.
+- Migración de las peticiones fetch a un nuevo archivo de utilidad centralizado para la API.
+- Animaciones de transición en los cambios de página utilizando Framer Motion.
+
+### Cambiado
+
+- Modernización de la interfaz en los componentes `Settings`, `UserMenu` y `UserProfile` mediante la incorporación sistemática de la iconografía de `lucide-react`.
+- Mejora de los badges informativos en el `README.md` detallando las versiones exactas del stack tecnológico.
+
+### Corregido
+
+- Añadido *rewrite* en la configuración de Vercel para solucionar el error 404 Not Found al recargar rutas en React.
+
 ## [0.2.0-beta] - 2026-05-23
 
 ### Añadido
