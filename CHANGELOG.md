@@ -15,11 +15,15 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) y
 - Campos opcionales de nombre y apellidos en el registro de usuarios.
 - Migración de las peticiones fetch a un nuevo archivo de utilidad centralizado para la API.
 - Animaciones de transición en los cambios de página utilizando Framer Motion.
+- Validación visual asíncrona (*debounce*) en el registro y en los ajustes para comprobar en tiempo real la disponibilidad del correo y nombre de usuario.
+- Nuevos endpoints en el backend (`/check-username` y `/check-email`) para soportar validaciones de formulario rápidas.
+- Visualización del nombre y apellidos del usuario en el menú principal desplegable.
 
 ### Cambiado
 
 - Modernización de la interfaz en los componentes `Settings`, `UserMenu` y `UserProfile` mediante la incorporación sistemática de la iconografía de `lucide-react`.
 - Mejora de los badges informativos en el `README.md` detallando las versiones exactas del stack tecnológico.
+- Mejora del manejador global de peticiones (`apiFetch`) para interceptar caídas de red o del servidor y mostrar un error amigable en toda la aplicación.
 
 ### Corregido
 
