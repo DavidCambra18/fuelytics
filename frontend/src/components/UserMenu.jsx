@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../services/api";
 import { 
   Fuel, 
   Settings as SettingsIcon, 
@@ -15,7 +16,22 @@ export default function UserMenu() {
   const navigate = useNavigate();
   const { username, clearAuth } = useAuth();
   const [open, setOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
   const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!username) return;
+
+    apiFetch("/api/users/profile")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          const name = [data.firstName, data.lastName].filter(Boolean).join(" ");
+          setFullName(name);
+        }
+      })
+      .catch(() => {});
+  }, [username]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -100,6 +116,9 @@ export default function UserMenu() {
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">{username || "Usuario"}</p>
+                {fullName ? (
+                  <p className="mt-0.5 truncate text-xs text-slate-400">{fullName}</p>
+                ) : null}
               </div>
             </div>
           </div>
