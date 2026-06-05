@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Loader2, Check, X } from "lucide-react";
-import { apiFetch } from "../services/api";
+import { apiFetch, apiJson } from "../services/api";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -10,9 +10,9 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  
+
   const [errorMessage, setErrorMessage] = useState("");
-  
+
   const [usernameError, setUsernameError] = useState("");
   const [usernameStatus, setUsernameStatus] = useState("idle");
 
@@ -24,7 +24,7 @@ export default function Register() {
 
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [confirmPasswordStatus, setConfirmPasswordStatus] = useState("idle");
-  
+
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
@@ -128,34 +128,17 @@ export default function Register() {
 
     try {
       const body = { username, email, password };
-      const fn = firstName?.trim();
-      const ln = lastName?.trim();
-      if (fn) body.firstName = fn;
-      if (ln) body.lastName = ln;
+      if (firstName?.trim()) body.firstName = firstName.trim();
+      if (lastName?.trim()) body.lastName = lastName.trim();
 
-      const res = await apiFetch("/api/users/register", {
+      await apiJson("/api/users/register", {
         method: "POST",
         body,
       });
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        if (res.status === 400 || res.status === 409) {
-          setErrorMessage(data.error || "Datos inválidos o el usuario ya existe.");
-        } else {
-          setErrorMessage("Error en el servidor. Inténtalo más tarde.");
-        }
-        return;
-      }
-
       navigate("/login");
-    } catch (error) {
-      if (error.message === "No se pudo establecer conexión con el servidor.") {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("No se pudo crear la cuenta");
-      }
+    } catch (err) {
+      setErrorMessage(err.message);
     } finally {
       setSubmitting(false);
     }
@@ -198,11 +181,10 @@ export default function Register() {
               <span className="mb-2 block text-sm font-medium text-slate-300">Nombre de usuario</span>
               <div className="relative">
                 <input
-                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${
-                    usernameError 
-                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20" 
-                      : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
-                  }`}
+                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${usernameError
+                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
+                    : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
+                    }`}
                   placeholder="Tu nombre de usuario"
                   required
                   value={username}
@@ -225,11 +207,10 @@ export default function Register() {
               <span className="mb-2 block text-sm font-medium text-slate-300">Correo electrónico</span>
               <div className="relative">
                 <input
-                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${
-                    emailError 
-                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20" 
-                      : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
-                  }`}
+                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${emailError
+                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
+                    : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
+                    }`}
                   placeholder="tu@email.com"
                   type="email"
                   required
@@ -274,11 +255,10 @@ export default function Register() {
               <div className="relative">
                 <input
                   type="password"
-                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${
-                    passwordError 
-                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20" 
-                      : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
-                  }`}
+                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${passwordError
+                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
+                    : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
+                    }`}
                   placeholder="Define tu contraseña"
                   required
                   onChange={(e) => setPassword(e.target.value)}
@@ -296,11 +276,10 @@ export default function Register() {
               <div className="relative">
                 <input
                   type="password"
-                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${
-                    confirmPasswordError 
-                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20" 
-                      : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
-                  }`}
+                  className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${confirmPasswordError
+                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
+                    : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
+                    }`}
                   placeholder="Repite tu contraseña"
                   required
                   onChange={(e) => setConfirmPassword(e.target.value)}

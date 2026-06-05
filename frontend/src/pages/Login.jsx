@@ -17,24 +17,23 @@ export default function Login() {
     setErrorMessage("");
     setSubmitting(true);
 
-    const res = await apiFetch("/api/users/login", {
-      method: "POST",
-      body: { email, password },
-    });
     try {
-      const data = await res.json().catch(() => ({}));
+      const res = await apiFetch("/api/users/login", {
+        method: "POST",
+        body: { email, password },
+      });
 
-      // For both incorrect password and user-not-found, show the same message.
-      if (!res.ok || data.error) {
+      if (!res.ok) {
         setErrorMessage("Correo o contraseña incorrectos");
         return;
       }
 
-      // Successful login — set auth and go to dashboard
+      const data = await res.json();
       setAuth({ token: data.token, username: data.username });
       navigate("/dashboard");
-    } catch {
-      setErrorMessage("No se pudo conectar con el servidor.");
+
+    } catch (err) {
+      setErrorMessage(err.message);
     } finally {
       setSubmitting(false);
     }
