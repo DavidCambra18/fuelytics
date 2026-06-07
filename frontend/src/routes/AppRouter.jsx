@@ -12,7 +12,9 @@ import Fuelings from "../pages/Fuelings";
 import Expenses from "../pages/Expenses";
 import Statistics from "../pages/Statistics";
 import Settings from "../pages/Settings";
-import UserProfile from "../pages/UserProfile";
+import MyProfile from "../pages/MyProfile";
+import PublicProfile from "../pages/PublicProfile";
+import PublicVehicle from "../pages/PublicVehicle";
 import GasStations from "../pages/GasStations";
 import VehicleLayout from "../layout/VehicleLayout";
 import VehicleOverview from "../pages/VehicleOverview";
@@ -44,15 +46,14 @@ function InnerRoutes() {
     <AnimatePresence mode="wait" initial={false}>
       <Routes location={location} key={location.pathname}>
 
-        {/* Public */}
         <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-        <Route 
-        path="/gas-stations"
-        element={
-        <PageTransition>
-          <GasStations />
-          </PageTransition>
-        } 
+        <Route
+          path="/gas-stations"
+          element={
+            <PageTransition>
+              <GasStations />
+            </PageTransition>
+          }
         />
         <Route
           path="/login"
@@ -71,12 +72,12 @@ function InnerRoutes() {
           }
         />
 
-        <Route path="/users/:username" element={<PageTransition><UserProfile /></PageTransition>} />
-
-        {/* Private */}
+        <Route path="/users/:username" element={<PageTransition><PublicProfile /></PageTransition>} />
+        <Route path="/public/vehicles/:id" element={<PageTransition><PublicVehicle /></PageTransition>} />
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+          <Route path="/my-profile" element={<PageTransition><MyProfile /></PageTransition>} />
           <Route path="/vehicles/new" element={<PageTransition><VehicleCreate /></PageTransition>} />
           <Route path="/vehicles/:vehicleId" element={<VehicleLayout />}>
             <Route index element={<PageTransition><VehicleOverview /></PageTransition>} />
@@ -87,7 +88,6 @@ function InnerRoutes() {
           </Route>
         </Route>
 
-        {/* fallback */}
         <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>

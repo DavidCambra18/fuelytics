@@ -1,11 +1,14 @@
 package com.fuelytics.backend.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fuelytics.backend.dto.ExpensePublicDTO;
+import com.fuelytics.backend.dto.FuelEntryPublicDTO;
 import com.fuelytics.backend.dto.VehicleDTO;
 import com.fuelytics.backend.dto.VehicleResponseDTO;
 import com.fuelytics.backend.dto.VehicleUpdateDTO;
@@ -13,17 +16,25 @@ import com.fuelytics.backend.entity.User;
 import com.fuelytics.backend.entity.Vehicle;
 import com.fuelytics.backend.repository.UserRepository;
 import com.fuelytics.backend.repository.VehicleRepository;
+import com.fuelytics.backend.repository.FuelingRepository;
+import com.fuelytics.backend.repository.ExpenseRepository;
 
 @Service
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
+    private final FuelingRepository fuelingRepository;
+    private final ExpenseRepository expenseRepository;
 
     public VehicleService(VehicleRepository vehicleRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            FuelingRepository fuelingRepository,
+            ExpenseRepository expenseRepository) {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
+        this.fuelingRepository = fuelingRepository;
+        this.expenseRepository = expenseRepository;
     }
 
     public VehicleResponseDTO createVehicle(VehicleDTO dto, String email) {
@@ -215,5 +226,63 @@ public class VehicleService {
         }
 
         vehicleRepository.delete(vehicle);
+    }
+
+    public List<FuelEntryPublicDTO> getVehicleFuelings(Integer vehicleId, String email) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+
+        boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
+
+        if (!isOwner && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowFuelData()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Los repostajes de este vehículo son privados");
+        }
+
+        return fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId).stream().map(fuel -> {
+            FuelEntryPublicDTO dto = new FuelEntryPublicDTO();
+            dto.setId(fuel.getId());
+            dto.setDate(fuel.getDate());
+            dto.setLiters(fuel.getLiters());
+            dto.setPriceTotal(fuel.getPriceTotal());
+            dto.setDistance(fuel.getDistance());
+            dto.setBoardConsumption(fuel.getBoardConsumption());
+            return dto;
+        }).toList();
+    }
+
+    public List<ExpensePublicDTO> getVehicleExpenses(Integer vehicleId, String email) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+
+        boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
+
+        if (!isOwner && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowExpenses()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Los gastos de este vehículo son privados");
+        }
+
+        return expenseRepository.findByVehicleIdOrderByDateDesc(vehicleId).stream().map(expense -> {
+            ExpensePublicDTO dto = new ExpensePublicDTO();
+            dto.setId(expense.getId());
+            dto.setDate(expense.getDate());
+            dto.setType(expense.getType() != null ? expense.getType().name() : null);
+            dto.setCost(expense.getCost());
+            return dto;
+        }).toList();
+    }
+
+    public Map<String, Object> getVehicleStatistics(Integer vehicleId, String email) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+
+        boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
+
+        if (!isOwner && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowStatistics()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Las estadísticas de este vehículo son privadas");
+        }
+
+        return Map.of(
+            "message", "Estadísticas en construcción",
+            "vehicleId", vehicleId
+        );
     }
 }

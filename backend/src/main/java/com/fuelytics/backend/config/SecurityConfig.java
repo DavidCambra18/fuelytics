@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -43,6 +44,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/users/check-username", "/api/users/check-email").permitAll()
 
                     .requestMatchers("/api/external/**").permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/api/vehicles/{id}/**").permitAll()
 
                     .requestMatchers("/api/users/**").authenticated()
 

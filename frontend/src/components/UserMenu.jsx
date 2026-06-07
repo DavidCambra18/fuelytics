@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiFetch } from "../services/api";
-import { 
-  Fuel, 
-  Settings as SettingsIcon, 
-  Warehouse, 
-  User, 
-  LogOut, 
-  ChevronRight, 
-  ChevronDown 
+import {
+  Fuel,
+  Settings as SettingsIcon,
+  Warehouse,
+  User,
+  LogOut,
+  ChevronRight,
+  ChevronDown
 } from "lucide-react";
 
 export default function UserMenu() {
@@ -30,7 +30,7 @@ export default function UserMenu() {
           setFullName(name);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [username]);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function UserMenu() {
           </span>
           <ChevronDown className={`hidden h-4 w-4 text-teal-200/70 transition-transform duration-200 sm:block ${open ? "rotate-180" : ""}`} />
         </button>
-        
+
         <Link
           to="/settings"
           aria-label="Editar perfil y ajustes"
@@ -87,7 +87,7 @@ export default function UserMenu() {
         >
           <SettingsIcon className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
-        
+
         <Link
           to="/gas-stations"
           aria-label="Ir al mapa de gasolineras"
@@ -96,7 +96,7 @@ export default function UserMenu() {
         >
           <Fuel className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
-        
+
         <Link
           to="/dashboard"
           aria-label="Ir al garaje"
@@ -126,7 +126,7 @@ export default function UserMenu() {
           <div className="grid gap-2 p-3">
             {username ? (
               <Link
-                to={`/users/${encodeURIComponent(username)}`}
+                to="/my-profile"s
                 onClick={() => setOpen(false)}
                 className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:border-white/15 hover:bg-white/[0.08]"
               >
@@ -135,14 +135,14 @@ export default function UserMenu() {
                     <User className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">Perfil</p>
+                    <p className="text-sm font-medium text-white">Mi Perfil</p>
                     <p className="mt-0.5 text-xs text-slate-400">Ver tu perfil</p>
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-slate-300" />
               </Link>
             ) : null}
-            
+
             <button
               type="button"
               onClick={logout}

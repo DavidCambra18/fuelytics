@@ -75,4 +75,22 @@ public class VehicleController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/fuelings")
+    public ResponseEntity<?> getVehicleFuelings(@PathVariable Integer id, Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(vehicleService.getVehicleFuelings(id, email));
+    }
+
+    @GetMapping("/{id}/expenses")
+    public ResponseEntity<?> getVehicleExpenses(@PathVariable Integer id, Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(vehicleService.getVehicleExpenses(id, email));
+    }
+
+    @GetMapping("/{id}/statistics")
+    public ResponseEntity<?> getVehicleStatistics(@PathVariable Integer id, Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(vehicleService.getVehicleStatistics(id, email));
+    }
 }

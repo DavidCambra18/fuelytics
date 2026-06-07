@@ -120,6 +120,25 @@ export const TIRE_TYPE_OPTIONS = [
   { value: "allseason", label: "Neumáticos 4 estaciones" },
 ];
 
+const EXPENSE_TYPE_LABELS = {
+  maintenance: "Mantenimiento",
+  repair: "Reparación",
+  insurance: "Seguro",
+  fines: "Multas",
+  oil: "Aceite",
+  toll: "Peaje",
+  washing: "Lavado",
+  taxes: "Impuestos",
+  inspection: "ITV",
+  homologation: "Homologación",
+  tuning: "Tuning",
+  tire_change: "Cambio de neumáticos",
+  financing: "Financiación",
+  spare_parts: "Repuestos",
+  parking: "Parking",
+  matriculation: "Matriculación"
+};
+
 function toReadableLabel(value) {
   if (!value) {
     return "No definido";
@@ -158,6 +177,10 @@ export function formatDrivingType(value) {
 
 export function formatTireType(value) {
   return TIRE_TYPE_LABELS[value] || toReadableLabel(value);
+}
+
+export function formatExpenseType(value) {
+  return EXPENSE_TYPE_LABELS[value] || toReadableLabel(value);
 }
 
 export function getConsumptionUnit(vehicleType, vehicleEnergyType) {

@@ -1,6 +1,8 @@
 package com.fuelytics.backend.service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -11,21 +13,26 @@ import com.fuelytics.backend.dto.UserPrivacyDTO;
 import com.fuelytics.backend.dto.UserLoginDTO;
 import com.fuelytics.backend.dto.UserProfileDTO;
 import com.fuelytics.backend.dto.UserRegisterDTO;
+import com.fuelytics.backend.dto.VehicleResponseDTO;
 import com.fuelytics.backend.entity.User;
 import com.fuelytics.backend.repository.UserRepository;
+import com.fuelytics.backend.repository.VehicleRepository;
 import com.fuelytics.backend.security.JwtService;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
+    private final VehicleRepository vehicleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public UserService(UserRepository userRepository,
+            VehicleRepository vehicleRepository,
             BCryptPasswordEncoder passwordEncoder,
             JwtService jwtService) {
         this.userRepository = userRepository;
+        this.vehicleRepository = vehicleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
@@ -71,7 +78,25 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Este perfil es privado");
         }
 
-        return toProfileDTO(user);
+        UserProfileDTO dto = toProfileDTO(user);
+
+        List<VehicleResponseDTO> publicVehicles = vehicleRepository.findByUserId(user.getId())
+                .stream()
+                .filter(vehicle -> isOwner || Boolean.TRUE.equals(vehicle.getIsPublic()))
+                .map(vehicle -> {
+                    VehicleResponseDTO vDto = new VehicleResponseDTO();
+                    vDto.setId(vehicle.getId());
+                    vDto.setBrand(vehicle.getBrand());
+                    vDto.setModel(vehicle.getModel());
+                    vDto.setYear(vehicle.getYear());
+                    vDto.setIsPublic(vehicle.getIsPublic());
+                    return vDto;
+                })
+                .collect(Collectors.toList());
+
+        dto.setVehicles(publicVehicles);
+
+        return dto;
     }
 
     public UserProfileDTO updateProfile(String email, UserProfileDTO dto) {
