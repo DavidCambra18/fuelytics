@@ -10,7 +10,8 @@ import {
   LogOut,
   ChevronRight,
   ChevronDown,
-  Trophy
+  Trophy,
+  Calculator
 } from "lucide-react";
 
 export default function UserMenu() {
@@ -114,6 +115,15 @@ export default function UserMenu() {
           className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
         >
           <Warehouse className="h-5 w-5 text-teal-200" aria-hidden="true" />
+        </Link>
+
+        <Link
+          to="/calculator"
+          aria-label="Ir a la calculadora de viaje"
+          title="Calculadora de viaje"
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+        >
+          <Calculator className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
       </div>
 
