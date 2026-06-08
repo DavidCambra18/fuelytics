@@ -57,6 +57,12 @@ public class Vehicle {
     @Column(name = "official_consumption")
     private BigDecimal officialConsumption;
 
+    @Column(name = "avg_consumption")
+    private Double avgConsumption;
+
+    @Column(name = "fuel_entries_count")
+    private Integer fuelEntriesCount;
+
     private Boolean isPublic = false;
     private Boolean showFuelData = true;
     private Boolean showExpenses = false;
@@ -174,6 +180,22 @@ public class Vehicle {
 
     public void setOfficialConsumption(BigDecimal officialConsumption) {
         this.officialConsumption = officialConsumption;
+    }
+
+    public Double getAvgConsumption() {
+        return avgConsumption;
+    }
+
+    public void setAvgConsumption(Double avgConsumption) {
+        this.avgConsumption = avgConsumption;
+    }
+
+    public Integer getFuelEntriesCount() {
+        return fuelEntriesCount;
+    }
+
+    public void setFuelEntriesCount(Integer fuelEntriesCount) {
+        this.fuelEntriesCount = fuelEntriesCount;
     }
 
     public Boolean getIsPublic() {

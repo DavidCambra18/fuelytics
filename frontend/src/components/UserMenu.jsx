@@ -9,7 +9,8 @@ import {
   User,
   LogOut,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Trophy
 } from "lucide-react";
 
 export default function UserMenu() {
@@ -98,6 +99,15 @@ export default function UserMenu() {
         </Link>
 
         <Link
+          to="/ranking"
+          aria-label="Ir al ranking global"
+          title="Ranking Global"
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+        >
+          <Trophy className="h-5 w-5 text-teal-200" aria-hidden="true" />
+        </Link>
+
+        <Link
           to="/dashboard"
           aria-label="Ir al garaje"
           title="Garaje"
@@ -126,7 +136,7 @@ export default function UserMenu() {
           <div className="grid gap-2 p-3">
             {username ? (
               <Link
-                to="/my-profile"s
+                to="/my-profile"
                 onClick={() => setOpen(false)}
                 className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:border-white/15 hover:bg-white/[0.08]"
               >

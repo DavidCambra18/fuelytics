@@ -107,6 +107,8 @@ CREATE TABLE vehicles (
   tank_capacity DECIMAL(5,2) NOT NULL,
   gearbox gearbox_type NOT NULL,
   official_consumption DECIMAL(5,2),
+  avg_consumption DOUBLE PRECISION(5,2) DEFAULT NULL,
+  fuel_entries_count INT DEFAULT 0,
   is_public BOOLEAN DEFAULT FALSE,
   show_fuel_data BOOLEAN DEFAULT TRUE,
   show_expenses BOOLEAN DEFAULT FALSE,

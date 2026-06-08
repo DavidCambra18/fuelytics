@@ -15,6 +15,7 @@ import Settings from "../pages/Settings";
 import MyProfile from "../pages/MyProfile";
 import PublicProfile from "../pages/PublicProfile";
 import PublicVehicle from "../pages/PublicVehicle";
+import Ranking from "../pages/Ranking";
 import GasStations from "../pages/GasStations";
 import VehicleLayout from "../layout/VehicleLayout";
 import VehicleOverview from "../pages/VehicleOverview";
@@ -76,6 +77,7 @@ function InnerRoutes() {
         <Route path="/public/vehicles/:id" element={<PageTransition><PublicVehicle /></PageTransition>} />
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+          <Route path="/ranking" element={<PageTransition><Ranking /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
           <Route path="/my-profile" element={<PageTransition><MyProfile /></PageTransition>} />
           <Route path="/vehicles/new" element={<PageTransition><VehicleCreate /></PageTransition>} />
