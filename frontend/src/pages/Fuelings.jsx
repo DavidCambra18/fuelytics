@@ -13,6 +13,14 @@ import {
   formatFuelType,
   getConsumptionUnit,
 } from "../utils/vehicleLabels";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 function createInitialFormData(vehicle) {
   return {
@@ -177,6 +185,8 @@ export default function Fuelings() {
   const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(() => createInitialFormData(selectedVehicle));
   const fuelingRows = useMemo(() => buildFuelingRows(fuelings), [fuelings]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
   const exportDateRange = useMemo(() => {
     if (fuelings.length === 0) {
       return {};
@@ -410,6 +420,10 @@ export default function Fuelings() {
 
   const displayFuelings = [...fuelingRows].reverse();
 
+  const totalPages = Math.ceil(displayFuelings.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentFuelings = displayFuelings.slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <section className="w-full space-y-6">
       <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
@@ -463,7 +477,7 @@ export default function Fuelings() {
           </div>
         ) : (
           <div className="space-y-3">
-            {displayFuelings.map((fueling) => {
+            {currentFuelings.map((fueling) => {
               const liters = Number(fueling.liters) || 0;
               const distance = Number(fueling.distance) || 0;
               const priceTotal = Number(fueling.priceTotal) || 0;
@@ -598,6 +612,63 @@ export default function Fuelings() {
                 </div>
               );
             })}
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="mt-8 mb-2">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) setCurrentPage(prev => prev - 1);
+                    }}
+                    className={
+                      currentPage === 1
+                        ? "pointer-events-none opacity-50 text-slate-500"
+                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
+                    }
+                  />
+                </PaginationItem>
+
+                {[...Array(totalPages)].map((_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(i + 1);
+                      }}
+                      isActive={currentPage === i + 1}
+                      className={
+                        currentPage === i + 1
+                          ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white border-transparent"
+                          : "text-slate-400 hover:bg-white/10 hover:text-white"
+                      }
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+                    }}
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50 text-slate-500"
+                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
       </article>
@@ -759,8 +830,8 @@ export default function Fuelings() {
                   <label
                     key={key}
                     className={`group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-[1.35rem] border px-4 py-4 transition duration-200 ${formData[key]
-                        ? "border-teal-300/35 bg-gradient-to-br from-teal-300/15 via-slate-950/80 to-slate-950/70 shadow-[0_10px_30px_rgba(8,145,178,0.12)]"
-                        : "border-white/10 bg-slate-950/45 hover:border-white/20 hover:bg-white/[0.04]"
+                      ? "border-teal-300/35 bg-gradient-to-br from-teal-300/15 via-slate-950/80 to-slate-950/70 shadow-[0_10px_30px_rgba(8,145,178,0.12)]"
+                      : "border-white/10 bg-slate-950/45 hover:border-white/20 hover:bg-white/[0.04]"
                       }`}
                   >
                     <input
@@ -780,8 +851,8 @@ export default function Fuelings() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition ${formData[key]
-                              ? "border-teal-300/30 bg-teal-300/15 text-teal-100"
-                              : "border-white/10 bg-white/[0.03] text-slate-300 group-hover:border-white/20"
+                            ? "border-teal-300/30 bg-teal-300/15 text-teal-100"
+                            : "border-white/10 bg-white/[0.03] text-slate-300 group-hover:border-white/20"
                             }`}>
                             <Icon className="h-4.5 w-4.5" />
                           </span>

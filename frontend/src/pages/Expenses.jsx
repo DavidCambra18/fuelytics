@@ -4,6 +4,14 @@ import { Download, ReceiptText } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
 import { apiFetch } from "../services/api";
 import ExportReportModal from "../components/ExportReportModal";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const EXPENSE_TYPE_OPTIONS = [
   { value: "maintenance", label: "Mantenimiento" },
@@ -124,6 +132,8 @@ export default function Expenses() {
   const [deletingId, setDeletingId] = useState(null);
   const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(createInitialFormData());
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -301,6 +311,10 @@ export default function Expenses() {
     return acc;
   }, 0);
 
+  const totalPages = Math.ceil(expenses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentExpenses = expenses.slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <section className="w-full space-y-6">
       <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
@@ -371,7 +385,7 @@ export default function Expenses() {
             </div>
 
             <div className="space-y-3">
-              {expenses.map((expense) => {
+              {currentExpenses.map((expense) => {
                 const cost = Number(expense.cost) || 0;
 
                 return (
@@ -432,6 +446,63 @@ export default function Expenses() {
               })}
             </div>
           </>
+        )}
+        {totalPages > 1 && (
+          <div className="mt-8 mb-2">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) setCurrentPage(prev => prev - 1);
+                    }}
+                    className={
+                      currentPage === 1
+                        ? "pointer-events-none opacity-50 text-slate-500"
+                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
+                    }
+                  />
+                </PaginationItem>
+
+                {[...Array(totalPages)].map((_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(i + 1);
+                      }}
+                      isActive={currentPage === i + 1}
+                      className={
+                        currentPage === i + 1
+                          ? "bg-amber-600 text-white hover:bg-amber-700 hover:text-white border-transparent"
+                          : "text-slate-400 hover:bg-white/10 hover:text-white"
+                      }
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+                    }}
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50 text-slate-500"
+                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         )}
       </article>
 
