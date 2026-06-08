@@ -80,6 +80,8 @@ public class FuelingService {
 
         FuelEntry saved = fuelingRepository.save(fuelEntry);
 
+        updateVehicleAverages(vehicle);
+
         return mapToDTO(saved);
     }
 
@@ -119,7 +121,11 @@ public class FuelingService {
         fuelEntry.setAverageSpeed(dto.getAverageSpeed());
         fuelEntry.setNotes(dto.getNotes());
 
-        return mapToDTO(fuelingRepository.save(fuelEntry));
+        FuelEntry saved = fuelingRepository.save(fuelEntry);
+
+        updateVehicleAverages(saved.getVehicle());
+
+        return mapToDTO(saved);
     }
 
     @Transactional
@@ -127,8 +133,12 @@ public class FuelingService {
 
         User user = userRepository.findByEmail(email);
         FuelEntry fuelEntry = getOwnedFueling(fuelingId, user);
+        Vehicle vehicle = fuelEntry.getVehicle();
 
         fuelingRepository.delete(fuelEntry);
+        fuelingRepository.flush(); 
+
+        updateVehicleAverages(vehicle);
     }
 
     public List<FuelingResponseDTO> getVehicleFuelings(
@@ -168,6 +178,36 @@ public class FuelingService {
         }
 
         return fuelEntry;
+    }
+
+    private void updateVehicleAverages(Vehicle vehicle) {
+        List<FuelEntry> fuelings = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicle.getId());
+        
+        int count = fuelings.size();
+        vehicle.setFuelEntriesCount(count);
+        
+        if (count < 5) {
+            vehicle.setAvgConsumption(null);
+        } else {
+            double totalLiters = fuelings.stream()
+                    .filter(f -> f.getLiters() != null)
+                    .mapToDouble(f -> f.getLiters().doubleValue())
+                    .sum();
+                    
+            double totalDistance = fuelings.stream()
+                    .filter(f -> f.getDistance() != null)
+                    .mapToDouble(f -> f.getDistance().doubleValue())
+                    .sum();
+                    
+            if (totalDistance > 0) {
+                double avg = (totalLiters / totalDistance) * 100.0;
+                vehicle.setAvgConsumption(Math.round(avg * 100.0) / 100.0);
+            } else {
+                vehicle.setAvgConsumption(null);
+            }
+        }
+        
+        vehicleRepository.save(vehicle);
     }
 
     private FuelingResponseDTO mapToDTO(FuelEntry fuelEntry) {

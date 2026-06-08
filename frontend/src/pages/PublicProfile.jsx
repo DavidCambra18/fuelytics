@@ -1,29 +1,44 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch } from "../services/api";
-import { ArrowLeft, AlertCircle, User, Car, Calendar } from "lucide-react";
+import { ArrowLeft, AlertCircle, User, Car, Calendar, Medal } from "lucide-react";
 
 export default function PublicProfile() {
   const { username } = useParams();
   const [profile, setProfile] = useState(null);
+  const [rankingPositions, setRankingPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadProfile = async () => {
+    const loadProfileData = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const response = await apiFetch(`/api/users/public/${encodeURIComponent(username)}`);
+        const [profileRes, rankingRes] = await Promise.all([
+          apiFetch(`/api/users/public/${encodeURIComponent(username)}`),
+          apiFetch("/api/ranking")
+        ]);
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || (response.status === 403 ? "Este perfil es privado" : "No se pudo cargar el perfil"));
+        if (!profileRes.ok) {
+          const errorData = await profileRes.json().catch(() => ({}));
+          throw new Error(errorData.message || (profileRes.status === 403 ? "Este perfil es privado" : "No se pudo cargar el perfil"));
         }
 
-        const data = await response.json();
-        setProfile(data);
+        const profileData = await profileRes.json();
+        setProfile(profileData);
+
+        if (rankingRes.ok) {
+          const rankingData = await rankingRes.json();
+          const top3 = rankingData.slice(0, 3);
+          
+          const positions = top3
+            .map((r, index) => (r.username === profileData.username ? index + 1 : null))
+            .filter((pos) => pos !== null);
+            
+          setRankingPositions(positions);
+        }
       } catch (fetchError) {
         setError(fetchError.message || "No se pudo cargar el perfil");
       } finally {
@@ -32,7 +47,7 @@ export default function PublicProfile() {
     };
 
     if (username) {
-      loadProfile();
+      loadProfileData();
     }
   }, [username]);
 
@@ -88,6 +103,21 @@ export default function PublicProfile() {
                           {profile.username}
                         </h1>
                         <p className="mt-1.5 text-base text-slate-400">@{profile.username}</p>
+                        
+                        {rankingPositions.length > 0 && (
+                          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                            {rankingPositions.map((pos) => (
+                              <div key={pos} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium ${
+                                pos === 1 ? "border-yellow-400/30 bg-yellow-400/10 text-yellow-400" :
+                                pos === 2 ? "border-slate-300/30 bg-slate-300/10 text-slate-300" :
+                                "border-amber-600/30 bg-amber-600/10 text-amber-500"
+                              }`}>
+                                <Medal className="h-4 w-4" />
+                                TOP {pos} Global
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
