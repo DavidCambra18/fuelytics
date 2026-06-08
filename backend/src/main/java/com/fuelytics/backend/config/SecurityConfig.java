@@ -39,7 +39,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                    .requestMatchers("/api/users/register", "/api/users/login", "/api/users/public/**", "/api/health").permitAll()
+                    .requestMatchers("/api/users/register", "/api/users/login", "/api/users/public/**", "/api/health", "/api/ranking").permitAll()
 
                     .requestMatchers("/api/users/check-username", "/api/users/check-email").permitAll()
 
