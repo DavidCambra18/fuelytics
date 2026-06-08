@@ -14,6 +14,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) y
 - Vista de vehiculos publicos con informacion de repostajes y gastos
 - Ranking global de consumos público
 - Paginacion en pagina de repostajes y gastos.
+- Calculadora de viaje para compartir gastos.
 - Generación y exportación de informes completos en formato PDF (gastos, repostajes y resumen global).
 - Mapa de gasolineras con comparador de precios en tiempo real.
 - Campos opcionales de nombre y apellidos en el registro de usuarios.
@@ -28,6 +29,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) y
 - Modernización de la interfaz en los componentes `Settings`, `UserMenu` y `UserProfile` mediante la incorporación sistemática de la iconografía de `lucide-react`.
 - Mejora de los badges informativos en el `README.md` detallando las versiones exactas del stack tecnológico.
 - Mejora del manejador global de peticiones (`apiFetch`) para interceptar caídas de red o del servidor y mostrar un error amigable en toda la aplicación.
+- Actualizacion automatica del odometro del coche al registrar o modificar un repostaje.
 
 ### Corregido
 
