@@ -150,9 +150,10 @@ export default function PublicProfile() {
                         <Car className="h-5 w-5 text-teal-500/50" />
                       </div>
 
-                      {profile.vehicles && profile.vehicles.length > 0 ? (
+                      {/* Filtramos para quedarnos solo con los públicos */}
+                      {profile.vehicles && profile.vehicles.filter(v => v.isPublic).length > 0 ? (
                         <div className="grid gap-4 sm:grid-cols-2">
-                          {profile.vehicles.map((vehicle) => (
+                          {profile.vehicles.filter(v => v.isPublic).map((vehicle) => (
                             <Link
                               to={`/public/vehicles/${vehicle.id}`}
                               key={vehicle.id} 
