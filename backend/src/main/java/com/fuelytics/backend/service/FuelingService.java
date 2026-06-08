@@ -59,24 +59,31 @@ public class FuelingService {
         fuelEntry.setDistance(dto.getDistance());
         fuelEntry.setLiters(dto.getLiters());
         fuelEntry.setPriceTotal(dto.getPriceTotal());
-        
+
         if (dto.getPriceTotal() != null && dto.getLiters() != null && dto.getLiters().signum() != 0) {
             fuelEntry.setPricePerLiter(dto.getPriceTotal().divide(dto.getLiters(), 3, RoundingMode.HALF_UP));
         }
 
         fuelEntry.setDrivingType(dto.getDrivingType());
         fuelEntry.setTireType(dto.getTireType());
-        
+
         fuelEntry.setHighway(dto.getHighway() != null ? dto.getHighway() : false);
         fuelEntry.setCity(dto.getCity() != null ? dto.getCity() : false);
         fuelEntry.setRoad(dto.getRoad() != null ? dto.getRoad() : false);
         fuelEntry.setAc(dto.getAc() != null ? dto.getAc() : false);
         fuelEntry.setTrailer(dto.getTrailer() != null ? dto.getTrailer() : false);
         fuelEntry.setHeating(dto.getHeating() != null ? dto.getHeating() : false);
-        
+
         fuelEntry.setBoardConsumption(dto.getBoardConsumption());
         fuelEntry.setAverageSpeed(dto.getAverageSpeed());
         fuelEntry.setNotes(dto.getNotes());
+
+        if (dto.getOdometer() != null) {
+            if (vehicle.getOdometer() == null || dto.getOdometer() > vehicle.getOdometer()) {
+                vehicle.setOdometer(dto.getOdometer());
+                vehicleRepository.save(vehicle);
+            }
+        }
 
         FuelEntry saved = fuelingRepository.save(fuelEntry);
 
@@ -121,6 +128,14 @@ public class FuelingService {
         fuelEntry.setAverageSpeed(dto.getAverageSpeed());
         fuelEntry.setNotes(dto.getNotes());
 
+        if (dto.getOdometer() != null) {
+            Vehicle vehicleToUpdate = fuelEntry.getVehicle();
+            if (vehicleToUpdate.getOdometer() == null || dto.getOdometer() > vehicleToUpdate.getOdometer()) {
+                vehicleToUpdate.setOdometer(dto.getOdometer());
+                vehicleRepository.save(vehicleToUpdate);
+            }
+        }
+
         FuelEntry saved = fuelingRepository.save(fuelEntry);
 
         updateVehicleAverages(saved.getVehicle());
@@ -136,7 +151,7 @@ public class FuelingService {
         Vehicle vehicle = fuelEntry.getVehicle();
 
         fuelingRepository.delete(fuelEntry);
-        fuelingRepository.flush(); 
+        fuelingRepository.flush();
 
         updateVehicleAverages(vehicle);
     }
@@ -182,10 +197,10 @@ public class FuelingService {
 
     private void updateVehicleAverages(Vehicle vehicle) {
         List<FuelEntry> fuelings = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicle.getId());
-        
+
         int count = fuelings.size();
         vehicle.setFuelEntriesCount(count);
-        
+
         if (count < 5) {
             vehicle.setAvgConsumption(null);
         } else {
@@ -193,12 +208,12 @@ public class FuelingService {
                     .filter(f -> f.getLiters() != null)
                     .mapToDouble(f -> f.getLiters().doubleValue())
                     .sum();
-                    
+
             double totalDistance = fuelings.stream()
                     .filter(f -> f.getDistance() != null)
                     .mapToDouble(f -> f.getDistance().doubleValue())
                     .sum();
-                    
+
             if (totalDistance > 0) {
                 double avg = (totalLiters / totalDistance) * 100.0;
                 vehicle.setAvgConsumption(Math.round(avg * 100.0) / 100.0);
@@ -206,7 +221,7 @@ public class FuelingService {
                 vehicle.setAvgConsumption(null);
             }
         }
-        
+
         vehicleRepository.save(vehicle);
     }
 
