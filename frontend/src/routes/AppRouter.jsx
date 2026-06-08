@@ -16,6 +16,7 @@ import MyProfile from "../pages/MyProfile";
 import PublicProfile from "../pages/PublicProfile";
 import PublicVehicle from "../pages/PublicVehicle";
 import Ranking from "../pages/Ranking";
+import TripCalculator from "../components/TripCalculator";
 import GasStations from "../pages/GasStations";
 import VehicleLayout from "../layout/VehicleLayout";
 import VehicleOverview from "../pages/VehicleOverview";
@@ -79,6 +80,7 @@ function InnerRoutes() {
           <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
           <Route path="/ranking" element={<PageTransition><Ranking /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+          <Route path="/calculator" element={<TripCalculator />} />
           <Route path="/my-profile" element={<PageTransition><MyProfile /></PageTransition>} />
           <Route path="/vehicles/new" element={<PageTransition><VehicleCreate /></PageTransition>} />
           <Route path="/vehicles/:vehicleId" element={<VehicleLayout />}>
