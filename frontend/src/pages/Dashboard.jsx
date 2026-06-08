@@ -39,7 +39,7 @@ export default function Dashboard() {
                   <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Selecciona un coche</p>
                   <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Elige el vehículo sobre el que quieres trabajar</h2>
                   <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                    Después de elegirlo podrás entrar en sus repostajes, gastos y estadísticas específicas.
+                    Después de elegirlo podrás entrar en sus repostajes, gastos y estadísticas.
                   </p>
                 </div>
               </div>

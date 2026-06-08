@@ -599,7 +599,7 @@ export default function Settings() {
                                           disabled={secondaryDisabled}
                                           onChange={(checked) => handleVehicleChange(vehicle.id, "showFuelData", checked)}
                                           label="Mostrar repostajes"
-                                          hint="Habilita el historial de repostajes y la media de consumo."
+                                          hint="Permite hacer públicos los repostajes asociados al vehículo, como historial de repostajes y consumos medios."
                                         />
 
                                         <Toggle
@@ -607,7 +607,7 @@ export default function Settings() {
                                           disabled={secondaryDisabled}
                                           onChange={(checked) => handleVehicleChange(vehicle.id, "showExpenses", checked)}
                                           label="Mostrar gastos"
-                                          hint="Permite ver mantenimientos y costes asociados."
+                                          hint="Permite hacer públicos los gastos asociados al vehículo"
                                         />
 
                                         <Toggle
@@ -615,7 +615,7 @@ export default function Settings() {
                                           disabled={secondaryDisabled}
                                           onChange={(checked) => handleVehicleChange(vehicle.id, "showStatistics", checked)}
                                           label="Mostrar estadísticas y rankings"
-                                          hint="Controla si los datos agregados del vehículo se comparten en la comunidad."
+                                          hint="Permite hacer públicas las estadísticas del vehículo."
                                         />
                                       </div>
                                     </div>

@@ -47,7 +47,7 @@ export default function Login() {
 
           <div className="space-y-5">
             <h1 className="max-w-xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              Accede a tu cuenta y continúa con la gestión de tu flota.
+              Accede a tu cuenta y continúa con la gestión de tus vehículos.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-slate-300">
               Todo el contenido importante queda organizado en una experiencia limpia y directa.
@@ -58,7 +58,7 @@ export default function Login() {
             {[
               ["Rápido", "Acceso inmediato a tu panel"],
               ["Claro", "Interfaz pensada para trabajar"],
-              ["Sólido", "Diseño preparado para crecer"],
+              ["Seguro", "Tus datos protegidos con cifrado"],
             ].map(([title, description]) => (
               <div key={title} className="glass-panel rounded-2xl p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-200/80">{title}</p>
