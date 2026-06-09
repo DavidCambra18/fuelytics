@@ -13,6 +13,8 @@ public class ExpenseResponseDTO {
     private String description;
     private BigDecimal cost;
     private Integer tireSetId;
+    private Integer nextMaintenanceKm;
+    private java.time.LocalDate nextMaintenanceDate;
 
     public Integer getId() {
         return id;
@@ -68,5 +70,21 @@ public class ExpenseResponseDTO {
 
     public void setTireSetId(Integer tireSetId) {
         this.tireSetId = tireSetId;
+    }
+
+    public Integer getNextMaintenanceKm() {
+        return nextMaintenanceKm;
+    }
+
+    public void setNextMaintenanceKm(Integer nextMaintenanceKm) {
+        this.nextMaintenanceKm = nextMaintenanceKm;
+    }
+
+    public java.time.LocalDate getNextMaintenanceDate() {
+        return nextMaintenanceDate;
+    }
+
+    public void setNextMaintenanceDate(java.time.LocalDate nextMaintenanceDate) {
+        this.nextMaintenanceDate = nextMaintenanceDate;
     }
 }

@@ -51,6 +51,8 @@ public class ExpenseService {
         expense.setType(dto.getType());
         expense.setDescription(dto.getDescription());
         expense.setCost(dto.getCost());
+        expense.setNextMaintenanceKm(dto.getNextMaintenanceKm());
+        expense.setNextMaintenanceDate(dto.getNextMaintenanceDate());
 
         if (dto.getType() == ExpenseType.tire_change && dto.getTireSetId() != null) {
             TireSet tireSet = tireSetRepository.findById(dto.getTireSetId())
@@ -97,6 +99,9 @@ public class ExpenseService {
         if (dto.getCost() != null)
             expense.setCost(dto.getCost());
 
+        expense.setNextMaintenanceKm(dto.getNextMaintenanceKm());
+        expense.setNextMaintenanceDate(dto.getNextMaintenanceDate());
+
         if (expense.getType() == ExpenseType.tire_change && dto.getTireSetId() != null) {
             TireSet tireSet = tireSetRepository.findById(dto.getTireSetId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Neumático no encontrado"));
@@ -130,6 +135,9 @@ public class ExpenseService {
         dto.setType(expense.getType());
         dto.setDescription(expense.getDescription());
         dto.setCost(expense.getCost());
+        dto.setNextMaintenanceKm(expense.getNextMaintenanceKm());
+        dto.setNextMaintenanceDate(expense.getNextMaintenanceDate());
+        
         if (expense.getTireSet() != null) {
             dto.setTireSetId(expense.getTireSet().getId());
         }

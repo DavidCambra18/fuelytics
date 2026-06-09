@@ -19,6 +19,10 @@ import com.fuelytics.backend.repository.VehicleRepository;
 import com.fuelytics.backend.repository.FuelingRepository;
 import com.fuelytics.backend.repository.ExpenseRepository;
 
+import com.fuelytics.backend.dto.AlertResponseDTO;
+import com.fuelytics.backend.entity.FuelEntry;
+import com.fuelytics.backend.entity.Expense;
+
 @Service
 public class VehicleService {
 
@@ -234,7 +238,8 @@ public class VehicleService {
 
         boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
 
-        if (!isOwner && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowFuelData()))) {
+        if (!isOwner
+                && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowFuelData()))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Los repostajes de este vehículo son privados");
         }
 
@@ -256,7 +261,8 @@ public class VehicleService {
 
         boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
 
-        if (!isOwner && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowExpenses()))) {
+        if (!isOwner
+                && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowExpenses()))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Los gastos de este vehículo son privados");
         }
 
@@ -276,13 +282,58 @@ public class VehicleService {
 
         boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
 
-        if (!isOwner && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowStatistics()))) {
+        if (!isOwner
+                && (!Boolean.TRUE.equals(vehicle.getIsPublic()) || !Boolean.TRUE.equals(vehicle.getShowStatistics()))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Las estadísticas de este vehículo son privadas");
         }
 
         return Map.of(
-            "message", "Estadísticas en construcción",
-            "vehicleId", vehicleId
-        );
+                "message", "Estadísticas en construcción",
+                "vehicleId", vehicleId);
+    }
+
+    public List<AlertResponseDTO> getVehicleAlerts(Integer vehicleId, String email) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+
+        boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
+        if (!isOwner && !Boolean.TRUE.equals(vehicle.getIsPublic())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
+        }
+
+        List<FuelEntry> fuelings = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId);
+
+        final Integer currentOdometer;
+        if (!fuelings.isEmpty() && fuelings.get(0).getOdometer() != null) {
+            currentOdometer = fuelings.get(0).getOdometer();
+        } else if (vehicle.getOdometer() != null) {
+            currentOdometer = vehicle.getOdometer();
+        } else {
+            currentOdometer = 0;
+        }
+
+        List<Expense> expenses = expenseRepository.findByVehicleIdOrderByDateDesc(vehicleId);
+
+        return expenses.stream()
+                .filter(e -> e.getNextMaintenanceKm() != null && e.getNextMaintenanceKm() > 0)
+                .map(e -> {
+                    AlertResponseDTO dto = new AlertResponseDTO();
+                    dto.setExpenseType(e.getType() != null ? e.getType().name() : "maintenance");
+                    dto.setDescription(e.getDescription());
+                    dto.setNextMaintenanceDate(e.getNextMaintenanceDate());
+
+                    int difference = e.getNextMaintenanceKm() - currentOdometer;
+                    dto.setRemainingKm(difference);
+
+                    if (difference <= 500) {
+                        dto.setUrgency("CRITICAL");
+                    } else if (difference <= 1200) {
+                        dto.setUrgency("WARNING");
+                    } else {
+                        dto.setUrgency("OK");
+                    }
+
+                    return dto;
+                }).toList();
     }
 }

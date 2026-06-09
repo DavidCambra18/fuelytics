@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import VehicleAlerts from "../components/VehicleAlerts";
 
 export default function Dashboard() {
   const [vehicles, setVehicles] = useState([]);
@@ -80,14 +81,14 @@ export default function Dashboard() {
               ) : (
                 <div className="mt-5 grid gap-4 lg:grid-cols-2">
                   {vehicles.map((vehicle) => (
-                    <Link
+                    <div
                       key={vehicle.id}
-                      to={`/vehicles/${vehicle.id}`}
                       className="flex h-full flex-col justify-between gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-teal-300/30 hover:bg-white/[0.05]"
                     >
-                      <div>
+                      {/* Cabecera clickeable que lleva al coche */}
+                      <Link to={`/vehicles/${vehicle.id}`} className="block group">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-semibold text-white">
+                          <h3 className="text-lg font-semibold text-white group-hover:text-teal-400 transition-colors">
                             {vehicle.brand} {vehicle.model}
                           </h3>
                           <span className="rounded-full bg-teal-300/10 px-3 py-1 text-xs font-medium text-teal-100">
@@ -97,8 +98,13 @@ export default function Dashboard() {
                         <p className="mt-2 text-sm text-slate-400">
                           {vehicle.power} CV · {vehicle.cc} cc
                         </p>
+                      </Link>
+
+                      {/* Componente de Alertas inyectado para este vehículo */}
+                      <div className="mt-2">
+                        <VehicleAlerts vehicleId={vehicle.id} />
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}
