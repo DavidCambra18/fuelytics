@@ -130,7 +130,6 @@ export default function TiresModule() {
         }
 
         const km = tire.currentKm || 0;
-        // Mantenemos solo el cálculo para el reemplazo (vida útil)
         const replacePct = Math.min((km / 40000) * 100, 100);
 
         return (
@@ -152,7 +151,6 @@ export default function TiresModule() {
                     </div>
                 </div>
 
-                {/* Solo dejamos la barra de vida útil */}
                 <div className="pt-2">
                     <div className="flex justify-between text-xs mb-1">
                         <span className="text-slate-400 flex items-center gap-1">
@@ -195,7 +193,6 @@ export default function TiresModule() {
                 <form onSubmit={handleCreate} className="glass-panel rounded-[2rem] p-5 sm:p-6 grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2"><h3 className="text-base font-semibold text-white">Montar nuevo neumático</h3></div>
 
-                    {/* Marca y Modelo */}
                     <label className="block">
                         <span className="text-xs text-slate-400 block mb-2">Marca</span>
                         <input
@@ -217,7 +214,6 @@ export default function TiresModule() {
                         />
                     </label>
 
-                    {/* Medida desglosada */}
                     <div className="md:col-span-2">
                         <span className="text-xs text-slate-400 block mb-2">Medida (Ancho / Perfil / Pulgada)</span>
                         <div className="flex gap-2 items-center">
@@ -247,7 +243,6 @@ export default function TiresModule() {
                         </div>
                     </div>
 
-                    {/* Eje, Fecha y Odómetro */}
                     <label className="block">
                         <span className="text-xs text-slate-400 block mb-2">Eje de colocación</span>
                         <CustomSelect
@@ -277,7 +272,6 @@ export default function TiresModule() {
                         />
                     </label>
 
-                    {/* Botones */}
                     <div className="md:col-span-2 flex gap-2 pt-2">
                         <button type="submit" className="px-5 py-2.5 bg-white text-slate-950 rounded-xl text-xs font-semibold hover:bg-slate-200 transition">Guardar</button>
                         <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 border border-white/10 text-slate-400 rounded-xl text-xs font-semibold hover:text-white transition">Cancelar</button>
@@ -300,7 +294,16 @@ export default function TiresModule() {
                                     <p className="font-semibold text-slate-200">{tire.brand} {tire.model} - {tire.size} ({tire.axle === "FRONT" ? "Delantero" : "Trasero"})</p>
                                     <p className="text-slate-500 mt-0.5">Instalación: {tire.installationOdometer.toLocaleString()} km → Baja: {tire.removalOdometer?.toLocaleString()} km</p>
                                 </div>
-                                <span className="font-mono text-teal-400 bg-teal-400/5 px-2 py-1 rounded-md font-medium">+{tire.currentKm.toLocaleString()} km recorridos</span>
+                                <div className="text-right">
+                                    <span className="block font-mono text-teal-400 bg-teal-400/5 px-2 py-1 rounded-md font-medium mb-1">
+                                        +{tire.currentKm.toLocaleString()} km
+                                    </span>
+                                    {tire.expenseCost > 0 && (
+                                        <span className="block text-amber-400 font-semibold">
+                                            {tire.expenseCost.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
