@@ -48,24 +48,33 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(objectUrl);
 }
 
-export async function exportReportFile(options) {
-  const res = await apiFetch("/api/export", {
-    method: "POST",
-    body: options,
+export async function exportReportFile({ reportType, vehicle, startDate, endDate, format = "pdf" }) {
+  const queryParams = new URLSearchParams();
+  if (startDate) queryParams.append("startDate", startDate);
+  if (endDate) queryParams.append("endDate", endDate);
+
+  const endpoint = `/api/export/${reportType}/${vehicle.id}?${queryParams.toString()}`;
+
+  const res = await apiFetch(endpoint, {
+    method: "GET",
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "No hay datos en las fechas seleccionadas");
+    const errorText = await res.text();
+    let errorMessage = "No hay datos en las fechas seleccionadas";
+    try {
+      const errorData = JSON.parse(errorText);
+      errorMessage = errorData.message || errorMessage;
+    } catch (e) {
+    }
+    throw new Error(errorMessage);
   }
 
   const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "exportacion.pdf";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
+
+  const contentDisposition = res.headers.get("Content-Disposition");
+  const fallbackName = buildFallbackFilename(reportType, vehicle, startDate, endDate, format);
+  const filename = extractFilename(contentDisposition) || fallbackName;
+
+  downloadBlob(blob, filename);
 }
