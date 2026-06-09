@@ -11,6 +11,7 @@ public class ExpenseDTO {
     private ExpenseType type;
     private String description;
     private BigDecimal cost;
+    private Integer tireSetId;
 
     public Integer getVehicleId() {
         return vehicleId;
@@ -50,5 +51,13 @@ public class ExpenseDTO {
 
     public void setCost(BigDecimal cost) {
         this.cost = cost;
+    }
+
+    public Integer getTireSetId() {
+        return tireSetId;
+    }
+
+    public void setTireSetId(Integer tireSetId) {
+        this.tireSetId = tireSetId;
     }
 }

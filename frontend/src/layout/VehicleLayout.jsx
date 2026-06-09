@@ -38,6 +38,7 @@ export default function VehicleLayout() {
         { label: "Resumen", to: "" },
         { label: "Repostajes", to: "fuelings" },
         { label: "Gastos", to: "expenses" },
+        { label: "Neumáticos", to: "tires" },
         { label: "Estadísticas", to: "statistics" },
     ];
 

@@ -33,6 +33,10 @@ public class Expense {
     @Column(nullable = false)
     private BigDecimal cost;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tire_set_id")
+    private TireSet tireSet;
+
     public Integer getId() {
         return id;
     }
@@ -79,5 +83,13 @@ public class Expense {
 
     public void setCost(BigDecimal cost) {
         this.cost = cost;
+    }
+
+    public TireSet getTireSet() {
+        return tireSet;
+    }
+
+    public void setTireSet(TireSet tireSet) {
+        this.tireSet = tireSet;
     }
 }

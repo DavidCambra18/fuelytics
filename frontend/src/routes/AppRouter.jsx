@@ -16,6 +16,7 @@ import MyProfile from "../pages/MyProfile";
 import PublicProfile from "../pages/PublicProfile";
 import PublicVehicle from "../pages/PublicVehicle";
 import Ranking from "../pages/Ranking";
+import TireModule from "../components/TireModule";
 import TripCalculator from "../components/TripCalculator";
 import GasStations from "../pages/GasStations";
 import VehicleLayout from "../layout/VehicleLayout";
@@ -88,6 +89,7 @@ function InnerRoutes() {
             <Route path="edit" element={<PageTransition><VehicleEdit /></PageTransition>} />
             <Route path="fuelings" element={<PageTransition><Fuelings /></PageTransition>} />
             <Route path="expenses" element={<PageTransition><Expenses /></PageTransition>} />
+            <Route path="tires" element={<TireModule />} />
             <Route path="statistics" element={<PageTransition><Statistics /></PageTransition>} />
           </Route>
         </Route>

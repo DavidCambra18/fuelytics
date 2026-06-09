@@ -59,6 +59,11 @@ const TIRE_TYPE_LABELS = {
   allseason: "Neumáticos 4 estaciones",
 };
 
+const TIRE_AXLE_LABELS = {
+  FRONT: "Delanteros",
+  REAR: "Traseros",
+};
+
 export const VEHICLE_ENERGY_TYPE_OPTIONS = [
   { value: "gasoline", label: "Gasolina" },
   { value: "diesel", label: "Diésel" },
@@ -120,6 +125,11 @@ export const TIRE_TYPE_OPTIONS = [
   { value: "allseason", label: "Neumáticos 4 estaciones" },
 ];
 
+export const TIRE_AXLE_OPTIONS = [
+  { value: "FRONT", label: "Delanteros" },
+  { value: "REAR", label: "Traseros" },
+];
+
 const EXPENSE_TYPE_LABELS = {
   maintenance: "Mantenimiento",
   repair: "Reparación",
@@ -177,6 +187,10 @@ export function formatDrivingType(value) {
 
 export function formatTireType(value) {
   return TIRE_TYPE_LABELS[value] || toReadableLabel(value);
+}
+
+export function formatTireAxle(value) {
+  return TIRE_AXLE_LABELS[value] || toReadableLabel(value);
 }
 
 export function formatExpenseType(value) {

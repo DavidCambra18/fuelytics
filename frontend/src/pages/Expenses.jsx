@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Download, ReceiptText } from "lucide-react";
+import { Download } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
 import { apiFetch } from "../services/api";
 import ExportReportModal from "../components/ExportReportModal";
@@ -41,13 +41,10 @@ function formatDateEs(value) {
   if (!value) {
     return "No definida";
   }
-
   const date = new Date(`${value}T00:00:00`);
-
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-
   return new Intl.DateTimeFormat("es-ES", {
     day: "2-digit",
     month: "2-digit",
@@ -61,6 +58,7 @@ function createInitialFormData() {
     type: "maintenance",
     description: "",
     cost: "",
+    tireSetId: "",
   };
 }
 
@@ -70,23 +68,18 @@ function toFormData(expense) {
     type: expense?.type || "maintenance",
     description: expense?.description || "",
     cost: expense?.cost ?? "",
+    tireSetId: expense?.tireSetId ?? "",
   };
 }
 
 function toNumber(value) {
-  if (value === "" || value === null || value === undefined) {
-    return null;
-  }
-
+  if (value === "" || value === null || value === undefined) return null;
   const parsed = Number(value);
   return Number.isNaN(parsed) ? null : parsed;
 }
 
 function parseExpenseDate(value) {
-  if (!value) {
-    return null;
-  }
-
+  if (!value) return null;
   const date = new Date(`${value}T00:00:00`);
   return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -98,23 +91,13 @@ function formatMoney(value) {
   });
 }
 
-function formatMonthYear(date) {
-  return new Intl.DateTimeFormat("es-ES", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
-}
-
 function getMonthSpan(expensesList) {
   const dates = expensesList
     .map((expense) => parseExpenseDate(expense.date))
     .filter(Boolean)
     .sort((left, right) => left - right);
 
-  if (dates.length === 0) {
-    return 0;
-  }
-
+  if (dates.length === 0) return 0;
   const firstDate = dates[0];
   const lastDate = dates[dates.length - 1];
 
@@ -124,6 +107,7 @@ function getMonthSpan(expensesList) {
 export default function Expenses() {
   const { selectedVehicle } = useOutletContext();
   const [expenses, setExpenses] = useState([]);
+  const [availableTires, setAvailableTires] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -134,27 +118,15 @@ export default function Expenses() {
   const [formData, setFormData] = useState(createInitialFormData());
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
+
   const now = new Date();
-  const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
+
   const exportDateRange = useMemo(() => {
-    if (expenses.length === 0) {
-      return {};
-    }
-
-    const dates = expenses
-      .map((expense) => expense.date)
-      .filter(Boolean)
-      .sort();
-
-    if (dates.length === 0) {
-      return {};
-    }
-
-    return {
-      startDate: dates[0],
-      endDate: dates[dates.length - 1],
-    };
+    if (expenses.length === 0) return {};
+    const dates = expenses.map((e) => e.date).filter(Boolean).sort();
+    if (dates.length === 0) return {};
+    return { startDate: dates[0], endDate: dates[dates.length - 1] };
   }, [expenses]);
 
   useEffect(() => {
@@ -164,17 +136,11 @@ export default function Expenses() {
   useEffect(() => {
     const loadExpenses = async () => {
       if (!selectedVehicle?.id) return;
-
       setLoading(true);
       setError("");
-
       try {
         const response = await apiFetch(`/api/expenses/vehicle/${selectedVehicle.id}`);
-
-        if (!response.ok) {
-          throw new Error("No se pudieron cargar los gastos");
-        }
-
+        if (!response.ok) throw new Error("No se pudieron cargar los gastos");
         const data = await response.json();
         setExpenses(data || []);
       } catch (fetchError) {
@@ -183,8 +149,23 @@ export default function Expenses() {
         setLoading(false);
       }
     };
-
     loadExpenses();
+  }, [selectedVehicle?.id]);
+
+  useEffect(() => {
+    const loadTires = async () => {
+      if (!selectedVehicle?.id) return;
+      try {
+        const res = await apiFetch(`/api/vehicles/${selectedVehicle.id}/tires`);
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableTires(data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadTires();
   }, [selectedVehicle?.id]);
 
   const openCreateForm = () => {
@@ -207,18 +188,11 @@ export default function Expenses() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setFormData((current) => ({ ...current, [name]: value }));
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setFormData((current) => ({ ...current, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -233,12 +207,11 @@ export default function Expenses() {
         type: formData.type,
         description: formData.description,
         cost: toNumber(formData.cost),
+        tireSetId: formData.type === "tire_change" && formData.tireSetId ? Number(formData.tireSetId) : null,
       };
 
       const response = await apiFetch(
-        editingExpense
-          ? `/api/expenses/${editingExpense.id}`
-          : "/api/expenses",
+        editingExpense ? `/api/expenses/${editingExpense.id}` : "/api/expenses",
         {
           method: editingExpense ? "PUT" : "POST",
           body: payload,
@@ -251,13 +224,11 @@ export default function Expenses() {
       }
 
       const savedExpense = await response.json();
-
-      setExpenses((currentExpenses) =>
+      setExpenses((current) =>
         editingExpense
-          ? currentExpenses.map((item) => (item.id === savedExpense.id ? savedExpense : item))
-          : [savedExpense, ...currentExpenses]
+          ? current.map((item) => (item.id === savedExpense.id ? savedExpense : item))
+          : [savedExpense, ...current]
       );
-
       closeForm();
     } catch (submitError) {
       setError(submitError.message || "Error guardando gasto");
@@ -268,25 +239,16 @@ export default function Expenses() {
 
   const handleDelete = async (expense) => {
     const confirmed = window.confirm("¿Seguro que quieres borrar este gasto?");
-
-    if (!confirmed) {
-      return;
-    }
-
+    if (!confirmed) return;
     setDeletingId(expense.id);
     setError("");
-
     try {
-      const response = await apiFetch(`/api/expenses/${expense.id}`, {
-        method: "DELETE",
-      });
-
+      const response = await apiFetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Error al borrar el gasto");
       }
-
-      setExpenses((currentExpenses) => currentExpenses.filter((item) => item.id !== expense.id));
+      setExpenses((current) => current.filter((item) => item.id !== expense.id));
     } catch (deleteError) {
       setError(deleteError.message || "Error borrando gasto");
     } finally {
@@ -299,15 +261,8 @@ export default function Expenses() {
   const monthlyAverageCost = monthSpan > 0 ? totalCost / monthSpan : 0;
   const yearlyCost = expenses.reduce((acc, expense) => {
     const expenseDate = parseExpenseDate(expense.date);
-
-    if (!expenseDate) {
-      return acc;
-    }
-
-    if (expenseDate.getFullYear() === currentYear) {
-      return acc + Number(expense.cost || 0);
-    }
-
+    if (!expenseDate) return acc;
+    if (expenseDate.getFullYear() === currentYear) return acc + Number(expense.cost || 0);
     return acc;
   }, 0);
 
@@ -335,7 +290,6 @@ export default function Expenses() {
           >
             + Nuevo gasto
           </button>
-
           <button
             type="button"
             onClick={() => setExportTarget({ reportType: "expenses", vehicle: selectedVehicle })}
@@ -347,11 +301,11 @@ export default function Expenses() {
           </button>
         </div>
 
-        {error ? (
+        {error && (
           <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/20 p-4 text-sm text-red-300">
             {error}
           </div>
-        ) : null}
+        )}
 
         {loading ? (
           <div className="py-8 text-center text-slate-400">Cargando...</div>
@@ -364,30 +318,21 @@ export default function Expenses() {
             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
                 <p className="text-xs uppercase tracking-[0.15em] text-amber-400 font-semibold">Gasto total</p>
-                <p className="mt-2 text-2xl font-bold text-white">
-                  {formatMoney(totalCost)} €
-                </p>
+                <p className="mt-2 text-2xl font-bold text-white">{formatMoney(totalCost)} €</p>
               </div>
-
               <div className="rounded-xl border border-slate-700/50 bg-slate-950/30 p-4">
                 <p className="text-xs uppercase tracking-[0.15em] text-slate-400 font-semibold">Gasto mensual promedio</p>
-                <p className="mt-2 text-2xl font-bold text-white">
-                  {formatMoney(monthlyAverageCost)} €
-                </p>
+                <p className="mt-2 text-2xl font-bold text-white">{formatMoney(monthlyAverageCost)} €</p>
               </div>
-
               <div className="rounded-xl border border-slate-700/50 bg-slate-950/30 p-4">
                 <p className="text-xs uppercase tracking-[0.15em] text-slate-400 font-semibold">Gasto anual</p>
-                <p className="mt-2 text-2xl font-bold text-white">
-                  {formatMoney(yearlyCost)} €
-                </p>
+                <p className="mt-2 text-2xl font-bold text-white">{formatMoney(yearlyCost)} €</p>
               </div>
             </div>
 
             <div className="space-y-3">
               {currentExpenses.map((expense) => {
                 const cost = Number(expense.cost) || 0;
-
                 return (
                   <div
                     key={expense.id}
@@ -398,7 +343,6 @@ export default function Expenses() {
                         <p className="text-sm font-semibold text-white">{formatDateEs(expense.date)}</p>
                         <p className="mt-1 text-xs text-slate-400">{formatExpenseType(expense.type)}</p>
                       </div>
-
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -417,28 +361,35 @@ export default function Expenses() {
                         </button>
                       </div>
                     </div>
-
                     <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1.4fr]">
                       <div>
                         <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Coste</p>
                         <p className="mt-1 text-xl font-bold text-amber-400">
-                          {cost.toLocaleString("es-ES", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })} €
+                          {cost.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                         </p>
                       </div>
-
                       <div>
                         <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Categoría</p>
                         <p className="mt-1 text-white font-medium">{formatExpenseType(expense.type)}</p>
                       </div>
-
                       <div>
                         <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Descripción</p>
-                        <p className="mt-1 text-white font-medium">
-                          {expense.description || "Sin descripción"}
-                        </p>
+                        <p className="mt-1 text-white font-medium">{expense.description || "Sin descripción"}</p>
+
+                        {expense.type === "tire_change" && expense.tireSetId && (
+                          (() => {
+                            const tire = availableTires.find(t => t.id === expense.tireSetId);
+                            if (!tire) return null;
+
+                            return (
+                              <div className="mt-2">
+                                <span className="inline-block rounded-md border border-teal-500/20 bg-teal-500/10 px-2 py-1 text-xs font-medium text-teal-300">
+                                  {tire.brand} {tire.model} - {tire.size} ({tire.axle === 'FRONT' ? 'Delantero' : 'Trasero'})
+                                </span>
+                              </div>
+                            );
+                          })()
+                        )}
                       </div>
                     </div>
                   </div>
@@ -465,7 +416,6 @@ export default function Expenses() {
                     }
                   />
                 </PaginationItem>
-
                 {[...Array(totalPages)].map((_, i) => (
                   <PaginationItem key={i}>
                     <PaginationLink
@@ -485,7 +435,6 @@ export default function Expenses() {
                     </PaginationLink>
                   </PaginationItem>
                 ))}
-
                 <PaginationItem>
                   <PaginationNext
                     href="#"
@@ -506,7 +455,7 @@ export default function Expenses() {
         )}
       </article>
 
-      {showForm ? (
+      {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-black/40 sm:p-8">
             <div className="mb-6 flex items-start justify-between gap-4">
@@ -516,7 +465,6 @@ export default function Expenses() {
                   {editingExpense ? "Editar gasto" : "Nuevo gasto"}
                 </h3>
               </div>
-
               <button
                 type="button"
                 onClick={closeForm}
@@ -549,6 +497,24 @@ export default function Expenses() {
                   />
                 </div>
               </div>
+
+              {formData.type === "tire_change" && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">Neumático montado</label>
+                  <CustomSelect
+                    options={[
+                      { value: "", label: "Ninguno / Gasto general" },
+                      ...availableTires.map(t => ({
+                        value: t.id,
+                        label: `${t.brand} ${t.model} - ${t.size} (${t.axle === 'FRONT' ? 'Delantero' : 'Trasero'}) | ${formatDateEs(t.installationDate)} - ${t.installationOdometer.toLocaleString()} km`
+                      }))
+                    ]}
+                    value={formData.tireSetId}
+                    onChange={(value) => handleSelectChange("tireSetId", value)}
+                    placeholder="Selecciona el juego de neumáticos"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-300">Descripción</label>
@@ -586,9 +552,9 @@ export default function Expenses() {
             </form>
           </div>
         </div>
-      ) : null}
+      )}
 
-      {exportTarget ? (
+      {exportTarget && (
         <ExportReportModal
           open={Boolean(exportTarget)}
           reportType={exportTarget.reportType}
@@ -597,7 +563,7 @@ export default function Expenses() {
           defaultEndDate={exportDateRange.endDate || ""}
           onClose={() => setExportTarget(null)}
         />
-      ) : null}
+      )}
     </section>
   );
 }
