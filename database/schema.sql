@@ -79,6 +79,11 @@ CREATE TYPE expense_type AS ENUM (
   'matriculation'
 );
 
+CREATE TYPE tire_axle_enum AS ENUM (
+  'FRONT',
+  'REAR'
+);
+
 -- USERS
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -107,7 +112,7 @@ CREATE TABLE vehicles (
   tank_capacity DECIMAL(5,2) NOT NULL,
   gearbox gearbox_type NOT NULL,
   official_consumption DECIMAL(5,2),
-  avg_consumption DOUBLE PRECISION(5,2) DEFAULT NULL,
+  avg_consumption DOUBLE PRECISION DEFAULT NULL,
   fuel_entries_count INT DEFAULT 0,
   is_public BOOLEAN DEFAULT FALSE,
   show_fuel_data BOOLEAN DEFAULT TRUE,
@@ -153,6 +158,24 @@ CREATE TABLE expenses (
   type expense_type NOT NULL,
   description TEXT,
   cost DECIMAL(8,2) NOT NULL,
+  tire_set_id INT,
 
   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+  FOREIGN KEY (tire_set_id) REFERENCES tire_sets(id) ON DELETE SET NULL
+);
+
+-- TIRE SETS
+CREATE TABLE tire_sets (
+  id SERIAL PRIMARY KEY,
+  vehicle_id INT NOT NULL,
+  brand VARCHAR(100) NOT NULL,
+  model VARCHAR(100) NOT NULL,
+  size VARCHAR(50) NOT NULL,
+  axle tire_axle_enum NOT NULL,
+  installation_date DATE NOT NULL,
+  installation_odometer INT NOT NULL,
+  removal_odometer INT,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    
+  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 );
