@@ -37,6 +37,9 @@ public class Expense {
     @JoinColumn(name = "tire_set_id")
     private TireSet tireSet;
 
+    private Integer nextMaintenanceKm;
+    private java.time.LocalDate nextMaintenanceDate;
+
     public Integer getId() {
         return id;
     }
@@ -91,5 +94,21 @@ public class Expense {
 
     public void setTireSet(TireSet tireSet) {
         this.tireSet = tireSet;
+    }
+
+    public Integer getNextMaintenanceKm() {
+        return nextMaintenanceKm;
+    }
+
+    public void setNextMaintenanceKm(Integer nextMaintenanceKm) {
+        this.nextMaintenanceKm = nextMaintenanceKm;
+    }
+
+    public java.time.LocalDate getNextMaintenanceDate() {
+        return nextMaintenanceDate;
+    }
+
+    public void setNextMaintenanceDate(java.time.LocalDate nextMaintenanceDate) {
+        this.nextMaintenanceDate = nextMaintenanceDate;
     }
 }

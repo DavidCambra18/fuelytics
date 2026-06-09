@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fuelytics.backend.dto.AlertResponseDTO;
 import com.fuelytics.backend.dto.VehicleDTO;
 import com.fuelytics.backend.dto.VehicleResponseDTO;
 import com.fuelytics.backend.dto.VehicleUpdateDTO;
@@ -92,5 +93,14 @@ public class VehicleController {
     public ResponseEntity<?> getVehicleStatistics(@PathVariable Integer id, Principal principal) {
         String email = principal != null ? principal.getName() : null;
         return ResponseEntity.ok(vehicleService.getVehicleStatistics(id, email));
+    }
+
+    @GetMapping("/{vehicleId}/alerts")
+    public ResponseEntity<List<AlertResponseDTO>> getVehicleAlerts(
+            @PathVariable Integer vehicleId,
+            Principal principal) {
+
+        List<AlertResponseDTO> alerts = vehicleService.getVehicleAlerts(vehicleId, principal.getName());
+        return ResponseEntity.ok(alerts);
     }
 }

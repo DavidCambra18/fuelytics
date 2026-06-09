@@ -59,6 +59,8 @@ function createInitialFormData() {
     description: "",
     cost: "",
     tireSetId: "",
+    nextMaintenanceKm: "",
+    nextMaintenanceDate: "",
   };
 }
 
@@ -69,6 +71,8 @@ function toFormData(expense) {
     description: expense?.description || "",
     cost: expense?.cost ?? "",
     tireSetId: expense?.tireSetId ?? "",
+    nextMaintenanceKm: expense?.nextMaintenanceKm ?? "",
+    nextMaintenanceDate: expense?.nextMaintenanceDate || "",
   };
 }
 
@@ -208,6 +212,8 @@ export default function Expenses() {
         description: formData.description,
         cost: toNumber(formData.cost),
         tireSetId: formData.type === "tire_change" && formData.tireSetId ? Number(formData.tireSetId) : null,
+        nextMaintenanceKm: toNumber(formData.nextMaintenanceKm),
+        nextMaintenanceDate: formData.nextMaintenanceDate || null,
       };
 
       const response = await apiFetch(
@@ -541,6 +547,35 @@ export default function Expenses() {
                   className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
                 />
               </div>
+
+              {formData.type === "maintenance" && (
+                <div className="mt-2 border-t border-white/5 pt-4">
+                  <h4 className="mb-4 text-sm font-medium text-slate-300">Programar próxima revisión</h4>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-300">Kilometraje previsto</label>
+                      <input
+                        type="number"
+                        name="nextMaintenanceKm"
+                        value={formData.nextMaintenanceKm}
+                        onChange={handleInputChange}
+                        placeholder="Ej: 330000"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-300">Fecha estimada</label>
+                      <input
+                        type="date"
+                        name="nextMaintenanceDate"
+                        value={formData.nextMaintenanceDate}
+                        onChange={handleInputChange}
+                        className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
