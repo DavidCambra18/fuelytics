@@ -49,6 +49,8 @@ public class SecurityConfig {
 
                     .requestMatchers("/api/users/**").authenticated()
 
+                    // .requestMatchers("/api/badges/**").authenticated()
+
                         .requestMatchers("/api/vehicles/**").authenticated()
 
                         .anyRequest().authenticated())

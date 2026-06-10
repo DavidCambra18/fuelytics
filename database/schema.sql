@@ -181,3 +181,30 @@ CREATE TABLE tire_sets (
     
   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 );
+
+-- BADGES
+CREATE TABLE badges (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  icon_name VARCHAR(50) NOT NULL
+);
+
+-- USER BADGES
+CREATE TABLE user_badges (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  badge_id INT NOT NULL,
+  vehicle_id INT,
+  earned_date DATE NOT NULL DEFAULT CURRENT_DATE,
+
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
+  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL
+);
+
+INSERT INTO badges (name, description, icon_name) VALUES
+('Cliente Habitual', 'Has registrado tus primeros 10 repostajes.', 'fuel'),
+('Gestor Eficiente', 'Has registrado 10 gastos en tu vehículo.', 'receipt'),
+('Pie de Pluma', 'Has consolidado un consumo medio igual o inferior a 5.0 L/100km.', 'leaf'),
+('Mecánico de Confianza', 'Has registrado 5 mantenimientos o cambios de neumáticos.', 'wrench');

@@ -24,15 +24,18 @@ public class ExpenseService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final TireSetRepository tireSetRepository;
+    private final BadgeService badgeService;
 
     public ExpenseService(ExpenseRepository expenseRepository,
             VehicleRepository vehicleRepository,
             UserRepository userRepository,
-            TireSetRepository tireSetRepository) {
+            TireSetRepository tireSetRepository,
+            BadgeService badgeService) {
         this.expenseRepository = expenseRepository;
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
         this.tireSetRepository = tireSetRepository;
+        this.badgeService = badgeService;
     }
 
     public ExpenseResponseDTO createExpense(ExpenseDTO dto, String email) {
@@ -61,6 +64,9 @@ public class ExpenseService {
         }
 
         Expense saved = expenseRepository.save(expense);
+
+        badgeService.checkExpenseBadges(user, vehicle);
+
         return mapToDTO(saved);
     }
 
@@ -111,6 +117,9 @@ public class ExpenseService {
         }
 
         Expense updated = expenseRepository.save(expense);
+
+        badgeService.checkExpenseBadges(user, expense.getVehicle());
+
         return mapToDTO(updated);
     }
 

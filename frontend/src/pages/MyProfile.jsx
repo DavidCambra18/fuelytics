@@ -1,7 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
-import { ArrowLeft, AlertCircle, User, Info, Settings, Car, Calendar } from "lucide-react";
+import { ArrowLeft, AlertCircle, User, Info, Settings, Car, Calendar, Award, Fuel, Receipt, Leaf, Wrench } from "lucide-react";
+
+const BADGE_ICONS = {
+  fuel: Fuel,
+  receipt: Receipt,
+  leaf: Leaf,
+  wrench: Wrench,
+  default: Award,
+};
+
+function formatDateEs(dateString) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
 
 export default function MyProfile() {
   const [profile, setProfile] = useState(null);
@@ -14,9 +32,10 @@ export default function MyProfile() {
       setError("");
 
       try {
-        const [profileRes, vehiclesRes] = await Promise.all([
+        const [profileRes, vehiclesRes, badgesRes] = await Promise.all([
           apiFetch("/api/users/profile"),
-          apiFetch("/api/vehicles")
+          apiFetch("/api/vehicles"),
+          apiFetch("/api/badges")
         ]);
 
         if (!profileRes.ok) {
@@ -25,10 +44,12 @@ export default function MyProfile() {
 
         const profileData = await profileRes.json();
         const vehiclesData = vehiclesRes.ok ? await vehiclesRes.json() : [];
+        const badgesData = badgesRes.ok ? await badgesRes.json() : [];
 
         setProfile({
           ...profileData,
-          vehicles: vehiclesData
+          vehicles: vehiclesData,
+          badges: badgesData
         });
       } catch (fetchError) {
         setError(fetchError.message || "Error al cargar los datos");
@@ -58,10 +79,10 @@ export default function MyProfile() {
   }
 
   return (
-    <div className="min-h-screen text-slate-100">
+    <div className="min-h-screen text-slate-100 pt-15">
       <main className="pb-10 pt-6 lg:pb-16">
         <div className="section-shell">
-          
+
           <div className="mx-auto max-w-5xl">
             <div className="mb-6">
               <Link
@@ -80,10 +101,10 @@ export default function MyProfile() {
               </div>
             ) : profile ? (
               <div className="space-y-6">
-                
+
                 <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
                   <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-teal-900/20 to-transparent pointer-events-none"></div>
-                  
+
                   <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
                     <div className="flex flex-col items-center gap-6 sm:flex-row">
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-teal-950 text-4xl font-bold text-teal-400 ring-2 ring-teal-500/20 sm:h-28 sm:w-28 sm:text-5xl">
@@ -112,11 +133,11 @@ export default function MyProfile() {
                 </section>
 
                 <div className="grid gap-6 lg:grid-cols-3">
-                  
+
                   <section className="flex flex-col gap-4 lg:col-span-1">
                     <div className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
                       <h2 className="mb-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Información Personal</h2>
-                      
+
                       <div className="flex flex-col gap-5">
                         <article className="flex items-center gap-4">
                           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-slate-400">
@@ -135,8 +156,8 @@ export default function MyProfile() {
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-medium text-slate-500">Nombre real</p>
                             <p className="truncate text-base font-semibold text-white">
-                              {profile.firstName || profile.lastName 
-                                ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() 
+                              {profile.firstName || profile.lastName
+                                ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim()
                                 : <span className="text-slate-500 italic">No definido</span>}
                             </p>
                           </div>
@@ -183,6 +204,47 @@ export default function MyProfile() {
                   </section>
 
                 </div>
+
+                {/* NUEVA SECCIÓN: LOGROS E INSIGNIAS */}
+                <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                  <div className="mb-6 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Logros e Insignias</h2>
+                      <p className="mt-1 text-sm text-slate-400">Tu historial de hitos y buenas prácticas.</p>
+                    </div>
+                    <Award className="h-6 w-6 text-amber-500/50" />
+                  </div>
+
+                  {profile.badges && profile.badges.length > 0 ? (
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                      {profile.badges.map((badge, index) => {
+                        const IconComponent = BADGE_ICONS[badge.iconName] || BADGE_ICONS.default;
+
+                        return (
+                          <div key={index} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5 flex flex-col items-center text-center transition hover:border-amber-500/30">
+                            <div className="p-3.5 rounded-full bg-amber-500/10 text-amber-400 mb-3 border border-amber-500/10 shadow-inner">
+                              <IconComponent className="h-6 w-6" />
+                            </div>
+                            <h4 className="text-sm font-bold text-white tracking-wide">{badge.name}</h4>
+                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed flex-grow">{badge.description}</p>
+                            <div className="mt-4 pt-3 w-full border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-500">
+                              <Calendar className="h-3 w-3" />
+                              <span>Obtenido: {formatDateEs(badge.earnedDate)}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-8 text-center">
+                      <Award className="mb-3 h-8 w-8 text-slate-500 opacity-50" />
+                      <p className="text-sm text-slate-400">
+                        Aún no has desbloqueado ninguna insignia. ¡Sigue registrando datos para conseguir la primera!
+                      </p>
+                    </div>
+                  )}
+                </section>
+
               </div>
             ) : null}
           </div>
