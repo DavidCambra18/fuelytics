@@ -1,7 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch } from "../services/api";
-import { ArrowLeft, AlertCircle, User, Car, Calendar, Medal } from "lucide-react";
+import { ArrowLeft, AlertCircle, User, Car, Calendar, Medal, Award, Fuel, Receipt, Leaf, Wrench } from "lucide-react";
+
+const BADGE_ICONS = {
+  fuel: Fuel,
+  receipt: Receipt,
+  leaf: Leaf,
+  wrench: Wrench,
+  default: Award,
+};
+
+function formatDateEs(dateString) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
 
 export default function PublicProfile() {
   const { username } = useParams();
@@ -16,9 +34,10 @@ export default function PublicProfile() {
       setError("");
 
       try {
-        const [profileRes, rankingRes] = await Promise.all([
+        const [profileRes, rankingRes, badgesRes] = await Promise.all([
           apiFetch(`/api/users/public/${encodeURIComponent(username)}`),
-          apiFetch("/api/ranking")
+          apiFetch("/api/ranking"),
+          apiFetch(`/api/badges/public/${encodeURIComponent(username)}`)
         ]);
 
         if (!profileRes.ok) {
@@ -27,16 +46,21 @@ export default function PublicProfile() {
         }
 
         const profileData = await profileRes.json();
-        setProfile(profileData);
+        const badgesData = badgesRes.ok ? await badgesRes.json() : [];
+
+        setProfile({
+          ...profileData,
+          badges: badgesData
+        });
 
         if (rankingRes.ok) {
           const rankingData = await rankingRes.json();
           const top3 = rankingData.slice(0, 3);
-          
+
           const positions = top3
             .map((r, index) => (r.username === profileData.username ? index + 1 : null))
             .filter((pos) => pos !== null);
-            
+
           setRankingPositions(positions);
         }
       } catch (fetchError) {
@@ -68,7 +92,7 @@ export default function PublicProfile() {
   }
 
   return (
-    <div className="min-h-screen text-slate-100">
+    <div className="min-h-screen text-slate-100 pt-15">
       <main className="pb-10 pt-6 lg:pb-16">
         <div className="section-shell">
           <div className="mx-auto max-w-5xl">
@@ -89,10 +113,10 @@ export default function PublicProfile() {
               </div>
             ) : profile ? (
               <div className="space-y-6">
-                
+
                 <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
                   <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-teal-900/20 to-transparent pointer-events-none"></div>
-                  
+
                   <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
                     <div className="flex flex-col items-center gap-6 sm:flex-row">
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-teal-950 text-4xl font-bold text-teal-400 ring-2 ring-teal-500/20 sm:h-28 sm:w-28 sm:text-5xl">
@@ -103,15 +127,14 @@ export default function PublicProfile() {
                           {profile.username}
                         </h1>
                         <p className="mt-1.5 text-base text-slate-400">@{profile.username}</p>
-                        
+
                         {rankingPositions.length > 0 && (
                           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                             {rankingPositions.map((pos) => (
-                              <div key={pos} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium ${
-                                pos === 1 ? "border-yellow-400/30 bg-yellow-400/10 text-yellow-400" :
-                                pos === 2 ? "border-slate-300/30 bg-slate-300/10 text-slate-300" :
-                                "border-amber-600/30 bg-amber-600/10 text-amber-500"
-                              }`}>
+                              <div key={pos} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium ${pos === 1 ? "border-yellow-400/30 bg-yellow-400/10 text-yellow-400" :
+                                  pos === 2 ? "border-slate-300/30 bg-slate-300/10 text-slate-300" :
+                                    "border-amber-600/30 bg-amber-600/10 text-amber-500"
+                                }`}>
                                 <Medal className="h-4 w-4" />
                                 TOP {pos} Global
                               </div>
@@ -124,11 +147,11 @@ export default function PublicProfile() {
                 </section>
 
                 <div className="grid gap-6 lg:grid-cols-3">
-                  
+
                   <section className="flex flex-col gap-4 lg:col-span-1">
                     <div className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
                       <h2 className="mb-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Información</h2>
-                      
+
                       <div className="flex flex-col gap-5">
                         <article className="flex items-center gap-4">
                           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-slate-400">
@@ -150,13 +173,12 @@ export default function PublicProfile() {
                         <Car className="h-5 w-5 text-teal-500/50" />
                       </div>
 
-                      {/* Filtramos para quedarnos solo con los públicos */}
                       {profile.vehicles && profile.vehicles.filter(v => v.isPublic).length > 0 ? (
                         <div className="grid gap-4 sm:grid-cols-2">
                           {profile.vehicles.filter(v => v.isPublic).map((vehicle) => (
                             <Link
                               to={`/public/vehicles/${vehicle.id}`}
-                              key={vehicle.id} 
+                              key={vehicle.id}
                               className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/5 bg-slate-900/50 p-4 transition hover:border-teal-500/30 hover:bg-slate-900/80 cursor-pointer"
                             >
                               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-400/10 text-teal-400">
@@ -186,6 +208,46 @@ export default function PublicProfile() {
                   </section>
 
                 </div>
+
+                <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                  <div className="mb-6 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Logros e Insignias</h2>
+                      <p className="mt-1 text-sm text-slate-400">El historial de hitos de este conductor.</p>
+                    </div>
+                    <Award className="h-6 w-6 text-amber-500/50" />
+                  </div>
+
+                  {profile.badges && profile.badges.length > 0 ? (
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                      {profile.badges.map((badge, index) => {
+                        const IconComponent = BADGE_ICONS[badge.iconName] || BADGE_ICONS.default;
+
+                        return (
+                          <div key={index} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5 flex flex-col items-center text-center transition hover:border-amber-500/30">
+                            <div className="p-3.5 rounded-full bg-amber-500/10 text-amber-400 mb-3 border border-amber-500/10 shadow-inner">
+                              <IconComponent className="h-6 w-6" />
+                            </div>
+                            <h4 className="text-sm font-bold text-white tracking-wide">{badge.name}</h4>
+                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed flex-grow">{badge.description}</p>
+                            <div className="mt-4 pt-3 w-full border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-500">
+                              <Calendar className="h-3 w-3" />
+                              <span>Obtenido: {formatDateEs(badge.earnedDate)}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-8 text-center">
+                      <Award className="mb-3 h-8 w-8 text-slate-500 opacity-50" />
+                      <p className="text-sm text-slate-400">
+                        Este usuario aún no ha desbloqueado ninguna insignia pública.
+                      </p>
+                    </div>
+                  )}
+                </section>
+
               </div>
             ) : null}
           </div>

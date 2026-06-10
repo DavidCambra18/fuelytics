@@ -23,15 +23,18 @@ public class FuelingService {
     private final FuelingRepository fuelingRepository;
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
+    private final BadgeService badgeService;
 
     public FuelingService(
             FuelingRepository fuelingRepository,
             VehicleRepository vehicleRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            BadgeService badgeService) {
 
         this.fuelingRepository = fuelingRepository;
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
+        this.badgeService = badgeService;
     }
 
     public FuelingResponseDTO createFueling(FuelingDTO dto, String email) {
@@ -89,6 +92,8 @@ public class FuelingService {
 
         updateVehicleAverages(vehicle);
 
+        badgeService.checkFuelingBadges(user, vehicle);
+
         return mapToDTO(saved);
     }
 
@@ -139,6 +144,8 @@ public class FuelingService {
         FuelEntry saved = fuelingRepository.save(fuelEntry);
 
         updateVehicleAverages(saved.getVehicle());
+
+        badgeService.checkFuelingBadges(user, fuelEntry.getVehicle());
 
         return mapToDTO(saved);
     }
