@@ -11,12 +11,14 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) y
 ### Añadido
 
 - Perfil publico de usuarios.
-- Vista de vehiculos publicos con informacion de repostajes y gastos
-- Ranking global de consumos público
+- Vista de vehiculos publicos con informacion de repostajes y gastos.
+- Ranking global de consumos público.
 - Paginacion en pagina de repostajes y gastos.
 - Calculadora de viaje para compartir gastos.
 - Generación y exportación de informes completos en formato PDF (gastos, repostajes y resumen global).
 - Mapa de gasolineras con comparador de precios en tiempo real.
+- Sistema de alertas de mantenimientos.
+- Logros e insignas en el perfil del usuario.
 - Campos opcionales de nombre y apellidos en el registro de usuarios.
 - Migración de las peticiones fetch a un nuevo archivo de utilidad centralizado para la API.
 - Animaciones de transición en los cambios de página utilizando Framer Motion.
