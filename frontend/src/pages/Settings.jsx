@@ -610,13 +610,13 @@ export default function Settings() {
                                           hint="Permite hacer públicos los gastos asociados al vehículo"
                                         />
 
-                                        <Toggle
+                                        {/* <Toggle
                                           checked={vehicle.showStatistics}
                                           disabled={secondaryDisabled}
                                           onChange={(checked) => handleVehicleChange(vehicle.id, "showStatistics", checked)}
                                           label="Mostrar estadísticas y rankings"
                                           hint="Permite hacer públicas las estadísticas del vehículo."
-                                        />
+                                        /> */}
                                       </div>
                                     </div>
                                   </div>

@@ -91,6 +91,15 @@ export default function UserMenu() {
         </Link>
 
         <Link
+          to="/dashboard"
+          aria-label="Ir al garaje"
+          title="Garaje"
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+        >
+          <Warehouse className="h-5 w-5 text-teal-200" aria-hidden="true" />
+        </Link>
+        
+        <Link
           to="/gas-stations"
           aria-label="Ir al mapa de gasolineras"
           title="Gasolineras"
@@ -108,14 +117,6 @@ export default function UserMenu() {
           <Trophy className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
 
-        <Link
-          to="/dashboard"
-          aria-label="Ir al garaje"
-          title="Garaje"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
-        >
-          <Warehouse className="h-5 w-5 text-teal-200" aria-hidden="true" />
-        </Link>
 
         <Link
           to="/calculator"
