@@ -120,7 +120,7 @@ CREATE TABLE vehicles (
   show_statistics BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- FUEL ENTRIES
@@ -147,7 +147,7 @@ CREATE TABLE fuel_entries (
   average_speed INT,
   notes TEXT,
 
-  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 );
 
 -- EXPENSES
@@ -159,8 +159,10 @@ CREATE TABLE expenses (
   description TEXT,
   cost DECIMAL(8,2) NOT NULL,
   tire_set_id INT,
+  next_maintenance_km INT,
+  next_maintenance_date DATE,
 
-  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
   FOREIGN KEY (tire_set_id) REFERENCES tire_sets(id) ON DELETE SET NULL
 );
 
