@@ -5,6 +5,7 @@ import { apiFetch } from "../services/api";
 export default function VehicleAlerts({ vehicleId }) {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [completingId, setCompletingId] = useState(null);
 
   useEffect(() => {
     const loadAlerts = async () => {
@@ -71,6 +72,19 @@ export default function VehicleAlerts({ vehicleId }) {
     }).format(date);
   };
 
+  const completeAlert = async (expenseId) => {
+    setCompletingId(expenseId);
+    try {
+      const response = await apiFetch(`/api/vehicles/${vehicleId}/alerts/${expenseId}/complete`, {
+        method: "PUT",
+      });
+      if (!response.ok) throw new Error("No se pudo completar la alerta");
+      setAlerts((current) => current.filter((alert) => alert.expenseId !== expenseId));
+    } finally {
+      setCompletingId(null);
+    }
+  };
+
   if (loading || alerts.length === 0) return null;
 
   return (
@@ -84,11 +98,12 @@ export default function VehicleAlerts({ vehicleId }) {
         {alerts.map((alert, index) => {
           const styles = getUrgencyStyles(alert.urgency);
           const CustomIcon = getIcon(alert.description);
-          const isOverdue = alert.remainingKm <= 0;
+          const isOverdue = alert.remainingKm != null && alert.remainingKm <= 0;
+          const isDateOverdue = alert.remainingDays != null && alert.remainingDays <= 0;
 
           return (
             <div
-              key={index}
+              key={alert.expenseId || index}
               className={`flex items-center justify-between rounded-xl border p-2.5 transition duration-200 ${styles.card}`}
             >
               <div className="flex items-center gap-3 overflow-hidden">
@@ -100,18 +115,29 @@ export default function VehicleAlerts({ vehicleId }) {
                     {alert.description || "Mantenimiento"}
                   </span>
                   <span className="truncate text-[10px] font-medium text-slate-400">
-                    {isOverdue 
-                      ? `Vencido por ${Math.abs(alert.remainingKm).toLocaleString("es-ES")} km` 
-                      : `En ${alert.remainingKm.toLocaleString("es-ES")} km`
-                    }
-                    {alert.nextMaintenanceDate && ` • ${formatDateEs(alert.nextMaintenanceDate)}`}
+                    {alert.remainingKm != null && (isOverdue
+                      ? `Vencido por ${Math.abs(alert.remainingKm).toLocaleString("es-ES")} km`
+                      : `En ${alert.remainingKm.toLocaleString("es-ES")} km`)}
+                    {alert.remainingKm != null && alert.nextMaintenanceDate && " • "}
+                    {alert.nextMaintenanceDate && (isDateOverdue ? "Fecha vencida: " : "Fecha: ")}
+                    {alert.nextMaintenanceDate && formatDateEs(alert.nextMaintenanceDate)}
                   </span>
                 </div>
               </div>
 
-              <span className={`ml-2 shrink-0 rounded-md border px-2 py-0.5 text-[9px] font-bold tracking-wide ${styles.badge}`}>
-                {styles.label}
-              </span>
+              <div className="ml-2 flex shrink-0 items-center gap-2">
+                <span className={`rounded-md border px-2 py-0.5 text-[9px] font-bold tracking-wide ${styles.badge}`}>
+                  {styles.label}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => completeAlert(alert.expenseId)}
+                  disabled={completingId === alert.expenseId}
+                  className="rounded-md border border-white/10 px-2 py-1 text-[10px] font-semibold text-slate-300 hover:text-white disabled:opacity-50"
+                >
+                  {completingId === alert.expenseId ? "Guardando" : "Hecho"}
+                </button>
+              </div>
             </div>
           );
         })}

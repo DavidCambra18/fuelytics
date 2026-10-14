@@ -3,11 +3,21 @@ package com.fuelytics.backend.dto;
 import java.time.LocalDate;
 
 public class AlertResponseDTO {
+    private Integer expenseId;
     private String expenseType;
     private String description;
     private Integer remainingKm;
     private String urgency;
     private LocalDate nextMaintenanceDate;
+    private Long remainingDays;
+
+    public Integer getExpenseId() {
+        return expenseId;
+    }
+
+    public void setExpenseId(Integer expenseId) {
+        this.expenseId = expenseId;
+    }
 
     public String getExpenseType() {
         return expenseType;
@@ -47,5 +57,13 @@ public class AlertResponseDTO {
 
     public void setNextMaintenanceDate(LocalDate nextMaintenanceDate) {
         this.nextMaintenanceDate = nextMaintenanceDate;
+    }
+
+    public Long getRemainingDays() {
+        return remainingDays;
+    }
+
+    public void setRemainingDays(Long remainingDays) {
+        this.remainingDays = remainingDays;
     }
 }

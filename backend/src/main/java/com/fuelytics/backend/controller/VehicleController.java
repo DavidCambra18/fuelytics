@@ -105,4 +105,13 @@ public class VehicleController {
         List<AlertResponseDTO> alerts = vehicleService.getVehicleAlerts(vehicleId, principal.getName());
         return ResponseEntity.ok(alerts);
     }
+
+    @PutMapping("/{vehicleId}/alerts/{expenseId}/complete")
+    public ResponseEntity<Void> completeVehicleAlert(
+            @PathVariable Integer vehicleId,
+            @PathVariable Integer expenseId,
+            Principal principal) {
+        vehicleService.completeAlert(vehicleId, expenseId, principal.getName());
+        return ResponseEntity.noContent().build();
+    }
 }

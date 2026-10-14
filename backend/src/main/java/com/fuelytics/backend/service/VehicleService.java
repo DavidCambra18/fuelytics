@@ -3,10 +3,13 @@ package com.fuelytics.backend.service;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fuelytics.backend.dto.ExpensePublicDTO;
 import com.fuelytics.backend.dto.FuelEntryPublicDTO;
@@ -323,19 +326,29 @@ public class VehicleService {
         List<Expense> expenses = expenseRepository.findByVehicleIdOrderByDateDesc(vehicleId);
 
         return expenses.stream()
-                .filter(e -> e.getNextMaintenanceKm() != null && e.getNextMaintenanceKm() > 0)
+                .filter(e -> (e.getNextMaintenanceKm() != null && e.getNextMaintenanceKm() > 0)
+                        || e.getNextMaintenanceDate() != null)
                 .map(e -> {
                     AlertResponseDTO dto = new AlertResponseDTO();
+                    dto.setExpenseId(e.getId());
                     dto.setExpenseType(e.getType() != null ? e.getType().name() : "maintenance");
                     dto.setDescription(e.getDescription());
                     dto.setNextMaintenanceDate(e.getNextMaintenanceDate());
 
-                    int difference = e.getNextMaintenanceKm() - currentOdometer;
+                    Integer difference = e.getNextMaintenanceKm() != null
+                            ? e.getNextMaintenanceKm() - currentOdometer
+                            : null;
+                    Long remainingDays = e.getNextMaintenanceDate() != null
+                            ? ChronoUnit.DAYS.between(LocalDate.now(), e.getNextMaintenanceDate())
+                            : null;
                     dto.setRemainingKm(difference);
+                    dto.setRemainingDays(remainingDays);
 
-                    if (difference <= 500) {
+                    if ((difference != null && difference <= 500)
+                            || (remainingDays != null && remainingDays <= 7)) {
                         dto.setUrgency("CRITICAL");
-                    } else if (difference <= 1200) {
+                    } else if ((difference != null && difference <= 1200)
+                            || (remainingDays != null && remainingDays <= 30)) {
                         dto.setUrgency("WARNING");
                     } else {
                         dto.setUrgency("OK");
@@ -343,6 +356,25 @@ public class VehicleService {
 
                     return dto;
                 }).toList();
+    }
+
+    @Transactional
+    public void completeAlert(Integer vehicleId, Integer expenseId, String email) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+        if (!vehicle.getUser().getEmail().equals(email)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
+        }
+
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gasto no encontrado"));
+        if (!expense.getVehicle().getId().equals(vehicleId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La alerta no pertenece al vehículo");
+        }
+
+        expense.setNextMaintenanceKm(null);
+        expense.setNextMaintenanceDate(null);
+        expenseRepository.save(expense);
     }
 
     private int currentOdometer(Vehicle vehicle) {
