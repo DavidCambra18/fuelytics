@@ -60,6 +60,7 @@ public class ExpenseService {
         if (dto.getType() == ExpenseType.tire_change && dto.getTireSetId() != null) {
             TireSet tireSet = tireSetRepository.findById(dto.getTireSetId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Neumático no encontrado"));
+            verifyTireBelongsToVehicle(tireSet, vehicle);
             expense.setTireSet(tireSet);
         }
 
@@ -111,6 +112,7 @@ public class ExpenseService {
         if (expense.getType() == ExpenseType.tire_change && dto.getTireSetId() != null) {
             TireSet tireSet = tireSetRepository.findById(dto.getTireSetId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Neumático no encontrado"));
+            verifyTireBelongsToVehicle(tireSet, expense.getVehicle());
             expense.setTireSet(tireSet);
         } else {
             expense.setTireSet(null);
@@ -151,5 +153,12 @@ public class ExpenseService {
             dto.setTireSetId(expense.getTireSet().getId());
         }
         return dto;
+    }
+
+    private void verifyTireBelongsToVehicle(TireSet tireSet, Vehicle vehicle) {
+        if (!tireSet.getVehicle().getId().equals(vehicle.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El juego de neumáticos no pertenece al vehículo del gasto");
+        }
     }
 }
