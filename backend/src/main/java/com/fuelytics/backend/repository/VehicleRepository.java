@@ -4,6 +4,10 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
 
 import com.fuelytics.backend.entity.Vehicle;
 import com.fuelytics.backend.dto.RankingProjection; 
@@ -11,6 +15,10 @@ import com.fuelytics.backend.dto.RankingProjection;
 public interface VehicleRepository extends JpaRepository<Vehicle, Integer> {
 
     List<Vehicle> findByUserId(Integer userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT v FROM Vehicle v WHERE v.id = :id")
+    Optional<Vehicle> findByIdForUpdate(@Param("id") Integer id);
 
     @Query(value = "SELECT v.id AS vehicleId, v.brand AS brand, v.model AS model, u.username AS username, " +
                    "v.avg_consumption AS avgConsumption " +

@@ -202,8 +202,18 @@ CREATE TABLE user_badges (
 
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
-  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL
+  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL,
+  CONSTRAINT uq_user_badges_user_badge UNIQUE (user_id, badge_id)
 );
+
+CREATE INDEX idx_vehicles_user_id ON vehicles(user_id);
+CREATE INDEX idx_fuel_entries_vehicle_date ON fuel_entries(vehicle_id, date DESC, id DESC);
+CREATE INDEX idx_expenses_vehicle_date ON expenses(vehicle_id, date DESC, id DESC);
+CREATE INDEX idx_tire_sets_vehicle_date ON tire_sets(vehicle_id, installation_date DESC);
+CREATE INDEX idx_user_badges_user_id ON user_badges(user_id);
+CREATE UNIQUE INDEX uq_tire_sets_active_axle
+  ON tire_sets(vehicle_id, axle)
+  WHERE is_active = TRUE;
 
 INSERT INTO badges (name, description, icon_name) VALUES
 ('Cliente Habitual', 'Has registrado tus primeros 10 repostajes.', 'fuel'),

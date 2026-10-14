@@ -45,9 +45,9 @@ public class FuelingService {
     @Transactional
     public FuelingResponseDTO createFueling(FuelingDTO dto, String email) {
 
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
 
-        Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId())
+        Vehicle vehicle = vehicleRepository.findByIdForUpdate(dto.getVehicleId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Vehicle not found"));
@@ -101,8 +101,9 @@ public class FuelingService {
     @Transactional
     public FuelingResponseDTO updateFueling(Integer fuelingId, FuelingDTO dto, String email) {
 
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
         FuelEntry fuelEntry = getOwnedFueling(fuelingId, user);
+        vehicleRepository.findByIdForUpdate(fuelEntry.getVehicle().getId());
 
         if (dto.getVehicleId() != null && !fuelEntry.getVehicle().getId().equals(dto.getVehicleId())) {
             throw new ResponseStatusException(
@@ -148,8 +149,9 @@ public class FuelingService {
     @Transactional
     public void deleteFueling(Integer fuelingId, String email) {
 
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
         FuelEntry fuelEntry = getOwnedFueling(fuelingId, user);
+        vehicleRepository.findByIdForUpdate(fuelEntry.getVehicle().getId());
         Vehicle vehicle = fuelEntry.getVehicle();
 
         fuelingRepository.delete(fuelEntry);

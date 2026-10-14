@@ -41,7 +41,7 @@ public class TireService {
 
     @Transactional
     public TireSetResponseDTO createTireSet(Integer vehicleId, TireSetDTO dto, String principalName) {
-        Vehicle vehicle = verifyOwnership(vehicleId, principalName);
+        Vehicle vehicle = verifyOwnershipForUpdate(vehicleId, principalName);
 
         tireSetRepository.findByVehicleIdAndActiveTrue(vehicleId).stream()
                 .filter(t -> t.getAxle() == dto.getAxle())
@@ -71,7 +71,7 @@ public class TireService {
     public void deactivateTire(Integer tireId, Integer removalOdometer, String principalName) {
         TireSet tire = tireSetRepository.findById(tireId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Neumático no encontrado"));
-        verifyOwnership(tire.getVehicle().getId(), principalName);
+        verifyOwnershipForUpdate(tire.getVehicle().getId(), principalName);
 
         tire.setActive(false);
         tire.setRemovalOdometer(removalOdometer);
@@ -88,6 +88,15 @@ public class TireService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
         }
         return v;
+    }
+
+    private Vehicle verifyOwnershipForUpdate(Integer vehicleId, String principalName) {
+        Vehicle vehicle = vehicleRepository.findByIdForUpdate(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+        if (!vehicle.getUser().getEmail().equals(principalName)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
+        }
+        return vehicle;
     }
 
     private int getMaxOdometer(Integer vehicleId, Integer baseOdometer) {

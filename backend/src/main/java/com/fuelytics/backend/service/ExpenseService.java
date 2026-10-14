@@ -41,9 +41,9 @@ public class ExpenseService {
 
     @Transactional
     public ExpenseResponseDTO createExpense(ExpenseDTO dto, String email) {
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
 
-        Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId())
+        Vehicle vehicle = vehicleRepository.findByIdForUpdate(dto.getVehicleId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
 
         if (!vehicle.getUser().getId().equals(user.getId())) {
@@ -74,7 +74,7 @@ public class ExpenseService {
     }
 
     public List<ExpenseResponseDTO> getExpensesByVehicle(Integer vehicleId, String email) {
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
 
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
@@ -99,6 +99,7 @@ public class ExpenseService {
         if (!expense.getVehicle().getUser().getId().equals(user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
         }
+        vehicleRepository.findByIdForUpdate(expense.getVehicle().getId());
 
         if (dto.getDate() != null)
             expense.setDate(dto.getDate());
@@ -130,7 +131,7 @@ public class ExpenseService {
 
     @Transactional
     public void deleteExpense(Integer id, String email) {
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
 
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gasto no encontrado"));
