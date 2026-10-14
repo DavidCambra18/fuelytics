@@ -37,6 +37,7 @@ public class FuelingService {
         this.badgeService = badgeService;
     }
 
+    @Transactional
     public FuelingResponseDTO createFueling(FuelingDTO dto, String email) {
 
         User user = userRepository.findByEmail(email);

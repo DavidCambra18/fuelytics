@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fuelytics.backend.dto.ExpenseDTO;
 import com.fuelytics.backend.dto.ExpenseResponseDTO;
@@ -38,6 +39,7 @@ public class ExpenseService {
         this.badgeService = badgeService;
     }
 
+    @Transactional
     public ExpenseResponseDTO createExpense(ExpenseDTO dto, String email) {
         User user = userRepository.findByEmail(email);
 
@@ -87,6 +89,7 @@ public class ExpenseService {
                 .toList();
     }
 
+    @Transactional
     public ExpenseResponseDTO updateExpense(Integer id, ExpenseDTO dto, String email) {
         User user = userRepository.findByEmail(email);
 
@@ -125,6 +128,7 @@ public class ExpenseService {
         return mapToDTO(updated);
     }
 
+    @Transactional
     public void deleteExpense(Integer id, String email) {
         User user = userRepository.findByEmail(email);
 
