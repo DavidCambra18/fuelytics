@@ -12,7 +12,7 @@ function Pagination({
       role="navigation"
       aria-label="pagination"
       data-slot="pagination"
-      className={cn("mx-auto flex w-full justify-center", className)}
+      className={cn("mx-auto flex w-full min-w-0 justify-center", className)}
       {...props} />
   );
 }
@@ -24,7 +24,7 @@ function PaginationContent({
   return (
     <ul
       data-slot="pagination-content"
-      className={cn("flex items-center gap-0.5", className)}
+      className={cn("max-w-full items-center gap-0.5 overflow-x-auto py-1 flex", className)}
       {...props} />
   );
 }

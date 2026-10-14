@@ -25,12 +25,12 @@ export default function VehicleOverview() {
   return (
     <section className="w-full">
       <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
-        <div className="space-y-2 mb-6 flex items-start justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <p className="text-xs uppercase tracking-[0.3em] text-teal-400 font-semibold">Resumen</p>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="flex w-full items-center gap-3 sm:ml-auto sm:w-auto">
             <Link
               to={`/vehicles/${selectedVehicle.id}/edit`}
-              className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-teal-300/40 hover:text-white"
+              className="flex-1 rounded-full border border-white/10 px-4 py-2.5 text-center text-sm font-semibold text-slate-300 transition hover:border-teal-300/40 hover:text-white sm:flex-none sm:py-2"
             >
               Editar
             </Link>
@@ -62,7 +62,7 @@ export default function VehicleOverview() {
                 }
               }}
               disabled={deleting}
-              className="rounded-full border border-rose-400/20 px-4 py-2 text-sm font-semibold text-rose-300 transition hover:border-rose-300/40 hover:text-rose-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex-1 rounded-full border border-rose-400/20 px-4 py-2.5 text-sm font-semibold text-rose-300 transition hover:border-rose-300/40 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:py-2"
             >
               {deleting ? "Eliminando..." : "Borrar"}
             </button>

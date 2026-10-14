@@ -626,7 +626,7 @@ export default function Fuelings() {
             aria-modal="true"
             aria-labelledby={formDialogTitleId}
             tabIndex={-1}
-            className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-black/40 sm:p-8"
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/40 sm:p-8"
           >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
@@ -856,7 +856,7 @@ export default function Fuelings() {
             aria-modal="true"
             aria-labelledby={helpDialogTitleId}
             tabIndex={-1}
-            className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-6"
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div>

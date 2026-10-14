@@ -370,7 +370,7 @@ export default function Statistics() {
                 </div>
               </div>
 
-              <div className="mt-5 h-[420px] rounded-[1.5rem] border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-3 sm:h-[480px] sm:p-4 xl:h-[520px]">
+              <div className="mt-5 h-[340px] rounded-[1.5rem] border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-3 sm:h-[480px] sm:p-4 xl:h-[520px]">
                 {chartFuelings.length > 0 ? (
                   <Line data={chartData} options={chartOptions} />
                 ) : (

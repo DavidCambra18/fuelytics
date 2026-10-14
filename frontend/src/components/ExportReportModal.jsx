@@ -106,7 +106,7 @@ function ExportReportDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-black/50 sm:p-8"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">
           <div>

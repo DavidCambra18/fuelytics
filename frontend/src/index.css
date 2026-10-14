@@ -56,16 +56,26 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 20%),
     radial-gradient(circle at 80% 0%, rgba(20, 184, 166, 0.15), transparent 24%),
     linear-gradient(180deg, #071017 0%, #0a1320 50%, #050a10 100%);
   color: #e5eef6;
+}
+
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
 }
 
 body::before {

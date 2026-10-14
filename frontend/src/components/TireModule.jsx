@@ -116,11 +116,11 @@ export default function TiresModule() {
 
         return (
             <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
                         <span className="text-xs font-bold uppercase tracking-wider text-teal-400">{title}</span>
-                        <h4 className="text-lg font-semibold text-white mt-0.5">{tire.brand} {tire.model}</h4>
-                        <p className="text-xs text-slate-400">Medida: {tire.size} | Montados a {tire.installationOdometer.toLocaleString()} km</p>
+                        <h4 className="mt-0.5 break-words text-lg font-semibold text-white">{tire.brand} {tire.model}</h4>
+                        <p className="text-xs leading-5 text-slate-400">Medida: {tire.size} · Montados a {tire.installationOdometer.toLocaleString()} km</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
@@ -134,11 +134,11 @@ export default function TiresModule() {
                 </div>
 
                 <div className="pt-2">
-                    <div className="flex justify-between text-xs mb-1">
+                    <div className="mb-2 flex flex-col gap-1 text-xs sm:flex-row sm:justify-between">
                         <span className="text-slate-400 flex items-center gap-1">
                             Ciclo de Vida Útil {km >= 40000 && <AlertTriangle className="h-3.5 w-3.5 text-rose-500 inline" />}
                         </span>
-                        <span className={km >= 40000 ? "text-rose-400 font-medium" : "text-slate-300"}>{km.toLocaleString()} / 40.000 km</span>
+                        <span className={`whitespace-nowrap ${km >= 40000 ? "text-rose-400 font-medium" : "text-slate-300"}`}>{km.toLocaleString()} / 40.000 km</span>
                     </div>
                     <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden">
                         <div
@@ -155,7 +155,7 @@ export default function TiresModule() {
         <div className="space-y-6">
             {error && <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div>}
 
-            <div className="flex justify-between items-center bg-slate-950/20 p-4 rounded-2xl border border-white/5">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/5 bg-slate-950/20 p-4">
                 <div className="flex items-center gap-2">
                     <Disc className="h-5 w-5 text-teal-400" />
                     <span className="text-sm font-medium text-slate-300">Gestión de Neumáticos</span>
@@ -257,9 +257,9 @@ export default function TiresModule() {
                         />
                     </label>
 
-                    <div className="md:col-span-2 flex gap-2 pt-2">
-                        <button type="submit" className="px-5 py-2.5 bg-white text-slate-950 rounded-xl text-xs font-semibold hover:bg-slate-200 transition">Guardar</button>
-                        <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 border border-white/10 text-slate-400 rounded-xl text-xs font-semibold hover:text-white transition">Cancelar</button>
+                    <div className="grid gap-2 pt-2 sm:grid-cols-2 md:col-span-2 md:flex">
+                        <button type="submit" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200">Guardar</button>
+                        <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-slate-400 transition hover:text-white">Cancelar</button>
                     </div>
                 </form>
             )}
@@ -274,12 +274,12 @@ export default function TiresModule() {
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Historial de Desgaste</h4>
                     <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 text-sm">
                         {tires.filter((t) => !t.active).map((tire) => (
-                            <div key={tire.id} className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs">
-                                <div>
+                            <div key={tire.id} className="flex flex-col gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+                                <div className="min-w-0">
                                     <p className="font-semibold text-slate-200">{tire.brand} {tire.model} - {tire.size} ({tire.axle === "FRONT" ? "Delantero" : "Trasero"})</p>
                                     <p className="text-slate-500 mt-0.5">Instalación: {tire.installationOdometer.toLocaleString()} km → Baja: {tire.removalOdometer?.toLocaleString()} km</p>
                                 </div>
-                                <div className="text-right">
+                                <div className="shrink-0 text-left sm:text-right">
                                     <span className="block font-mono text-teal-400 bg-teal-400/5 px-2 py-1 rounded-md font-medium mb-1">
                                         +{tire.currentKm.toLocaleString()} km
                                     </span>

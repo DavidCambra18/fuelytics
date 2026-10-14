@@ -194,10 +194,10 @@ export default function TripCalculator() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-white/5 bg-slate-900/30 p-6 h-fit">
+          <div className="flex h-fit flex-col gap-4 rounded-2xl border border-white/5 bg-slate-900/30 p-4 sm:p-6">
             <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-2">Estimación</h3>
             
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div className="flex flex-col gap-2 border-b border-white/5 pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3 text-slate-300">
                 <Droplets className="h-5 w-5 text-teal-500/70" />
                 <span className="text-sm">Cantidad necesaria</span>
@@ -207,7 +207,7 @@ export default function TripCalculator() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between border-b border-white/5 py-4">
+            <div className="flex flex-col gap-2 border-b border-white/5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3 text-slate-300">
                 <Wallet className="h-5 w-5 text-teal-500/70" />
                 <span className="text-sm">Coste total</span>
@@ -218,7 +218,7 @@ export default function TripCalculator() {
             </div>
 
             <div className={`flex flex-col pt-4 transition-all duration-300 ${numPeople > 1 ? 'opacity-100' : 'opacity-30 grayscale'}`}>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3 text-slate-300">
                   <Users className="h-5 w-5 text-teal-500/70" />
                   <span className="text-sm font-medium">Por persona</span>

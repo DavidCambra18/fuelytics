@@ -65,14 +65,14 @@ export default function UserMenu() {
   };
 
   return (
-    <div ref={menuRef} className="fixed left-5 top-5 z-40">
-      <div className="flex items-center gap-2">
+    <div ref={menuRef} className="fixed inset-x-3 bottom-3 z-40 sm:bottom-auto sm:left-5 sm:right-auto sm:top-5">
+      <div className="flex items-center justify-between gap-1 rounded-full border border-white/10 bg-slate-950/85 p-1 shadow-2xl shadow-black/30 backdrop-blur-xl sm:justify-start sm:gap-2 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
         <button
           type="button"
           onClick={() => setOpen((current) => !current)}
-          className="flex items-center gap-3 rounded-full border border-white/10 bg-slate-950/80 pl-2 pr-4 py-2 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+          className="flex h-11 w-11 shrink-0 items-center justify-center gap-3 rounded-full border border-white/10 bg-slate-950/80 p-1 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-auto sm:w-auto sm:justify-start sm:py-2 sm:pl-2 sm:pr-4"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-400/15 text-sm font-semibold text-teal-200 ring-1 ring-teal-300/20">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-400/15 text-sm font-semibold text-teal-200 ring-1 ring-teal-300/20 sm:h-10 sm:w-10">
             {(username || "U").slice(0, 1).toUpperCase()}
           </span>
           <span className="hidden text-sm font-medium text-white sm:block">
@@ -85,7 +85,7 @@ export default function UserMenu() {
           to="/settings"
           aria-label="Editar perfil y ajustes"
           title="Ajustes"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
         >
           <SettingsIcon className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
@@ -94,7 +94,7 @@ export default function UserMenu() {
           to="/dashboard"
           aria-label="Ir al garaje"
           title="Garaje"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
         >
           <Warehouse className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
@@ -103,7 +103,7 @@ export default function UserMenu() {
           to="/gas-stations"
           aria-label="Ir al mapa de gasolineras"
           title="Gasolineras"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
         >
           <Fuel className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
@@ -112,7 +112,7 @@ export default function UserMenu() {
           to="/ranking"
           aria-label="Ir al ranking global"
           title="Ranking Global"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
         >
           <Trophy className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
@@ -122,14 +122,14 @@ export default function UserMenu() {
           to="/calculator"
           aria-label="Ir a la calculadora de viaje"
           title="Calculadora de viaje"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
         >
           <Calculator className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
       </div>
 
       {open ? (
-        <div className="mt-3 w-80 overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/90 shadow-2xl shadow-black/30 backdrop-blur-xl">
+        <div className="absolute bottom-full left-0 mb-3 w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/30 backdrop-blur-xl sm:bottom-auto sm:top-full sm:mb-0 sm:mt-3 sm:w-80">
           <div className="border-b border-white/10 bg-gradient-to-br from-teal-400/10 via-cyan-400/5 to-transparent px-4 py-4">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 text-base font-semibold text-teal-200 ring-1 ring-teal-300/20">

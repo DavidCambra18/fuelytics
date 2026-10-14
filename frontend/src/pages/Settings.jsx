@@ -633,11 +633,11 @@ export default function Settings() {
         </div>
       </main>
 
-      <div className="pointer-events-none fixed right-4 top-4 z-50 space-y-3 sm:right-6 sm:top-6">
+      <div className="pointer-events-none fixed inset-x-4 top-4 z-50 space-y-3 sm:left-auto sm:right-6 sm:top-6">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-center gap-3 min-w-[280px] rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-xl ${
+            className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-xl sm:min-w-[280px] sm:w-auto ${
               toast.tone === "error" 
                 ? "border-rose-400/20 bg-rose-500/15 text-rose-50" 
                 : "border-teal-300/20 bg-teal-400/15 text-teal-50"

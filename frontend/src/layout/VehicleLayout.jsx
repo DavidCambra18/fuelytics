@@ -82,9 +82,9 @@ export default function VehicleLayout() {
         <div className="min-h-screen text-slate-100 pt-12">
             <main className="pb-10 pt-6 sm:pt-8 lg:pb-16">
                 <div className="section-shell space-y-6">
-                    <section className="glass-panel rounded-[2rem] p-6 sm:p-3">
+                    <section className="glass-panel rounded-[1.5rem] p-3 sm:rounded-[2rem] sm:p-4">
 
-                        <nav className="mt-2 flex gap-2 border-b border-white/10 items-center">
+                        <nav className="flex items-center gap-1 overflow-x-auto border-b border-white/10 sm:gap-2" aria-label="Secciones del vehículo">
                             {navigationItems.map((item) => (
                                 <NavLink
                                     key={item.label}
@@ -92,7 +92,7 @@ export default function VehicleLayout() {
                                     end={item.to === ""}
                                     className={({ isActive }) =>
                                         [
-                                            "px-4 py-3 text-sm font-medium transition border-b-2",
+                                            "shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition sm:px-4",
                                             isActive
                                                 ? "border-teal-300 text-white"
                                                 : "border-transparent text-slate-400 hover:text-white",
