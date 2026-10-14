@@ -90,9 +90,8 @@ public class TireService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
         
         String ownerEmail = v.getUser().getEmail();
-        String ownerUsername = v.getUser().getUsername();
-        
-        if (!ownerEmail.equals(principalName) && !ownerUsername.equals(principalName)) {
+
+        if (!ownerEmail.equals(principalName)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
         }
         return v;

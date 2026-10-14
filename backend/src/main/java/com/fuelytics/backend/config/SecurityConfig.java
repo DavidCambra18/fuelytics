@@ -45,7 +45,12 @@ public class SecurityConfig {
 
                     .requestMatchers("/api/external/**").permitAll()
 
-                    .requestMatchers(HttpMethod.GET, "/api/vehicles/{id}/**").permitAll()
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/vehicles/{id}",
+                            "/api/vehicles/{id}/fuelings",
+                            "/api/vehicles/{id}/expenses",
+                            "/api/vehicles/{id}/statistics",
+                            "/api/badges/public/{username}").permitAll()
 
                     .requestMatchers("/api/users/**").authenticated()
 

@@ -106,14 +106,14 @@ public class VehicleService {
 
     public VehicleResponseDTO getVehicleById(Integer id, String email) {
 
-        User user = userRepository.findByEmail(email);
-
         Vehicle v = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Vehiculo no encontrado"));
 
-        if (!v.getIsPublic() && !v.getUser().getId().equals(user.getId())) {
+        boolean isOwner = email != null && email.equals(v.getUser().getEmail());
+
+        if (!Boolean.TRUE.equals(v.getIsPublic()) && !isOwner) {
 
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
@@ -297,7 +297,7 @@ public class VehicleService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
 
         boolean isOwner = email != null && vehicle.getUser().getEmail().equals(email);
-        if (!isOwner && !Boolean.TRUE.equals(vehicle.getIsPublic())) {
+        if (!isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
         }
 

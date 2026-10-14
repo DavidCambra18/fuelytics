@@ -52,7 +52,8 @@ public class VehicleController {
 
     @GetMapping("/{id}")
     public ResponseEntity<VehicleResponseDTO> getVehicleById(@PathVariable Integer id, Principal principal) {
-        VehicleResponseDTO response = vehicleService.getVehicleById(id, principal.getName());
+        String email = principal != null ? principal.getName() : null;
+        VehicleResponseDTO response = vehicleService.getVehicleById(id, email);
         return ResponseEntity.ok(response);
     }
 

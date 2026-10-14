@@ -96,7 +96,14 @@ public class BadgeService {
 
     public List<UserBadgeResponseDTO> getUserBadgesByUsername(String username) {
     User user = userRepository.findByUsername(username);
-    if (user == null) return List.of();
+    if (user == null) {
+        throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "Usuario no encontrado");
+    }
+    if (!Boolean.TRUE.equals(user.getProfilePublic())) {
+        throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.FORBIDDEN, "Este perfil es privado");
+    }
     
     return userBadgeRepository.findByUserId(user.getId())
             .stream()
