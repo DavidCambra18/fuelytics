@@ -73,7 +73,7 @@ export async function apiFetch(path, options = {}) {
 		return response;
 	} catch (error) {
 		if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
-			throw new Error("Error al conectar con el servidor.");
+			throw new Error("Error al conectar con el servidor.", { cause: error });
 		}
 		throw error;
 	}

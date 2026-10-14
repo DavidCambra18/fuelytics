@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import UserMenu from "../components/UserMenu";
-import { isTokenValid, useAuth } from "../context/AuthContext";
+import { isTokenValid, useAuth } from "../context/auth";
 
 export default function ProtectedLayout() {
   const { token } = useAuth();

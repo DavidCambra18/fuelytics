@@ -1,7 +1,7 @@
 import { useEffect, useState} from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
-import { ArrowLeft, AlertCircle, Car, Calendar, Gauge, Fuel, Settings2, Activity, MapPin, Receipt, BarChart3, TrendingUp } from "lucide-react";
+import { ArrowLeft, AlertCircle, Car, Calendar, Gauge, Fuel, Settings2, Activity, Receipt, BarChart3 } from "lucide-react";
 import {
   formatVehicleEnergyType,
   formatGearboxType,

@@ -30,7 +30,7 @@ function extractFilename(contentDisposition) {
     return "";
   }
 
-  const match = contentDisposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)\"?/i);
+  const match = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)"?/i);
   return match ? decodeURIComponent(match[1]) : "";
 }
 
@@ -65,7 +65,8 @@ export async function exportReportFile({ reportType, vehicle, startDate, endDate
     try {
       const errorData = JSON.parse(errorText);
       errorMessage = errorData.message || errorMessage;
-    } catch (e) {
+    } catch {
+      errorMessage = errorText || errorMessage;
     }
     throw new Error(errorMessage);
   }

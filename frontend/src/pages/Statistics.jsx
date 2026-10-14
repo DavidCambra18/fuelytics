@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { BarChart3, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { apiFetch } from "../services/api";
 import { getConsumptionUnit, getOdometerUnit, getQuantityUnit, getUnitPriceLabel } from "../utils/vehicleLabels";
 import ExportReportModal from "../components/ExportReportModal";
@@ -205,7 +205,7 @@ export default function Statistics() {
         ],
       };
     }
-  }, [chartFuelings, selectedMetric, consumptionUnit, selectedVehicle]);
+  }, [chartFuelings, selectedMetric, consumptionUnit, costRateLabel, unitPriceLabel, selectedVehicle]);
 
   const chartOptions = useMemo(
     () => ({

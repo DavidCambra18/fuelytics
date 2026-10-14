@@ -35,7 +35,7 @@ export default function BadgesModule() {
                 } else {
                     setError("No se pudieron cargar las insignias");
                 }
-            } catch (err) {
+            } catch {
                 setError("Error al conectar con el servidor");
             } finally {
                 setLoading(false);

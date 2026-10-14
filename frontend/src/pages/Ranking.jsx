@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth";
 import { apiJson } from "../services/api";
 import { Trophy, Medal, AlertTriangle } from "lucide-react";
 

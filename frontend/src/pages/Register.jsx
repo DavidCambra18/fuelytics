@@ -19,11 +19,16 @@ export default function Register() {
   const [emailError, setEmailError] = useState("");
   const [emailStatus, setEmailStatus] = useState("idle");
 
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordStatus, setPasswordStatus] = useState("idle");
-
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
-  const [confirmPasswordStatus, setConfirmPasswordStatus] = useState("idle");
+  const passwordError = password && password.length < 6 ? "Debe tener al menos 6 caracteres" : "";
+  const passwordStatus = !password ? "idle" : passwordError ? "error" : "success";
+  const confirmPasswordError = confirmPassword && confirmPassword !== password
+    ? "Las contraseñas no coinciden"
+    : "";
+  const confirmPasswordStatus = !confirmPassword
+    ? "idle"
+    : confirmPasswordError || passwordStatus !== "success"
+      ? "error"
+      : "success";
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -31,11 +36,7 @@ export default function Register() {
 
   useEffect(() => {
     const val = username.trim();
-    if (!val) {
-      setUsernameStatus("idle");
-      setUsernameError("");
-      return;
-    }
+    if (!val) return undefined;
 
     const timer = setTimeout(async () => {
       setUsernameStatus("checking");
@@ -58,11 +59,7 @@ export default function Register() {
 
   useEffect(() => {
     const val = email.trim();
-    if (!val || !val.includes("@")) {
-      setEmailStatus("idle");
-      setEmailError("");
-      return;
-    }
+    if (!val || !val.includes("@")) return undefined;
 
     const timer = setTimeout(async () => {
       setEmailStatus("checking");
@@ -82,38 +79,6 @@ export default function Register() {
 
     return () => clearTimeout(timer);
   }, [email]);
-
-  useEffect(() => {
-    if (!password) {
-      setPasswordStatus("idle");
-      setPasswordError("");
-      return;
-    }
-
-    if (password.length < 6) {
-      setPasswordStatus("error");
-      setPasswordError("Debe tener al menos 6 caracteres");
-    } else {
-      setPasswordStatus("success");
-      setPasswordError("");
-    }
-  }, [password]);
-
-  useEffect(() => {
-    if (!confirmPassword) {
-      setConfirmPasswordStatus("idle");
-      setConfirmPasswordError("");
-      return;
-    }
-
-    if (confirmPassword !== password) {
-      setConfirmPasswordStatus("error");
-      setConfirmPasswordError("Las contraseñas no coinciden");
-    } else if (passwordStatus === "success") {
-      setConfirmPasswordStatus("success");
-      setConfirmPasswordError("");
-    }
-  }, [confirmPassword, password, passwordStatus]);
 
   const handleRegister = async (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 export default function CustomSelect({
   options,
@@ -18,20 +18,21 @@ export default function CustomSelect({
 
   const current = options.find((o) => o.value === value) || null;
 
-  const clearCloseTimer = () => {
+  const clearCloseTimer = useCallback(() => {
     if (closeTimerRef.current) {
       window.clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
-  };
+  }, []);
 
-  const closeWithDelay = () => {
+  const closeWithDelay = useCallback(() => {
     clearCloseTimer();
     closeTimerRef.current = window.setTimeout(() => {
       setOpen(false);
+      setHighlightedIndex(-1);
       closeTimerRef.current = null;
     }, 80);
-  };
+  }, [clearCloseTimer]);
 
   useEffect(() => {
     const handleDocumentMouseDown = (event) => {
@@ -46,11 +47,7 @@ export default function CustomSelect({
       document.removeEventListener("mousedown", handleDocumentMouseDown);
       clearCloseTimer();
     };
-  }, []);
-
-  useEffect(() => {
-    setHighlightedIndex(-1);
-  }, [open]);
+  }, [clearCloseTimer, closeWithDelay]);
 
   useEffect(() => {
     if (highlightedIndex !== -1 && listRef.current) {
@@ -75,6 +72,7 @@ export default function CustomSelect({
           return currentOpen;
         }
 
+        setHighlightedIndex(-1);
         return true;
       });
       buttonRef.current?.focus();

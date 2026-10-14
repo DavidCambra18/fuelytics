@@ -134,10 +134,6 @@ export default function Expenses() {
   }, [expenses]);
 
   useEffect(() => {
-    setFormData(createInitialFormData());
-  }, [selectedVehicle]);
-
-  useEffect(() => {
     const controller = new AbortController();
     const loadExpenses = async () => {
       if (!selectedVehicle?.id) return;

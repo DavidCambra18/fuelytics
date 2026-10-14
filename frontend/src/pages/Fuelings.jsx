@@ -117,10 +117,7 @@ export default function Fuelings() {
     () => buildFuelingRows(fuelings, selectedVehicle?.vehicleType),
     [fuelings, selectedVehicle?.vehicleType]
   );
-  const fuelOptions = useMemo(
-    () => getFuelOptionsForEnergy(selectedVehicle?.vehicleEnergyType),
-    [selectedVehicle?.vehicleEnergyType]
-  );
+  const fuelOptions = getFuelOptionsForEnergy(selectedVehicle?.vehicleEnergyType);
   const quantityUnit = getQuantityUnit(selectedVehicle?.vehicleEnergyType);
   const unitPriceLabel = getUnitPriceLabel(selectedVehicle?.vehicleEnergyType);
   const [currentPage, setCurrentPage] = useState(1);
@@ -144,10 +141,6 @@ export default function Fuelings() {
       endDate: dates[dates.length - 1],
     };
   }, [fuelings]);
-
-  useEffect(() => {
-    setFormData(createInitialFormData(selectedVehicle));
-  }, [selectedVehicle]);
 
   useEffect(() => {
     const controller = new AbortController();

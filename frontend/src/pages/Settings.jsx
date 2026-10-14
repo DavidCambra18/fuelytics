@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
 import { 
   ArrowLeft, 
@@ -146,8 +146,6 @@ export default function Settings() {
     if (!val || loading) return;
 
     if (val === username) {
-      setUsernameStatus("success");
-      setUsernameError("");
       return;
     }
 

@@ -65,7 +65,7 @@ function MapViewController({ center }) {
 }
 
 function MapCenterTracker({ onCenterChange }) {
-  const map = useMapEvents({
+  useMapEvents({
     moveend: (event) => {
       const nextCenter = event.target.getCenter();
       onCenterChange([nextCenter.lat, nextCenter.lng]);
@@ -115,7 +115,7 @@ export default function GasStations() {
   const [error, setError] = useState("");
   const [fuelType, setFuelType] = useState("diesel");
   const [location, setLocation] = useState(null);
-  const [locationStatus, setLocationStatus] = useState("idle");
+  const [locationStatus, setLocationStatus] = useState(() => navigator.geolocation ? "loading" : "unsupported");
   const [updatedAt, setUpdatedAt] = useState("");
   const [sourceState, setSourceState] = useState("idle");
   const [sourceError, setSourceError] = useState("");
@@ -124,12 +124,8 @@ export default function GasStations() {
   const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus("unsupported");
-      return;
-    }
+    if (!navigator.geolocation) return;
 
-    setLocationStatus("loading");
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const nextLocation = {
@@ -153,13 +149,7 @@ export default function GasStations() {
   }, []);
 
   useEffect(() => {
-    if (!hasSearched) {
-      setStations([]);
-      setUpdatedAt("");
-      setSourceState("idle");
-      setSourceError("");
-      return;
-    }
+    if (!hasSearched) return undefined;
 
     const controller = new AbortController();
     const loadStations = async () => {

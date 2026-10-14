@@ -1,9 +1,23 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Ban, Plus, Disc, AlertTriangle } from "lucide-react";
 import { apiFetch } from "../services/api";
 import { TIRE_AXLE_OPTIONS } from "../utils/vehicleLabels";
 import CustomSelect from "./CustomSelect";
+
+function createInitialFormData(odometer) {
+    return {
+        brand: "",
+        model: "",
+        size: "",
+        width: "",
+        profile: "",
+        rim: "",
+        axle: "FRONT",
+        installationDate: new Date().toISOString().split("T")[0],
+        installationOdometer: odometer || "",
+    };
+}
 
 export default function TiresModule() {
     const { selectedVehicle } = useOutletContext();
@@ -15,25 +29,9 @@ export default function TiresModule() {
     const [error, setError] = useState("");
     const [showForm, setShowForm] = useState(false);
 
-    const [formData, setFormData] = useState({
-        brand: "",
-        model: "",
-        size: "",
-        width: "",
-        profile: "",
-        rim: "",
-        axle: "FRONT",
-        installationDate: new Date().toISOString().split("T")[0],
-        installationOdometer: latestOdometer || "",
-    });
+    const [formData, setFormData] = useState(() => createInitialFormData(latestOdometer));
 
-    useEffect(() => {
-        if (latestOdometer) {
-            setFormData((prev) => ({ ...prev, installationOdometer: latestOdometer }));
-        }
-    }, [latestOdometer]);
-
-    const loadTires = async () => {
+    const loadTires = useCallback(async () => {
         setLoading(true);
         try {
             const res = await apiFetch(`/api/vehicles/${vehicleId}/tires`);
@@ -41,16 +39,18 @@ export default function TiresModule() {
                 const data = await res.json();
                 setTires(data || []);
             }
-        } catch (err) {
+        } catch {
             setError("Error cargando neumáticos");
         } finally {
             setLoading(false);
         }
-    };
+    }, [vehicleId]);
 
     useEffect(() => {
-        if (vehicleId) loadTires();
-    }, [vehicleId]);
+        if (!vehicleId) return undefined;
+        const timeoutId = window.setTimeout(loadTires, 0);
+        return () => window.clearTimeout(timeoutId);
+    }, [loadTires, vehicleId]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -72,29 +72,11 @@ export default function TiresModule() {
             });
             if (res.ok) {
                 setShowForm(false);
-                setFormData({
-                    brand: "",
-                    model: "",
-                    size: "",
-                    axle: "FRONT",
-                    installationDate: new Date().toISOString().split("T")[0],
-                    installationOdometer: latestOdometer || "",
-                });
+                setFormData(createInitialFormData(latestOdometer));
                 loadTires();
             }
-        } catch (err) {
+        } catch {
             setError("No se pudo registrar el neumático");
-        }
-    };
-
-    const handleRotate = async () => {
-        const odo = window.prompt("Introduce el odómetro actual de rotación:");
-        if (!odo) return;
-        try {
-            const res = await apiFetch(`/api/vehicles/${vehicleId}/tires/rotate?odometer=${odo}`, { method: "POST" });
-            if (res.ok) loadTires();
-        } catch (err) {
-            setError("Error al rotar neumáticos");
         }
     };
 
@@ -104,7 +86,7 @@ export default function TiresModule() {
         try {
             const res = await apiFetch(`/api/vehicles/${vehicleId}/tires/${id}/deactivate?odometer=${odo}`, { method: "PUT" });
             if (res.ok) loadTires();
-        } catch (err) {
+        } catch {
             setError("Error al dar de baja");
         }
     };
@@ -180,7 +162,10 @@ export default function TiresModule() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setShowForm(!showForm)}
+                        onClick={() => {
+                            setFormData(createInitialFormData(latestOdometer));
+                            setShowForm((current) => !current);
+                        }}
                         className="p-2.5 rounded-xl bg-teal-600 text-white hover:bg-teal-700 transition"
                         title="Montar nuevo neumático"
                     >

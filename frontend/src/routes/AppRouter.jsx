@@ -22,7 +22,7 @@ import GasStations from "../pages/GasStations";
 import VehicleLayout from "../layout/VehicleLayout";
 import VehicleOverview from "../pages/VehicleOverview";
 import ProtectedLayout from "../layout/ProtectedLayout";
-import { isTokenValid, useAuth } from "../context/AuthContext";
+import { isTokenValid, useAuth } from "../context/auth";
 
 function PublicOnlyRoute({ children }) {
   const { token } = useAuth();

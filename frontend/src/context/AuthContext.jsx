@@ -1,45 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-
-const AuthContext = createContext(null);
-
-function getTokenExpiry(token) {
-	if (!token) {
-		return null;
-	}
-
-	const parts = token.split(".");
-
-	if (parts.length !== 3) {
-		return null;
-	}
-
-	try {
-		const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-		const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
-		const payload = JSON.parse(atob(paddedBase64));
-
-		if (typeof payload.exp !== "number") {
-			return null;
-		}
-
-		return payload.exp * 1000;
-	} catch {
-		return null;
-	}
-}
-
-export function isTokenValid(token) {
-	const expiresAt = getTokenExpiry(token);
-
-	if (!expiresAt) {
-		return false;
-	}
-
-	return expiresAt > Date.now();
-}
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AuthContext, getTokenExpiry, isTokenValid } from "./auth";
 
 export function AuthProvider({ children }) {
-	const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+	const [token, setToken] = useState(() => {
+		const storedToken = localStorage.getItem("token") || "";
+		return isTokenValid(storedToken) ? storedToken : "";
+	});
 	const [username, setUsername] = useState(() => localStorage.getItem("username") || "");
 	const setAuth = useCallback(({ token: nextToken, username: nextUsername }) => {
 		setToken(nextToken || "");
@@ -77,14 +43,9 @@ export function AuthProvider({ children }) {
 
 		const expiresAt = getTokenExpiry(token);
 
-		if (!expiresAt || expiresAt <= Date.now()) {
-			clearAuth();
-			return;
-		}
-
 		const timeoutId = window.setTimeout(() => {
 			clearAuth();
-		}, expiresAt - Date.now());
+		}, Math.max(expiresAt - Date.now(), 0));
 
 		return () => window.clearTimeout(timeoutId);
 	}, [token, clearAuth]);
@@ -100,14 +61,4 @@ export function AuthProvider({ children }) {
 	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-	const context = useContext(AuthContext);
-
-	if (!context) {
-		throw new Error("useAuth must be used within AuthProvider");
-	}
-
-	return context;
 }
