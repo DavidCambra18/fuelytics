@@ -138,9 +138,9 @@ public class GasStationService {
             List<GasStationRecord> stations = new ArrayList<>();
             for (JsonNode node : array) {
                 Map<String, String> fields = new java.util.LinkedHashMap<>();
-                node.properties().forEach(entry -> fields.put(
-                        entry.getKey(),
-                        entry.getValue().isNull() ? null : entry.getValue().asText()));
+                node.forEachEntry((name, value) -> fields.put(
+                        name,
+                        value.isNull() ? null : value.asString()));
                 GasStationRecord station = GasStationRecord.fromFields(fields);
                 if (station != null) {
                     stations.add(station);
