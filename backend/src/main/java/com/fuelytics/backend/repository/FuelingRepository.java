@@ -11,6 +11,8 @@ import com.fuelytics.backend.entity.FuelEntry;
 
 @Repository
 public interface FuelingRepository extends JpaRepository<FuelEntry, Integer> {
+
+        boolean existsByVehicleId(Integer vehicleId);
     
         @Query("SELECT f FROM FuelEntry f WHERE f.vehicle.id = :vehicleId ORDER BY f.date DESC")
         List<FuelEntry> findByVehicleIdOrderByDateDesc(@Param("vehicleId") Integer vehicleId);

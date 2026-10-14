@@ -20,7 +20,8 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Integer> {
                    "AND v.show_fuel_data = true " +
                    "AND u.profile_public = true " +
                    "AND v.vehicle_type != 'agricultural' " +
-                   "AND v.vehicle_energy_type != 'electric' " +
+                   "AND v.vehicle_energy_type IN ('gasoline', 'diesel', 'hybrid_gasoline', 'hybrid_diesel', " +
+                   "'plug_in_hybrid_gasoline', 'plug_in_hybrid_diesel', 'glp', 'ethanol') " +
                    "AND v.avg_consumption IS NOT NULL " +
                    "ORDER BY v.avg_consumption ASC", nativeQuery = true)
     List<RankingProjection> getGlobalRanking();

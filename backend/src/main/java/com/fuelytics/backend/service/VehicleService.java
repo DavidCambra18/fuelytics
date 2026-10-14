@@ -26,6 +26,7 @@ import com.fuelytics.backend.repository.ExpenseRepository;
 import com.fuelytics.backend.dto.AlertResponseDTO;
 import com.fuelytics.backend.entity.FuelEntry;
 import com.fuelytics.backend.entity.Expense;
+import com.fuelytics.backend.entity.enums.VehicleType;
 
 @Service
 public class VehicleService {
@@ -148,6 +149,19 @@ public class VehicleService {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Forbidden");
+        }
+
+        boolean hasFuelings = fuelingRepository.existsByVehicleId(id);
+        if (hasFuelings && dto.getVehicleEnergyType() != null
+                && dto.getVehicleEnergyType() != vehicle.getVehicleEnergyType()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede cambiar la energía de un vehículo con repostajes registrados");
+        }
+        if (hasFuelings && dto.getVehicleType() != null
+                && (dto.getVehicleType() == VehicleType.agricultural)
+                        != (vehicle.getVehicleType() == VehicleType.agricultural)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede cambiar entre kilómetros y horas con repostajes registrados");
         }
 
         if (dto.getBrand() != null) {
