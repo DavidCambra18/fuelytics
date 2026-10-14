@@ -18,9 +18,11 @@ public class JwtService {
 
     private final SecretKey key;
 
-    private final long EXPIRATION_TIME = 1000 * 60 * 60;
+    private final long expirationTime;
 
-    public JwtService(@Value("${app.jwt.secret}") String jwtSecret) {
+    public JwtService(
+            @Value("${app.jwt.secret}") String jwtSecret,
+            @Value("${app.jwt.expiration-ms:3600000}") long expirationTime) {
         byte[] secretBytes;
 
         try {
@@ -30,13 +32,14 @@ public class JwtService {
         }
 
         this.key = Keys.hmacShaKeyFor(secretBytes);
+        this.expirationTime = expirationTime;
     }
 
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(key)
                 .compact();
     }

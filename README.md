@@ -1,79 +1,114 @@
-# 🏎️ Fuelytics
+# Fuelytics
 
-![Status](https://img.shields.io/badge/Status-En%20Desarrollo-orange?style=for-the-badge)
-![Version](https://img.shields.io/github/v/release/davidcambra18/fuelytics?include_prereleases&style=for-the-badge&color=blue)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange)
+![Java](https://img.shields.io/badge/Java-17-FFA500?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4-6DB33F?logo=springboot)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql)
+[![Licencia](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
 
-[![React](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.0.16-646CFF?logo=vite)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3.0-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.6-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
-[![Java](https://img.shields.io/badge/Java-17-FFA500?logo=openjdk)](https://java.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql)](https://www.postgresql.org/)
-![Last Commit](https://img.shields.io/github/last-commit/davidcambra18/fuelytics)
+Fuelytics es una aplicación para registrar vehículos, repostajes, gastos, neumáticos y alertas de mantenimiento. Calcula consumos a partir de ciclos de llenado completos, genera informes PDF y permite publicar de forma selectiva perfiles y vehículos.
 
-**Fuelytics** es una plataforma Full-Stack diseñada para conductores que quieren llevar un control riguroso de su consumo y gastos. Permite transformar los datos de repostaje en estadísticas claras para optimizar gastos y monitorizar el rendimiento real de cualquier vehículo.
+## Estructura
 
----
+- `frontend/`: aplicación React y Vite.
+- `backend/`: API REST con Java 17, Spring Boot y Maven.
+- `database/schema.sql`: esquema completo para crear una base PostgreSQL local vacía.
+- `database/docker-compose.yml`: PostgreSQL local de desarrollo.
+- `database/neon/`: cambios SQL manuales para una base Neon ya existente.
 
-## 🚀 Funcionalidades Principales
+El esquema local y los scripts de Neon tienen propósitos distintos. El backend usa `ddl-auto=validate`: comprueba la estructura, pero no crea ni modifica tablas al arrancar.
 
-* **🌐 Gestión Multi-Vehículo:** Crea perfiles específicos para diferentes coches, almacenando detalles técnicos de motor y combustible.
-* **⛽ Registro de Repostajes:** Historial detallado de repostajes, incluyendo precio, litros, y tipo de conducción.
-* **📒 Registro de Gastos:** Historial detallado de gastos, incluyendo tipo de gasto, coste y fecha.
-* **📊 Análisis de Datos:** Visualización de métricas clave como el consumo medio (L/100km) y gasto acumulado.
+## Requisitos
 
----
+- Node.js 22 o posterior.
+- Docker con Docker Compose para la base local.
+- Java 17 o posterior. El repositorio incluye Maven Wrapper, por lo que no hace falta instalar Maven.
 
-## 🛠️ Herramientas y Tecnologías
+## Puesta en marcha local
 
-### 🎨 Frontend
-* **React + Vite:** Para una interfaz rápida y una experiencia de desarrollo ágil.
-* **Tailwind CSS:** Diseño moderno, limpio y totalmente responsivo.
+1. Arranca PostgreSQL:
 
-### ⚙️ Backend
-* **Java & Spring Boot:** Lógica de negocio y API REST.
-* **Spring Security:** Control de acceso y protección de rutas.
-* **Maven:** Gestión de dependencias.
-
-### 💾 Base de Datos e Infraestructura
-* **PostgreSQL:** Almacenamiento relacional para usuarios, vehículos, gastos y repostajes.
-* **Docker:** Contenedores para asegurar un entorno de desarrollo idéntico (DB).
-
----
-
-## 🏗️ Arquitectura del Proyecto
-
-El sistema está dividido en dos grandes bloques:
-
-1.  **Frontend SPA:** Gestiona la interacción del usuario y solicita tokens.
-2.  **Backend API:** Procesa las peticiones, valida los tokens y persiste la información en la DB.
-
----
-
-## 📦 Instalación
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/davidcambra18/fuelytics.git
-   ```
-2. **Iniciar la base de datos local (Docker):**
    ```bash
    cd database
-   docker-compose up -d
+   docker compose up -d
    ```
-3. **Iniciar backend:**
-   ```bash
+
+   `schema.sql` solo se ejecuta cuando Docker crea el volumen por primera vez. Para reconstruir una base local desde cero hay que eliminar expresamente el volumen local antes de volver a arrancar el servicio.
+
+2. Configura el backend con las variables documentadas en [backend/.env.example](backend/.env.example). Spring no carga ese archivo automáticamente; debes definirlas en tu terminal, IDE o plataforma de despliegue.
+
+   Ejemplo en PowerShell:
+
+   ```powershell
+   $env:DB_URL = "jdbc:postgresql://localhost:5432/fuelytics"
+   $env:DB_USER = "postgres"
+   $env:DB_PASS = "postgres"
+   $env:FRONTEND_URL = "http://localhost:5173"
+   $env:JWT_SECRET = "una-clave-local-de-al-menos-32-caracteres"
    cd backend
-   ./mvnw spring-boot:run
+   .\mvnw.cmd spring-boot:run
    ```
-4. **Iniciar frontend:**
+
+3. Crea `frontend/.env.local` a partir de [frontend/.env.example](frontend/.env.example) e inicia el frontend:
+
    ```bash
    cd frontend
-   npm install
+   npm ci
    npm run dev
    ```
 
----
+La aplicación estará en `http://localhost:5173` y la API en `http://localhost:8080`.
 
-Desarrollado por [David Cambra](https://github.com/DavidCambra18) - 2026
+## Neon y cambios de base de datos
+
+La aplicación desplegada puede apuntar a Neon mediante `DB_URL`, `DB_USER` y `DB_PASS`. Los archivos de `database/neon/` son scripts versionados para aplicar manualmente y en orden. No se ejecutan desde el backend, Docker ni CI.
+
+Antes de aplicar un script en Neon:
+
+1. revisa las consultas previas incluidas en el propio archivo;
+2. crea una copia o rama de la base;
+3. ejecuta el script en una ventana de mantenimiento;
+4. valida el esquema y arranca el backend con `ddl-auto=validate`.
+
+## Variables
+
+| Variable | Servicio | Uso |
+| --- | --- | --- |
+| `DB_URL` | Backend | URL JDBC de PostgreSQL |
+| `DB_USER` | Backend | Usuario de la base |
+| `DB_PASS` | Backend | Contraseña de la base |
+| `FRONTEND_URL` | Backend | Origen permitido por CORS |
+| `JWT_SECRET` | Backend | Clave de firma JWT de 32 bytes como mínimo |
+| `JWT_EXPIRATION_MS` | Backend | Duración de sesión; por defecto, una hora |
+| `JPA_SHOW_SQL` | Backend | Muestra SQL cuando vale `true`; por defecto, `false` |
+| `VITE_BACKEND_URL` | Frontend | URL pública de la API |
+
+No guardes valores reales, credenciales ni secretos en el repositorio.
+
+## Validación
+
+```bash
+cd backend
+./mvnw verify
+```
+
+```bash
+cd frontend
+npm ci
+npm run lint
+npm test
+npm run build
+```
+
+GitHub Actions ejecuta estas comprobaciones en cada `push` y cada pull request.
+
+## Contenedor del backend
+
+```bash
+docker build -t fuelytics-backend backend
+```
+
+La imagen ejecuta las pruebas durante la construcción y arranca la aplicación con un usuario sin privilegios.
+
+Desarrollado por [David Cambra](https://github.com/DavidCambra18).
