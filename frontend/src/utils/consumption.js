@@ -1,15 +1,18 @@
 const ELECTRIC_FUELS = new Set(["electricity"]);
 const HYDROGEN_FUELS = new Set(["hydrogen"]);
+const MASS_FUELS = new Set(["gnc"]);
 
 export function getFuelMeasurement(fuelType) {
   if (ELECTRIC_FUELS.has(fuelType)) return "electricity";
   if (HYDROGEN_FUELS.has(fuelType)) return "hydrogen";
+  if (MASS_FUELS.has(fuelType)) return "mass";
   return "liquid";
 }
 
 export function getVehicleMeasurement(vehicleEnergyType) {
   if (vehicleEnergyType === "electric") return "electricity";
   if (vehicleEnergyType === "hydrogen") return "hydrogen";
+  if (vehicleEnergyType === "gnc") return "mass";
   return "liquid";
 }
 

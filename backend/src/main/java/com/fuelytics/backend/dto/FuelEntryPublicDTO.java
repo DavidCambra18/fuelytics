@@ -3,6 +3,8 @@ package com.fuelytics.backend.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.fuelytics.backend.entity.enums.FuelType;
+
 public class FuelEntryPublicDTO {
     private Integer id;
     private LocalDate date;
@@ -10,6 +12,7 @@ public class FuelEntryPublicDTO {
     private BigDecimal priceTotal;
     private BigDecimal distance;
     private BigDecimal boardConsumption;
+    private FuelType fuelType;
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -23,4 +26,6 @@ public class FuelEntryPublicDTO {
     public void setDistance(BigDecimal distance) { this.distance = distance; }
     public BigDecimal getBoardConsumption() { return boardConsumption; }
     public void setBoardConsumption(BigDecimal boardConsumption) { this.boardConsumption = boardConsumption; }
+    public FuelType getFuelType() { return fuelType; }
+    public void setFuelType(FuelType fuelType) { this.fuelType = fuelType; }
 }

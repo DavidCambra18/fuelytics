@@ -88,6 +88,9 @@ public class ConsumptionCalculator {
         if (energyType == VehicleEnergyType.hydrogen) {
             return Measurement.HYDROGEN;
         }
+        if (energyType == VehicleEnergyType.gnc) {
+            return Measurement.GAS_MASS;
+        }
         return Measurement.LIQUID;
     }
 
@@ -97,6 +100,9 @@ public class ConsumptionCalculator {
         }
         if (fuelType == FuelType.hydrogen) {
             return Measurement.HYDROGEN;
+        }
+        if (fuelType == FuelType.gnc) {
+            return Measurement.GAS_MASS;
         }
         return Measurement.LIQUID;
     }
@@ -115,7 +121,8 @@ public class ConsumptionCalculator {
     public enum Measurement {
         LIQUID,
         ELECTRICITY,
-        HYDROGEN
+        HYDROGEN,
+        GAS_MASS
     }
 
     public record ConsumptionSummary(

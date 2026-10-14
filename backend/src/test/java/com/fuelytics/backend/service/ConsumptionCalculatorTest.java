@@ -65,6 +65,20 @@ class ConsumptionCalculatorTest {
         assertEquals(new BigDecimal("4.50"), summary.costPerUnit());
     }
 
+    @Test
+    void doesNotMixGasolineLitersWithCngKilograms() {
+        Vehicle vehicle = vehicle(VehicleEnergyType.gnc, VehicleType.car);
+
+        var summary = calculator.calculate(List.of(
+                entry(1, "2026-01-01", RefuelingType.initial, FuelType.gnc, "0", "4", "6"),
+                entry(2, "2026-01-05", RefuelingType.complete, FuelType.gasoline_95, "50", "5", "8"),
+                entry(3, "2026-01-10", RefuelingType.complete, FuelType.gnc, "100", "3", "4.5")), vehicle);
+
+        assertEquals(ConsumptionCalculator.Measurement.GAS_MASS, summary.measurement());
+        assertEquals(new BigDecimal("3.00"), summary.averageConsumption());
+        assertEquals(new BigDecimal("3"), summary.verifiedQuantity());
+    }
+
     private Vehicle vehicle(VehicleEnergyType energyType, VehicleType vehicleType) {
         Vehicle vehicle = new Vehicle();
         vehicle.setVehicleEnergyType(energyType);

@@ -15,8 +15,7 @@ import {
   getConsumptionUnit,
   getDefaultFuelType,
   getFuelOptionsForEnergy,
-  getQuantityUnit,
-  getUnitPriceLabel,
+  getQuantityUnitForFuel,
   getOdometerUnit,
 } from "../utils/vehicleLabels";
 import {
@@ -118,8 +117,7 @@ export default function Fuelings() {
     [fuelings, selectedVehicle?.vehicleType]
   );
   const fuelOptions = getFuelOptionsForEnergy(selectedVehicle?.vehicleEnergyType);
-  const quantityUnit = getQuantityUnit(selectedVehicle?.vehicleEnergyType);
-  const unitPriceLabel = getUnitPriceLabel(selectedVehicle?.vehicleEnergyType);
+  const formQuantityUnit = getQuantityUnitForFuel(formData.fuelType);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const exportDateRange = useMemo(() => {
@@ -417,6 +415,7 @@ export default function Fuelings() {
               const liters = Number(fueling.liters) || 0;
               const distance = Number(fueling.distance) || 0;
               const priceTotal = Number(fueling.priceTotal) || 0;
+              const rowQuantityUnit = getQuantityUnitForFuel(fueling.fuelType);
               const pricePerLiter = liters > 0 ? (priceTotal / liters).toFixed(3) : "0.000";
               const displayedConsumption =
                 fueling.displayConsumption !== null && fueling.displayConsumption !== undefined
@@ -450,7 +449,7 @@ export default function Fuelings() {
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-white">{formatDateEs(fueling.date)}</p>
-                      <p className="mt-1 text-xs text-slate-400">{pricePerLiter} {unitPriceLabel}</p>
+                      <p className="mt-1 text-xs text-slate-400">{pricePerLiter} €/{rowQuantityUnit}</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -486,12 +485,12 @@ export default function Fuelings() {
                     </div>
 
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">{quantityUnit} / Total</p>
+                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">{rowQuantityUnit} / Total</p>
                       <p className="mt-1 text-white font-medium">
                         {liters.toLocaleString("es-ES", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })} {quantityUnit}
+                        })} {rowQuantityUnit}
                       </p>
                       <p className="mt-1 text-sm text-slate-300">
                         {priceTotal.toLocaleString("es-ES", {
@@ -689,7 +688,7 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Cantidad ({quantityUnit})</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">Cantidad ({formQuantityUnit})</label>
                   <input
                     type="number"
                     step="0.01"

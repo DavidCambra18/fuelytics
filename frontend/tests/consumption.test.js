@@ -56,6 +56,23 @@ test("usa consumo por hora en vehículos agrícolas", () => {
   assert.equal(summary.costPerUnit, 4.5);
 });
 
+test("no mezcla litros de gasolina con kilogramos de GNC", () => {
+  const rows = buildFuelingRows([
+    fueling(1, "2026-01-01", "initial", "gnc", 0, 4, 6),
+    fueling(2, "2026-01-05", "complete", "gasoline_95", 50, 5, 8),
+    fueling(3, "2026-01-10", "complete", "gnc", 100, 3, 4.5),
+  ], "car");
+
+  const summary = summarizeConsumption(rows, {
+    vehicleEnergyType: "gnc",
+    vehicleType: "car",
+  });
+
+  assert.equal(summary.measurement, "mass");
+  assert.equal(summary.averageConsumption, 3);
+  assert.equal(summary.verifiedQuantity, 3);
+});
+
 function fueling(id, date, refueling, fuelType, distance, liters, priceTotal) {
   return { id, date, refueling, fuelType, distance, liters, priceTotal };
 }

@@ -222,6 +222,12 @@ export function getQuantityUnit(vehicleEnergyType) {
   return "L";
 }
 
+export function getQuantityUnitForFuel(fuelType) {
+  if (fuelType === "electricity") return "kWh";
+  if (fuelType === "hydrogen" || fuelType === "gnc") return "kg";
+  return "L";
+}
+
 export function getUnitPriceLabel(vehicleEnergyType) {
   return `€/${getQuantityUnit(vehicleEnergyType)}`;
 }

@@ -274,6 +274,7 @@ public class VehicleService {
             dto.setPriceTotal(fuel.getPriceTotal());
             dto.setDistance(fuel.getDistance());
             dto.setBoardConsumption(fuel.getBoardConsumption());
+            dto.setFuelType(fuel.getFuelType());
             return dto;
         }).toList();
     }

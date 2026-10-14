@@ -7,7 +7,7 @@ import {
   formatGearboxType,
   getOdometerUnit,
   getConsumptionUnit,
-  getQuantityUnit,
+  getQuantityUnitForFuel,
   formatExpenseType
 } from "../utils/vehicleLabels";
 
@@ -214,7 +214,7 @@ export default function PublicVehicle() {
                           fuelings.map((fuel) => (
                             <article key={fuel.id} className="flex items-center justify-between rounded-xl bg-slate-900/50 p-4 border border-white/5">
                               <div>
-                                <p className="text-sm font-semibold text-white">{fuel.liters} {getQuantityUnit(vehicle.vehicleEnergyType)} • {fuel.priceTotal} €</p>
+                                <p className="text-sm font-semibold text-white">{fuel.liters} {getQuantityUnitForFuel(fuel.fuelType)} • {fuel.priceTotal} €</p>
                                 <p className="text-xs text-slate-400 mt-1">{fuel.date} • {fuel.distance} {getOdometerUnit(vehicle.vehicleType)} recorridos</p>
                               </div>
                               <div className="text-right">

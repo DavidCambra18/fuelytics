@@ -192,17 +192,19 @@ public class ExportService {
 
     private byte[] buildFuelingsPdf(Vehicle vehicle, List<FuelEntry> fuelings, LocalDate startDate, LocalDate endDate) {
         SummaryTotals totals = calculateTotals(vehicle, fuelings, List.of());
+        String distanceUnit = distanceUnit(vehicle);
+        String quantityUnit = quantityUnit(vehicle);
 
         List<PdfMetric> metrics = List.of(
                 new PdfMetric("Repostajes", String.valueOf(totals.fuelingCount()), new Color(20, 184, 166)),
-                new PdfMetric("Km", formatDecimal(totals.totalDistance(), 2), new Color(15, 118, 110)),
-                new PdfMetric("Litros", formatDecimal(totals.totalLiters(), 2), new Color(8, 145, 178)),
+                new PdfMetric(distanceUnit, formatDecimal(totals.totalDistance(), 2), new Color(15, 118, 110)),
+                new PdfMetric(quantityUnit, formatDecimal(totals.totalQuantity(), 2), new Color(8, 145, 178)),
                 new PdfMetric("Coste", formatDecimal(totals.totalFuelCost(), 2), new Color(12, 74, 110)),
-                new PdfMetric("€/L", formatDecimal(totals.averageFuelPrice(), 3), new Color(13, 148, 136)));
+                new PdfMetric("€/" + quantityUnit, formatDecimal(totals.averageFuelPrice(), 3), new Color(13, 148, 136)));
 
         PdfTable table = new PdfTable(
                 "Historial de repostajes",
-                new String[] { "Fecha", "Odómetro", "Tipo", "Combustible", "Litros", "Km", "Importe", "€/L" },
+                new String[] { "Fecha", "Odómetro", "Tipo", "Combustible", "Cantidad", "Distancia", "Importe", "Precio/u" },
                 new int[] { 12, 10, 10, 16, 10, 10, 10, 8 },
                 fuelings.stream()
                         .map(fueling -> new String[] {
@@ -210,10 +212,10 @@ public class ExportService {
                                 stringOrDash(fueling.getOdometer()),
                                 truncate(translateRefuelingType(fueling.getRefueling()), 12),
                                 truncate(translateFuelType(fueling.getFuelType()), 16),
-                                formatDecimal(fueling.getLiters(), 2),
-                                formatDecimal(fueling.getDistance(), 2),
+                                formatDecimal(fueling.getLiters(), 2) + " " + quantityUnit(fueling),
+                                formatDecimal(fueling.getDistance(), 2) + " " + distanceUnit,
                                 formatDecimal(fueling.getPriceTotal(), 2) + " €",
-                                formatDecimal(fueling.getPricePerLiter(), 3)
+                                formatDecimal(fueling.getPricePerLiter(), 3) + " €/" + quantityUnit(fueling)
                         })
                         .toList());
 
@@ -224,8 +226,9 @@ public class ExportService {
                 true,
                 metrics,
                 table,
-                "Totales: registros=" + fuelings.size() + " km=" + formatDecimal(totals.totalDistance(), 2) + " litros="
-                        + formatDecimal(totals.totalLiters(), 2) + " coste="
+                "Totales: registros=" + fuelings.size() + " " + distanceUnit + "="
+                        + formatDecimal(totals.totalDistance(), 2) + " " + quantityUnit + "="
+                        + formatDecimal(totals.totalQuantity(), 2) + " coste="
                         + formatDecimal(totals.totalFuelCost(), 2));
     }
 
@@ -263,11 +266,13 @@ public class ExportService {
     private byte[] buildSummaryPdf(Vehicle vehicle, List<FuelEntry> fuelings, List<Expense> expenses,
             LocalDate startDate, LocalDate endDate) {
         SummaryTotals totals = calculateTotals(vehicle, fuelings, expenses);
+        String distanceUnit = distanceUnit(vehicle);
+        String quantityUnit = quantityUnit(vehicle);
 
         List<PdfMetric> metrics = List.of(
                 new PdfMetric("Repostajes", String.valueOf(totals.fuelingCount()), new Color(20, 184, 166)),
                 new PdfMetric("Gastos", String.valueOf(totals.expenseCount()), new Color(245, 158, 11)),
-                new PdfMetric("Km", formatDecimal(totals.totalDistance(), 2), new Color(15, 118, 110)),
+                new PdfMetric(distanceUnit, formatDecimal(totals.totalDistance(), 2), new Color(15, 118, 110)),
                 new PdfMetric("Coste total", formatDecimal(totals.totalFuelCost().add(totals.totalExpenseCost()), 2),
                         new Color(59, 130, 246)));
 
@@ -278,13 +283,13 @@ public class ExportService {
                 List.of(
                         new String[] { "Repostajes", String.valueOf(totals.fuelingCount()) },
                         new String[] { "Gastos", String.valueOf(totals.expenseCount()) },
-                        new String[] { "Km recorridos", formatDecimal(totals.totalDistance(), 2) },
-                        new String[] { "Litros repostados", formatDecimal(totals.totalLiters(), 2) },
+                        new String[] { "Distancia (" + distanceUnit + ")", formatDecimal(totals.totalDistance(), 2) },
+                        new String[] { "Cantidad principal (" + quantityUnit + ")", formatDecimal(totals.totalQuantity(), 2) },
                         new String[] { "Coste combustible", formatDecimal(totals.totalFuelCost(), 2) },
                         new String[] { "Coste gastos", formatDecimal(totals.totalExpenseCost(), 2) },
-                        new String[] { "Consumo medio", formatDecimal(totals.averageConsumption(), 2) },
-                        new String[] { "Coste por 100 km", formatDecimal(totals.costPer100Km(), 2) },
-                        new String[] { "Precio medio combustible", formatDecimal(totals.averageFuelPrice(), 3) },
+                        new String[] { "Consumo medio (" + consumptionUnit(vehicle) + ")", formatDecimal(totals.averageConsumption(), 2) },
+                        new String[] { "Coste por " + distanceRateLabel(vehicle), formatDecimal(totals.costPerDistanceUnit(), 2) },
+                        new String[] { "Precio medio (€/" + quantityUnit + ")", formatDecimal(totals.averageFuelPrice(), 3) },
                         new String[] { "Gasto medio", formatDecimal(totals.averageExpenseCost(), 2) }));
 
         return buildStyledPdf(
@@ -299,13 +304,15 @@ public class ExportService {
 
     private SummaryTotals calculateTotals(Vehicle vehicle, List<FuelEntry> fuelings, List<Expense> expenses) {
         BigDecimal totalDistance = BigDecimal.ZERO;
-        BigDecimal totalLiters = BigDecimal.ZERO;
+        BigDecimal totalQuantity = BigDecimal.ZERO;
         BigDecimal totalFuelCost = BigDecimal.ZERO;
         BigDecimal totalExpenseCost = BigDecimal.ZERO;
 
         for (FuelEntry fueling : fuelings) {
             totalDistance = totalDistance.add(nullToZero(fueling.getDistance()));
-            totalLiters = totalLiters.add(nullToZero(fueling.getLiters()));
+            if (quantityUnit(fueling).equals(quantityUnit(vehicle))) {
+                totalQuantity = totalQuantity.add(nullToZero(fueling.getLiters()));
+            }
             totalFuelCost = totalFuelCost.add(nullToZero(fueling.getPriceTotal()));
         }
 
@@ -314,7 +321,7 @@ public class ExportService {
         }
 
         ConsumptionCalculator.ConsumptionSummary consumption = consumptionCalculator.calculate(fuelings, vehicle);
-        return new SummaryTotals(fuelings.size(), expenses.size(), totalDistance, totalLiters, totalFuelCost,
+        return new SummaryTotals(fuelings.size(), expenses.size(), totalDistance, totalQuantity, totalFuelCost,
                 totalExpenseCost, consumption.averageConsumption(), consumption.costPerUnit(),
                 consumption.averageUnitPrice());
     }
@@ -432,15 +439,46 @@ public class ExportService {
         return value == null ? BigDecimal.ZERO : value;
     }
 
+    private String distanceUnit(Vehicle vehicle) {
+        return vehicle.getVehicleType() != null && vehicle.getVehicleType().toString().equals("agricultural") ? "h" : "km";
+    }
+
+    private String distanceRateLabel(Vehicle vehicle) {
+        return distanceUnit(vehicle).equals("h") ? "hora" : "100 km";
+    }
+
+    private String quantityUnit(Vehicle vehicle) {
+        if (vehicle.getVehicleEnergyType() == null) return "L";
+        return switch (vehicle.getVehicleEnergyType()) {
+            case electric -> "kWh";
+            case hydrogen, gnc -> "kg";
+            default -> "L";
+        };
+    }
+
+    private String quantityUnit(FuelEntry fueling) {
+        if (fueling.getFuelType() == null) return "L";
+        return switch (fueling.getFuelType()) {
+            case electricity -> "kWh";
+            case hydrogen, gnc -> "kg";
+            default -> "L";
+        };
+    }
+
+    private String consumptionUnit(Vehicle vehicle) {
+        String separator = distanceUnit(vehicle).equals("h") ? "/h" : "/100 km";
+        return quantityUnit(vehicle) + separator;
+    }
+
     private record SummaryTotals(
             int fuelingCount,
             int expenseCount,
             BigDecimal totalDistance,
-            BigDecimal totalLiters,
+            BigDecimal totalQuantity,
             BigDecimal totalFuelCost,
             BigDecimal totalExpenseCost,
             BigDecimal averageConsumption,
-            BigDecimal costPer100Km,
+            BigDecimal costPerDistanceUnit,
             BigDecimal averageFuelPrice) {
 
         private BigDecimal averageExpenseCost() {
@@ -772,8 +810,11 @@ public class ExportService {
             case "diesel" -> "Diésel";
             case "diesel_premium" -> "Diésel Premium";
             case "electricity" -> "Electricidad";
-            case "lpg" -> "GLP";
-            case "cng" -> "GNC";
+            case "glp" -> "GLP";
+            case "gnc" -> "GNC";
+            case "hydrogen" -> "Hidrógeno";
+            case "e85" -> "Etanol E85";
+            case "biodiesel" -> "Biodiésel";
             default -> typeObj.toString();
         };
     }
