@@ -66,6 +66,11 @@ export function AuthProvider({ children }) {
 	}, [token, username]);
 
 	useEffect(() => {
+		window.addEventListener("fuelytics:unauthorized", clearAuth);
+		return () => window.removeEventListener("fuelytics:unauthorized", clearAuth);
+	}, [clearAuth]);
+
+	useEffect(() => {
 		if (!token) {
 			return;
 		}

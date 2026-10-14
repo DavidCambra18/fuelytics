@@ -58,11 +58,19 @@ export async function apiFetch(path, options = {}) {
 			: body;
 
 	try {
-		return await fetch(buildApiUrl(path), {
+		const response = await fetch(buildApiUrl(path), {
 			...restOptions,
 			headers: finalHeaders,
 			body: requestBody,
 		});
+
+		if (response.status === 401 && getAuthToken() && typeof window !== "undefined") {
+			localStorage.removeItem("token");
+			localStorage.removeItem("username");
+			window.dispatchEvent(new Event("fuelytics:unauthorized"));
+		}
+
+		return response;
 	} catch (error) {
 		if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
 			throw new Error("Error al conectar con el servidor.");
