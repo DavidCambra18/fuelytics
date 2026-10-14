@@ -356,19 +356,19 @@ export default function GasStations() {
 
             <div className="mt-5 grid gap-5 lg:grid-cols-[1.7fr_0.9fr]">
               <section className="flex min-h-0 flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/40">
-                <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Mapa en vivo</p>
                     <h2 className="mt-1 text-xl font-semibold text-white">Precios oficiales por zona</h2>
                   </div>
-                  <div className="text-right text-xs text-slate-400">
+                  <div className="text-left text-xs text-slate-400 sm:text-right">
                     <p>Verde = barata</p>
                     <p>Naranja = normal</p>
                     <p>Rojo = cara</p>
                   </div>
                 </div>
 
-                <div className="relative min-h-[540px] flex-1 overflow-hidden bg-slate-950/30">
+                <div className="relative min-h-[420px] flex-1 overflow-hidden bg-slate-950/30 sm:min-h-[540px]">
                   {loading ? (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm" role="status" aria-live="polite">
                       <div className="rounded-2xl border border-white/10 bg-slate-950/90 px-5 py-3 text-sm text-slate-200 shadow-2xl">
