@@ -81,6 +81,10 @@ Antes de aplicar un script en Neon:
 | `FRONTEND_URL` | Backend | Origen permitido por CORS |
 | `JWT_SECRET` | Backend | Clave de firma JWT de 32 bytes como mínimo |
 | `JWT_EXPIRATION_MS` | Backend | Duración de sesión; por defecto, una hora |
+| `AUTH_LOGIN_MAX_ATTEMPTS` | Backend | Intentos de acceso permitidos por IP y ventana |
+| `AUTH_REGISTER_MAX_ATTEMPTS` | Backend | Registros permitidos por IP y ventana |
+| `AUTH_RATE_LIMIT_WINDOW_MS` | Backend | Ventana temporal del límite de autenticación |
+| `FORWARD_HEADERS_STRATEGY` | Backend | Tratamiento de la IP original detrás del proxy |
 | `JPA_SHOW_SQL` | Backend | Muestra SQL cuando vale `true`; por defecto, `false` |
 | `VITE_BACKEND_URL` | Frontend | URL pública de la API |
 
