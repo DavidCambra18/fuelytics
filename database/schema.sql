@@ -150,22 +150,6 @@ CREATE TABLE fuel_entries (
   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 );
 
--- EXPENSES
-CREATE TABLE expenses (
-  id SERIAL PRIMARY KEY,
-  vehicle_id INT NOT NULL,
-  date DATE NOT NULL,
-  type expense_type NOT NULL,
-  description TEXT,
-  cost DECIMAL(8,2) NOT NULL,
-  tire_set_id INT,
-  next_maintenance_km INT,
-  next_maintenance_date DATE,
-
-  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
-  FOREIGN KEY (tire_set_id) REFERENCES tire_sets(id) ON DELETE SET NULL
-);
-
 -- TIRE SETS
 CREATE TABLE tire_sets (
   id SERIAL PRIMARY KEY,
@@ -180,6 +164,22 @@ CREATE TABLE tire_sets (
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
     
   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+);
+
+-- EXPENSES
+CREATE TABLE expenses (
+  id SERIAL PRIMARY KEY,
+  vehicle_id INT NOT NULL,
+  date DATE NOT NULL,
+  type expense_type NOT NULL,
+  description VARCHAR(255),
+  cost DECIMAL(8,2) NOT NULL,
+  tire_set_id INT,
+  next_maintenance_km INT,
+  next_maintenance_date DATE,
+
+  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+  FOREIGN KEY (tire_set_id) REFERENCES tire_sets(id) ON DELETE SET NULL
 );
 
 -- BADGES
