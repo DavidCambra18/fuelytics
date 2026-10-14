@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import com.fuelytics.backend.dto.AlertResponseDTO;
 import com.fuelytics.backend.dto.VehicleDTO;
@@ -31,7 +32,7 @@ public class VehicleController {
     }
 
     @PostMapping
-    public VehicleResponseDTO create(@RequestBody VehicleDTO dto) {
+    public VehicleResponseDTO create(@Valid @RequestBody VehicleDTO dto) {
 
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
@@ -60,7 +61,7 @@ public class VehicleController {
     @PutMapping("/{id}")
     public ResponseEntity<VehicleResponseDTO> updateVehicle(
             @PathVariable Integer id,
-            @RequestBody VehicleUpdateDTO dto,
+            @Valid @RequestBody VehicleUpdateDTO dto,
             Principal principal) {
 
         VehicleResponseDTO response = vehicleService.updateVehicle(id, dto, principal.getName());

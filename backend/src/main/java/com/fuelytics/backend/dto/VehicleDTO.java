@@ -4,21 +4,48 @@ import com.fuelytics.backend.entity.enums.GearboxType;
 import com.fuelytics.backend.entity.enums.VehicleEnergyType;
 import com.fuelytics.backend.entity.enums.VehicleType;
 import java.math.BigDecimal;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 public class VehicleDTO {
 
+    @NotNull(message = "El tipo de vehículo es obligatorio")
     private VehicleType vehicleType;
+    @NotNull(message = "El tipo de energía es obligatorio")
     private VehicleEnergyType vehicleEnergyType;
+    @NotBlank(message = "La marca es obligatoria")
+    @Size(max = 100, message = "La marca no puede superar 100 caracteres")
     private String brand;
+    @NotBlank(message = "El modelo es obligatorio")
+    @Size(max = 100, message = "El modelo no puede superar 100 caracteres")
     private String model;
+    @Positive(message = "La potencia debe ser mayor que cero")
     private int power;
+    @PositiveOrZero(message = "La cilindrada no puede ser negativa")
     private int cc;
+    @Min(value = 1886, message = "El año no es válido")
+    @Max(value = 2100, message = "El año no es válido")
     private int year;
+    @PositiveOrZero(message = "El odómetro no puede ser negativo")
     private Integer odometer;
+    @Size(max = 20, message = "La matrícula no puede superar 20 caracteres")
     private String plate;
 
+    @NotNull(message = "La capacidad es obligatoria")
+    @DecimalMin(value = "0.01", message = "La capacidad debe ser mayor que cero")
+    @Digits(integer = 3, fraction = 2, message = "La capacidad no tiene un formato válido")
     private BigDecimal tankCapacity;
+    @DecimalMin(value = "0.0", inclusive = false, message = "El consumo oficial debe ser mayor que cero")
+    @Digits(integer = 3, fraction = 2, message = "El consumo oficial no tiene un formato válido")
     private BigDecimal officialConsumption;
+    @NotNull(message = "La caja de cambios es obligatoria")
     private GearboxType gearbox;
 
     public VehicleType getVehicleType() {

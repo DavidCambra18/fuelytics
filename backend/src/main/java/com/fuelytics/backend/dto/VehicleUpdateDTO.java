@@ -4,20 +4,39 @@ import com.fuelytics.backend.entity.enums.GearboxType;
 import com.fuelytics.backend.entity.enums.VehicleEnergyType;
 import com.fuelytics.backend.entity.enums.VehicleType;
 import java.math.BigDecimal;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 public class VehicleUpdateDTO {
 
+    @Size(min = 1, max = 100, message = "La marca debe tener entre 1 y 100 caracteres")
     private String brand;
+    @Size(min = 1, max = 100, message = "El modelo debe tener entre 1 y 100 caracteres")
     private String model;
+    @Positive(message = "La potencia debe ser mayor que cero")
     private Integer power;
+    @PositiveOrZero(message = "La cilindrada no puede ser negativa")
     private Integer cc;
+    @Min(value = 1886, message = "El año no es válido")
+    @Max(value = 2100, message = "El año no es válido")
     private Integer year;
     private VehicleType vehicleType;
     private GearboxType gearbox;
     private VehicleEnergyType vehicleEnergyType;
+    @PositiveOrZero(message = "El odómetro no puede ser negativo")
     private Integer odometer;
+    @Size(max = 20, message = "La matrícula no puede superar 20 caracteres")
     private String plate;
+    @DecimalMin(value = "0.0", inclusive = false, message = "La capacidad debe ser mayor que cero")
+    @Digits(integer = 3, fraction = 2, message = "La capacidad no tiene un formato válido")
     private BigDecimal tankCapacity;
+    @DecimalMin(value = "0.0", inclusive = false, message = "El consumo oficial debe ser mayor que cero")
+    @Digits(integer = 3, fraction = 2, message = "El consumo oficial no tiene un formato válido")
     private BigDecimal officialConsumption;
     private Boolean isPublic;
     private Boolean showFuelData;

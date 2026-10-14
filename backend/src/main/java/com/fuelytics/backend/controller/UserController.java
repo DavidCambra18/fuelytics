@@ -6,6 +6,7 @@ import java.security.Principal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import com.fuelytics.backend.dto.UserPrivacyDTO;
 import com.fuelytics.backend.dto.UserLoginDTO;
@@ -24,12 +25,12 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@RequestBody UserRegisterDTO dto) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody UserRegisterDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(dto));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody UserLoginDTO dto) {
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody UserLoginDTO dto) {
         return ResponseEntity.ok(userService.login(dto));
     }
 
@@ -45,12 +46,12 @@ public class UserController {
     }
 
     @PutMapping("/profile")
-    public UserProfileDTO updateProfile(Principal principal, @RequestBody UserProfileDTO dto) {
+    public UserProfileDTO updateProfile(Principal principal, @Valid @RequestBody UserProfileDTO dto) {
         return userService.updateProfile(principal.getName(), dto);
     }
 
     @PutMapping("/privacy")
-    public UserProfileDTO updatePrivacy(Principal principal, @RequestBody UserPrivacyDTO dto) {
+    public UserProfileDTO updatePrivacy(Principal principal, @Valid @RequestBody UserPrivacyDTO dto) {
         return userService.updatePrivacy(principal.getName(), dto);
     }
 
