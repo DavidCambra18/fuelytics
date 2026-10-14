@@ -14,5 +14,8 @@ public interface FuelingRepository extends JpaRepository<FuelEntry, Integer> {
     
         @Query("SELECT f FROM FuelEntry f WHERE f.vehicle.id = :vehicleId ORDER BY f.date DESC")
         List<FuelEntry> findByVehicleIdOrderByDateDesc(@Param("vehicleId") Integer vehicleId);
+
+        @Query("SELECT MAX(f.odometer) FROM FuelEntry f WHERE f.vehicle.id = :vehicleId")
+        Integer findMaxOdometerByVehicleId(@Param("vehicleId") Integer vehicleId);
     
 }

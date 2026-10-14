@@ -89,13 +89,6 @@ public class FuelingService {
         fuelEntry.setAverageSpeed(dto.getAverageSpeed());
         fuelEntry.setNotes(dto.getNotes());
 
-        if (dto.getOdometer() != null) {
-            if (vehicle.getOdometer() == null || dto.getOdometer() > vehicle.getOdometer()) {
-                vehicle.setOdometer(dto.getOdometer());
-                vehicleRepository.save(vehicle);
-            }
-        }
-
         FuelEntry saved = fuelingRepository.save(fuelEntry);
 
         updateVehicleAverages(vehicle);
@@ -142,14 +135,6 @@ public class FuelingService {
         fuelEntry.setBoardConsumption(dto.getBoardConsumption());
         fuelEntry.setAverageSpeed(dto.getAverageSpeed());
         fuelEntry.setNotes(dto.getNotes());
-
-        if (dto.getOdometer() != null) {
-            Vehicle vehicleToUpdate = fuelEntry.getVehicle();
-            if (vehicleToUpdate.getOdometer() == null || dto.getOdometer() > vehicleToUpdate.getOdometer()) {
-                vehicleToUpdate.setOdometer(dto.getOdometer());
-                vehicleRepository.save(vehicleToUpdate);
-            }
-        }
 
         FuelEntry saved = fuelingRepository.save(fuelEntry);
 

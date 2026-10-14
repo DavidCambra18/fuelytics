@@ -96,7 +96,7 @@ public class VehicleService {
         dto.setPower(v.getPower());
         dto.setCc(v.getCc());
         dto.setYear(v.getYear());
-        dto.setOdometer(v.getOdometer());
+        dto.setOdometer(currentOdometer(v));
         dto.setTankCapacity(v.getTankCapacity());
         dto.setGearbox(v.getGearbox());
         dto.setOfficialConsumption(v.getOfficialConsumption());
@@ -318,16 +318,7 @@ public class VehicleService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
         }
 
-        List<FuelEntry> fuelings = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId);
-
-        final Integer currentOdometer;
-        if (!fuelings.isEmpty() && fuelings.get(0).getOdometer() != null) {
-            currentOdometer = fuelings.get(0).getOdometer();
-        } else if (vehicle.getOdometer() != null) {
-            currentOdometer = vehicle.getOdometer();
-        } else {
-            currentOdometer = 0;
-        }
+        final Integer currentOdometer = currentOdometer(vehicle);
 
         List<Expense> expenses = expenseRepository.findByVehicleIdOrderByDateDesc(vehicleId);
 
@@ -352,5 +343,11 @@ public class VehicleService {
 
                     return dto;
                 }).toList();
+    }
+
+    private int currentOdometer(Vehicle vehicle) {
+        Integer historyOdometer = fuelingRepository.findMaxOdometerByVehicleId(vehicle.getId());
+        return Math.max(vehicle.getOdometer() != null ? vehicle.getOdometer() : 0,
+                historyOdometer != null ? historyOdometer : 0);
     }
 }

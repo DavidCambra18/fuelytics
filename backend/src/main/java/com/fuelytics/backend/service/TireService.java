@@ -43,13 +43,6 @@ public class TireService {
     public TireSetResponseDTO createTireSet(Integer vehicleId, TireSetDTO dto, String principalName) {
         Vehicle vehicle = verifyOwnership(vehicleId, principalName);
 
-        if (dto.getInstallationOdometer() != null) {
-            if (vehicle.getOdometer() == null || dto.getInstallationOdometer() > vehicle.getOdometer()) {
-                vehicle.setOdometer(dto.getInstallationOdometer());
-                vehicleRepository.save(vehicle);
-            }
-        }
-
         tireSetRepository.findByVehicleIdAndActiveTrue(vehicleId).stream()
                 .filter(t -> t.getAxle() == dto.getAxle())
                 .forEach(t -> {
@@ -98,10 +91,9 @@ public class TireService {
     }
 
     private int getMaxOdometer(Integer vehicleId, Integer baseOdometer) {
-        return fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId).stream()
-                .mapToInt(f -> f.getOdometer() != null ? f.getOdometer() : 0)
-                .max()
-                .orElse(baseOdometer != null ? baseOdometer : 0);
+        Integer historyOdometer = fuelingRepository.findMaxOdometerByVehicleId(vehicleId);
+        return Math.max(baseOdometer != null ? baseOdometer : 0,
+                historyOdometer != null ? historyOdometer : 0);
     }
 
     private TireSetResponseDTO mapToResponseDTO(TireSet tire, int currentOdometer) {
