@@ -7,6 +7,7 @@ import {
   formatGearboxType,
   getOdometerUnit,
   getConsumptionUnit,
+  getQuantityUnit,
   formatExpenseType
 } from "../utils/vehicleLabels";
 
@@ -17,6 +18,7 @@ export default function PublicVehicle() {
   const [vehicle, setVehicle] = useState(null);
   const [fuelings, setFuelings] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [stats, setStats] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -212,11 +214,11 @@ export default function PublicVehicle() {
                           fuelings.map((fuel) => (
                             <article key={fuel.id} className="flex items-center justify-between rounded-xl bg-slate-900/50 p-4 border border-white/5">
                               <div>
-                                <p className="text-sm font-semibold text-white">{fuel.liters} L • {fuel.priceTotal} €</p>
-                                <p className="text-xs text-slate-400 mt-1">{fuel.date} • {fuel.distance} km recorridos</p>
+                                <p className="text-sm font-semibold text-white">{fuel.liters} {getQuantityUnit(vehicle.vehicleEnergyType)} • {fuel.priceTotal} €</p>
+                                <p className="text-xs text-slate-400 mt-1">{fuel.date} • {fuel.distance} {getOdometerUnit(vehicle.vehicleType)} recorridos</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-sm font-bold text-teal-400">{fuel.boardConsumption ? `${fuel.boardConsumption} L/100` : '---'}</p>
+                                <p className="text-sm font-bold text-teal-400">{fuel.boardConsumption ? `${fuel.boardConsumption} ${getConsumptionUnit(vehicle.vehicleType, vehicle.vehicleEnergyType)}` : '---'}</p>
                               </div>
                             </article>
                           ))
@@ -257,6 +259,35 @@ export default function PublicVehicle() {
                     </section>
                   )}
                 </div>
+
+                {vehicle.showStatistics && stats && (
+                  <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Estadísticas verificadas</h2>
+                      <BarChart3 className="h-5 w-5 text-teal-500/50" />
+                    </div>
+                    <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-5">
+                        <p className="text-xs text-slate-500">Consumo medio</p>
+                        <p className="mt-2 text-xl font-semibold text-white">
+                          {stats.averageConsumption != null
+                            ? `${Number(stats.averageConsumption).toFixed(2)} ${getConsumptionUnit(vehicle.vehicleType, vehicle.vehicleEnergyType)}`
+                            : "Sin ciclos completos"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-5">
+                        <p className="text-xs text-slate-500">Ciclos verificados</p>
+                        <p className="mt-2 text-xl font-semibold text-white">{stats.verifiedCycles || 0}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-5">
+                        <p className="text-xs text-slate-500">Distancia verificada</p>
+                        <p className="mt-2 text-xl font-semibold text-white">
+                          {Number(stats.verifiedDistance || 0).toLocaleString("es-ES")} {getOdometerUnit(vehicle.vehicleType)}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                )}
 
               </div>
             ) : null}

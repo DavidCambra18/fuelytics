@@ -43,16 +43,19 @@ public class ExportService {
     private final UserRepository userRepository;
     private final FuelingRepository fuelingRepository;
     private final ExpenseRepository expenseRepository;
+    private final ConsumptionCalculator consumptionCalculator;
 
     public ExportService(
             VehicleRepository vehicleRepository,
             UserRepository userRepository,
             FuelingRepository fuelingRepository,
-            ExpenseRepository expenseRepository) {
+            ExpenseRepository expenseRepository,
+            ConsumptionCalculator consumptionCalculator) {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
         this.fuelingRepository = fuelingRepository;
         this.expenseRepository = expenseRepository;
+        this.consumptionCalculator = consumptionCalculator;
     }
 
     public ResponseEntity<byte[]> exportFuelings(
@@ -188,7 +191,7 @@ public class ExportService {
     }
 
     private byte[] buildFuelingsPdf(Vehicle vehicle, List<FuelEntry> fuelings, LocalDate startDate, LocalDate endDate) {
-        SummaryTotals totals = calculateTotals(fuelings, List.of());
+        SummaryTotals totals = calculateTotals(vehicle, fuelings, List.of());
 
         List<PdfMetric> metrics = List.of(
                 new PdfMetric("Repostajes", String.valueOf(totals.fuelingCount()), new Color(20, 184, 166)),
@@ -227,7 +230,7 @@ public class ExportService {
     }
 
     private byte[] buildExpensesPdf(Vehicle vehicle, List<Expense> expenses, LocalDate startDate, LocalDate endDate) {
-        SummaryTotals totals = calculateTotals(List.of(), expenses);
+        SummaryTotals totals = calculateTotals(vehicle, List.of(), expenses);
 
         List<PdfMetric> metrics = List.of(
                 new PdfMetric("Gastos", String.valueOf(totals.expenseCount()), new Color(245, 158, 11)),
@@ -259,7 +262,7 @@ public class ExportService {
 
     private byte[] buildSummaryPdf(Vehicle vehicle, List<FuelEntry> fuelings, List<Expense> expenses,
             LocalDate startDate, LocalDate endDate) {
-        SummaryTotals totals = calculateTotals(fuelings, expenses);
+        SummaryTotals totals = calculateTotals(vehicle, fuelings, expenses);
 
         List<PdfMetric> metrics = List.of(
                 new PdfMetric("Repostajes", String.valueOf(totals.fuelingCount()), new Color(20, 184, 166)),
@@ -294,7 +297,7 @@ public class ExportService {
                 "Visión rápida de actividad y coste del vehículo en el periodo seleccionado.");
     }
 
-    private SummaryTotals calculateTotals(List<FuelEntry> fuelings, List<Expense> expenses) {
+    private SummaryTotals calculateTotals(Vehicle vehicle, List<FuelEntry> fuelings, List<Expense> expenses) {
         BigDecimal totalDistance = BigDecimal.ZERO;
         BigDecimal totalLiters = BigDecimal.ZERO;
         BigDecimal totalFuelCost = BigDecimal.ZERO;
@@ -310,8 +313,10 @@ public class ExportService {
             totalExpenseCost = totalExpenseCost.add(nullToZero(expense.getCost()));
         }
 
+        ConsumptionCalculator.ConsumptionSummary consumption = consumptionCalculator.calculate(fuelings, vehicle);
         return new SummaryTotals(fuelings.size(), expenses.size(), totalDistance, totalLiters, totalFuelCost,
-                totalExpenseCost);
+                totalExpenseCost, consumption.averageConsumption(), consumption.costPerUnit(),
+                consumption.averageUnitPrice());
     }
 
     private byte[] buildStyledPdf(
@@ -433,31 +438,10 @@ public class ExportService {
             BigDecimal totalDistance,
             BigDecimal totalLiters,
             BigDecimal totalFuelCost,
-            BigDecimal totalExpenseCost) {
-
-        private BigDecimal averageConsumption() {
-            if (totalDistance.signum() == 0) {
-                return BigDecimal.ZERO;
-            }
-
-            return totalLiters.multiply(BigDecimal.valueOf(100)).divide(totalDistance, 2, RoundingMode.HALF_UP);
-        }
-
-        private BigDecimal costPer100Km() {
-            if (totalDistance.signum() == 0) {
-                return BigDecimal.ZERO;
-            }
-
-            return totalFuelCost.multiply(BigDecimal.valueOf(100)).divide(totalDistance, 2, RoundingMode.HALF_UP);
-        }
-
-        private BigDecimal averageFuelPrice() {
-            if (totalLiters.signum() == 0) {
-                return BigDecimal.ZERO;
-            }
-
-            return totalFuelCost.divide(totalLiters, 3, RoundingMode.HALF_UP);
-        }
+            BigDecimal totalExpenseCost,
+            BigDecimal averageConsumption,
+            BigDecimal costPer100Km,
+            BigDecimal averageFuelPrice) {
 
         private BigDecimal averageExpenseCost() {
             if (expenseCount == 0) {

@@ -20,6 +20,8 @@ public class VehicleResponseDTO {
     private BigDecimal tankCapacity;
     private GearboxType gearbox;
     private BigDecimal officialConsumption;
+    private Double avgConsumption;
+    private Integer fuelEntriesCount;
     private Boolean isPublic;
     private Boolean showFuelData;
     private Boolean showExpenses;
@@ -119,6 +121,22 @@ public class VehicleResponseDTO {
 
     public void setOfficialConsumption(BigDecimal officialConsumption) {
         this.officialConsumption = officialConsumption;
+    }
+
+    public Double getAvgConsumption() {
+        return avgConsumption;
+    }
+
+    public void setAvgConsumption(Double avgConsumption) {
+        this.avgConsumption = avgConsumption;
+    }
+
+    public Integer getFuelEntriesCount() {
+        return fuelEntriesCount;
+    }
+
+    public void setFuelEntriesCount(Integer fuelEntriesCount) {
+        this.fuelEntriesCount = fuelEntriesCount;
     }
 
     public Boolean getIsPublic() {

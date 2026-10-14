@@ -2,6 +2,7 @@ package com.fuelytics.backend.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,15 +31,18 @@ public class VehicleService {
     private final UserRepository userRepository;
     private final FuelingRepository fuelingRepository;
     private final ExpenseRepository expenseRepository;
+    private final ConsumptionCalculator consumptionCalculator;
 
     public VehicleService(VehicleRepository vehicleRepository,
             UserRepository userRepository,
             FuelingRepository fuelingRepository,
-            ExpenseRepository expenseRepository) {
+            ExpenseRepository expenseRepository,
+            ConsumptionCalculator consumptionCalculator) {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
         this.fuelingRepository = fuelingRepository;
         this.expenseRepository = expenseRepository;
+        this.consumptionCalculator = consumptionCalculator;
     }
 
     public VehicleResponseDTO createVehicle(VehicleDTO dto, String email) {
@@ -96,6 +100,8 @@ public class VehicleService {
         dto.setTankCapacity(v.getTankCapacity());
         dto.setGearbox(v.getGearbox());
         dto.setOfficialConsumption(v.getOfficialConsumption());
+        dto.setAvgConsumption(v.getAvgConsumption());
+        dto.setFuelEntriesCount(v.getFuelEntriesCount());
         dto.setIsPublic(v.getIsPublic());
         dto.setShowFuelData(v.getShowFuelData());
         dto.setShowExpenses(v.getShowExpenses());
@@ -287,9 +293,20 @@ public class VehicleService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Las estadísticas de este vehículo son privadas");
         }
 
-        return Map.of(
-                "message", "Estadísticas en construcción",
-                "vehicleId", vehicleId);
+        List<FuelEntry> fuelings = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId);
+        ConsumptionCalculator.ConsumptionSummary summary = consumptionCalculator.calculate(fuelings, vehicle);
+        Map<String, Object> statistics = new LinkedHashMap<>();
+        statistics.put("vehicleId", vehicleId);
+        statistics.put("entryCount", fuelings.size());
+        statistics.put("verifiedCycles", summary.verifiedCycles());
+        statistics.put("averageConsumption",
+                summary.verifiedCycles() > 0 ? summary.averageConsumption() : null);
+        statistics.put("verifiedDistance", summary.verifiedDistance());
+        statistics.put("verifiedQuantity", summary.verifiedQuantity());
+        statistics.put("averageUnitPrice",
+                summary.verifiedCycles() > 0 ? summary.averageUnitPrice() : null);
+        statistics.put("measurement", summary.measurement().name().toLowerCase());
+        return statistics;
     }
 
     public List<AlertResponseDTO> getVehicleAlerts(Integer vehicleId, String email) {

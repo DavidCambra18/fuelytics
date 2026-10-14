@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { BarChart3, Download } from "lucide-react";
 import { apiFetch } from "../services/api";
-import { getConsumptionUnit } from "../utils/vehicleLabels";
+import { getConsumptionUnit, getOdometerUnit, getQuantityUnit, getUnitPriceLabel } from "../utils/vehicleLabels";
 import ExportReportModal from "../components/ExportReportModal";
+import { buildFuelingRows, summarizeConsumption } from "../utils/consumption";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -52,89 +53,6 @@ function formatFullDate(value) {
   }).format(date);
 }
 
-function buildFuelingRows(fuelings) {
-  const sortedFuelings = [...fuelings].sort((left, right) => {
-    const leftDate = new Date(`${left.date}T00:00:00`).getTime();
-    const rightDate = new Date(`${right.date}T00:00:00`).getTime();
-
-    if (leftDate !== rightDate) {
-      return leftDate - rightDate;
-    }
-
-    return Number(left.id || 0) - Number(right.id || 0);
-  });
-
-  let accumulatedDistance = 0;
-  let accumulatedLiters = 0;
-  let accumulatedPrice = 0;
-  let hasBaseline = false;
-
-  return sortedFuelings.map((fueling) => {
-    const liters = Number(fueling.liters || 0);
-    const distance = Number(fueling.distance || 0);
-    const priceTotal = Number(fueling.priceTotal || 0);
-    const refuelingType = fueling.refueling;
-
-    if (!hasBaseline) {
-      hasBaseline = true;
-
-      if (refuelingType === "partial") {
-        accumulatedDistance = distance;
-        accumulatedLiters = liters;
-        accumulatedPrice = priceTotal;
-
-        return {
-          ...fueling,
-          displayState: "partial",
-          displayConsumption: distance > 0 ? (liters / distance) * 100 : null,
-        };
-      }
-
-      accumulatedDistance = 0;
-      accumulatedLiters = 0;
-      accumulatedPrice = 0;
-
-      return {
-        ...fueling,
-        displayState: "start",
-        displayConsumption: null,
-      };
-    }
-
-    accumulatedDistance += distance;
-    accumulatedLiters += liters;
-    accumulatedPrice += priceTotal;
-
-    if (refuelingType === "complete") {
-      const verifiedConsumption = accumulatedDistance > 0 ? (accumulatedLiters / accumulatedDistance) * 100 : null;
-      const verifiedPricePerLiter = accumulatedLiters > 0 ? accumulatedPrice / accumulatedLiters : null;
-      const verifiedDistance = accumulatedDistance;
-      const verifiedLiters = accumulatedLiters;
-      const verifiedPrice = accumulatedPrice;
-
-      accumulatedDistance = 0;
-      accumulatedLiters = 0;
-      accumulatedPrice = 0;
-
-      return {
-        ...fueling,
-        displayState: "verified",
-        displayConsumption: verifiedConsumption,
-        displayPricePerLiter: verifiedPricePerLiter,
-        verifiedDistance,
-        verifiedLiters,
-        verifiedPrice,
-      };
-    }
-
-    return {
-      ...fueling,
-      displayState: refuelingType === "initial" ? "start" : "estimated",
-      displayConsumption: accumulatedDistance > 0 ? (accumulatedLiters / accumulatedDistance) * 100 : null,
-    };
-  });
-}
-
 export default function Statistics() {
   const { selectedVehicle } = useOutletContext();
   const [fuelings, setFuelings] = useState([]);
@@ -143,6 +61,10 @@ export default function Statistics() {
   const [selectedMetric, setSelectedMetric] = useState("consumption");
   const [exportTarget, setExportTarget] = useState(null);
   const consumptionUnit = getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType);
+  const distanceUnit = getOdometerUnit(selectedVehicle?.vehicleType);
+  const quantityUnit = getQuantityUnit(selectedVehicle?.vehicleEnergyType);
+  const unitPriceLabel = getUnitPriceLabel(selectedVehicle?.vehicleEnergyType);
+  const costRateLabel = selectedVehicle?.vehicleType === "agricultural" ? "Coste por hora" : "Coste por 100 km";
 
   useEffect(() => {
     const loadFuelings = async () => {
@@ -182,7 +104,10 @@ export default function Statistics() {
     [fuelings]
   );
 
-  const fuelingRows = useMemo(() => buildFuelingRows(fuelings), [fuelings]);
+  const fuelingRows = useMemo(
+    () => buildFuelingRows(fuelings, selectedVehicle?.vehicleType),
+    [fuelings, selectedVehicle?.vehicleType]
+  );
 
   const metrics = useMemo(() => {
     const totalDistance = fuelings.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
@@ -190,14 +115,7 @@ export default function Statistics() {
     const totalPrice = fuelings.reduce((acc, fueling) => acc + Number(fueling.priceTotal || 0), 0);
     const totalEntries = fuelings.length;
 
-    const verifiedRows = fuelingRows.filter((r) => r.displayState === "verified");
-    const verifiedDistance = verifiedRows.reduce((acc, r) => acc + Number(r.verifiedDistance || 0), 0);
-    const verifiedLiters = verifiedRows.reduce((acc, r) => acc + Number(r.verifiedLiters || 0), 0);
-    const verifiedPrice = verifiedRows.reduce((acc, r) => acc + Number(r.verifiedPrice || 0), 0);
-
-    const averageConsumption = verifiedDistance > 0 ? (verifiedLiters / verifiedDistance) * 100 : 0;
-    const costPer100Km = verifiedDistance > 0 ? (verifiedPrice / verifiedDistance) * 100 : 0;
-    const averageFuelPrice = verifiedLiters > 0 ? verifiedPrice / verifiedLiters : 0;
+    const summary = summarizeConsumption(fuelingRows, selectedVehicle);
     const averageDistance = totalEntries > 0 ? totalDistance / totalEntries : 0;
 
     return {
@@ -205,41 +123,35 @@ export default function Statistics() {
       totalLiters,
       totalPrice,
       totalEntries,
-      averageConsumption,
-      costPer100Km,
-      averageFuelPrice,
+      averageConsumption: summary.averageConsumption,
+      costPer100Km: summary.costPerUnit,
+      averageFuelPrice: summary.averageUnitPrice,
       averageDistance,
     };
-  }, [fuelings]);
+  }, [fuelings, fuelingRows, selectedVehicle]);
 
   const chartData = useMemo(() => {
-    if (selectedMetric === "consumption") {
-      const consumptionLabels = [];
-      const consumptionData = [];
-      const cumulativeFuelings = [];
+    const cumulativeFuelings = [];
+    const verifiedPoints = [];
 
-      for (const fueling of chartFuelings) {
-        cumulativeFuelings.push(fueling);
+    for (const fueling of chartFuelings) {
+      cumulativeFuelings.push(fueling);
+      if (fueling.refueling !== "complete") continue;
 
-        if (fueling.refueling !== "complete") {
-          continue;
-        }
-
-        const subsetRows = buildFuelingRows(cumulativeFuelings);
-        const verifiedSubset = subsetRows.filter((r) => r.displayState === "verified");
-        const subsetDistance = verifiedSubset.reduce((acc, r) => acc + Number(r.verifiedDistance || 0), 0);
-        const subsetLiters = verifiedSubset.reduce((acc, r) => acc + Number(r.verifiedLiters || 0), 0);
-
-        consumptionLabels.push(formatDateLabel(fueling.date));
-        consumptionData.push(subsetDistance > 0 ? (subsetLiters / subsetDistance) * 100 : 0);
+      const rows = buildFuelingRows(cumulativeFuelings, selectedVehicle?.vehicleType);
+      const summary = summarizeConsumption(rows, selectedVehicle);
+      if (summary.verifiedCycles > 0) {
+        verifiedPoints.push({ date: fueling.date, summary });
       }
+    }
 
+    if (selectedMetric === "consumption") {
       return {
-        labels: consumptionLabels,
+        labels: verifiedPoints.map((point) => formatDateLabel(point.date)),
         datasets: [
           {
             label: `Media acumulada (${consumptionUnit})`,
-            data: consumptionData,
+            data: verifiedPoints.map((point) => point.summary.averageConsumption),
             borderColor: "#f8fafc",
             backgroundColor: "rgba(248, 250, 252, 0.12)",
             pointBackgroundColor: "#e2e8f0",
@@ -253,17 +165,11 @@ export default function Statistics() {
       };
     } else if (selectedMetric === "costPer100Km") {
       return {
-        labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
+        labels: verifiedPoints.map((point) => formatDateLabel(point.date)),
         datasets: [
           {
-            label: "Coste por 100km (€)",
-            data: chartFuelings.map((_, index) => {
-              const subset = chartFuelings.slice(0, index + 1);
-              const subsetDistance = subset.reduce((acc, fueling) => acc + Number(fueling.distance || 0), 0);
-              const subsetPrice = subset.reduce((acc, fueling) => acc + Number(fueling.priceTotal || 0), 0);
-
-              return subsetDistance > 0 ? (subsetPrice / subsetDistance) * 100 : 0;
-            }),
+            label: `${costRateLabel} (€)`,
+            data: verifiedPoints.map((point) => point.summary.costPerUnit),
             borderColor: "#fbbf24",
             backgroundColor: "rgba(251, 191, 36, 0.12)",
             pointBackgroundColor: "#fcd34d",
@@ -277,17 +183,11 @@ export default function Statistics() {
       };
     } else if (selectedMetric === "fuelPrice") {
       return {
-        labels: chartFuelings.map((fueling) => formatDateLabel(fueling.date)),
+        labels: verifiedPoints.map((point) => formatDateLabel(point.date)),
         datasets: [
           {
-            label: "Precio medio combustible (€/L)",
-            data: chartFuelings.map((_, index) => {
-              const subset = chartFuelings.slice(0, index + 1);
-              const subsetPrice = subset.reduce((acc, fueling) => acc + Number(fueling.priceTotal || 0), 0);
-              const subsetLiters = subset.reduce((acc, fueling) => acc + Number(fueling.liters || 0), 0);
-
-              return subsetLiters > 0 ? subsetPrice / subsetLiters : 0;
-            }),
+            label: `Precio medio (${unitPriceLabel})`,
+            data: verifiedPoints.map((point) => point.summary.averageUnitPrice),
             borderColor: "#10b981",
             backgroundColor: "rgba(16, 185, 129, 0.12)",
             pointBackgroundColor: "#6ee7b7",
@@ -300,7 +200,7 @@ export default function Statistics() {
         ],
       };
     }
-  }, [chartFuelings, selectedMetric]);
+  }, [chartFuelings, selectedMetric, consumptionUnit, selectedVehicle]);
 
   const chartOptions = useMemo(
     () => ({
@@ -323,7 +223,7 @@ export default function Statistics() {
               } else if (selectedMetric === "costPer100Km") {
                 return `${Number(context.raw || 0).toFixed(2)} €`;
               } else if (selectedMetric === "fuelPrice") {
-                return `${Number(context.raw || 0).toFixed(3)} €/L`;
+                return `${Number(context.raw || 0).toFixed(3)} ${unitPriceLabel}`;
               }
             },
           },
@@ -352,24 +252,24 @@ export default function Statistics() {
         },
       },
     }),
-    [selectedMetric, consumptionUnit]
+    [selectedMetric, consumptionUnit, unitPriceLabel]
   );
 
   const cards = [
     {
       label: "Consumo medio",
       value: `${metrics.averageConsumption.toFixed(2)} ${consumptionUnit}`,
-      note: "Litros totales divididos entre kilómetros recorridos",
+      note: `Cantidad verificada dividida entre ${distanceUnit === "h" ? "horas" : "kilómetros"} recorridos`,
     },
     {
-      label: "Coste por 100km",
+      label: costRateLabel,
       value: `${metrics.costPer100Km.toFixed(2)} €`,
-      note: "Coste estimado por cada 100 kilómetros",
+      note: selectedVehicle?.vehicleType === "agricultural" ? "Coste verificado por hora" : "Coste verificado por cada 100 kilómetros",
     },
     {
       label: "Precio medio combustible",
-      value: `${metrics.averageFuelPrice.toFixed(3)} €/L`,
-      note: "Precio medio pagado por litro",
+      value: `${metrics.averageFuelPrice.toFixed(3)} ${unitPriceLabel}`,
+      note: `Precio medio pagado por ${quantityUnit}`,
     },
   ];
 
@@ -459,7 +359,7 @@ export default function Statistics() {
                     {selectedMetric === "consumption"
                       ? "Consumo medio acumulado"
                       : selectedMetric === "costPer100Km"
-                        ? "Coste por 100km acumulado"
+                        ? `${costRateLabel} acumulado`
                         : "Precio medio combustible acumulado"}
                   </h3>
                 </div>
@@ -498,7 +398,7 @@ export default function Statistics() {
               <thead>
                 <tr className="text-left text-xs uppercase tracking-[0.16em] text-slate-500">
                   <th className="px-4 py-2">Fecha</th>
-                  <th className="px-4 py-2">Litros</th>
+                  <th className="px-4 py-2">Cantidad</th>
                   <th className="px-4 py-2">Importe</th>
                   <th className="px-4 py-2">Distancia</th>
                   <th className="px-4 py-2">Consumo</th>
@@ -517,9 +417,9 @@ export default function Statistics() {
                   return (
                     <tr key={fueling.id} className="rounded-2xl bg-white/5 text-sm text-slate-200">
                       <td className="rounded-l-2xl px-4 py-4">{formatFullDate(fueling.date)}</td>
-                      <td className="px-4 py-4">{liters.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
+                      <td className="px-4 py-4">{liters.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {quantityUnit}</td>
                       <td className="px-4 py-4">{priceTotal.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</td>
-                      <td className="px-4 py-4">{distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} km</td>
+                      <td className="px-4 py-4">{distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} {distanceUnit}</td>
                       <td className="rounded-r-2xl px-4 py-4">{consumption !== null ? `${consumption} ${consumptionUnit}` : "—"}</td>
                     </tr>
                   );

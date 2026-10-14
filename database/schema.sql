@@ -45,6 +45,8 @@ CREATE TYPE fuel_type AS ENUM (
   'biodiesel',
   'electricity',
   'e85',
+  'glp',
+  'gnc',
   'hydrogen'
 );
 

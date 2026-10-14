@@ -16,6 +16,8 @@ import com.fuelytics.backend.entity.Vehicle;
 import com.fuelytics.backend.repository.FuelingRepository;
 import com.fuelytics.backend.repository.UserRepository;
 import com.fuelytics.backend.repository.VehicleRepository;
+import com.fuelytics.backend.entity.enums.FuelType;
+import com.fuelytics.backend.entity.enums.VehicleEnergyType;
 
 @Service
 public class FuelingService {
@@ -24,17 +26,20 @@ public class FuelingService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final BadgeService badgeService;
+    private final ConsumptionCalculator consumptionCalculator;
 
     public FuelingService(
             FuelingRepository fuelingRepository,
             VehicleRepository vehicleRepository,
             UserRepository userRepository,
-            BadgeService badgeService) {
+            BadgeService badgeService,
+            ConsumptionCalculator consumptionCalculator) {
 
         this.fuelingRepository = fuelingRepository;
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
         this.badgeService = badgeService;
+        this.consumptionCalculator = consumptionCalculator;
     }
 
     @Transactional
@@ -52,6 +57,8 @@ public class FuelingService {
                     HttpStatus.FORBIDDEN,
                     "Forbidden");
         }
+
+        validateFuelCompatibility(vehicle.getVehicleEnergyType(), dto.getFuelType());
 
         FuelEntry fuelEntry = new FuelEntry();
 
@@ -109,6 +116,8 @@ public class FuelingService {
                     HttpStatus.BAD_REQUEST,
                     "Fueling cannot be reassigned to another vehicle");
         }
+
+        validateFuelCompatibility(fuelEntry.getVehicle().getVehicleEnergyType(), dto.getFuelType());
 
         fuelEntry.setDate(dto.getDate());
         fuelEntry.setOdometer(dto.getOdometer());
@@ -203,31 +212,46 @@ public class FuelingService {
         return fuelEntry;
     }
 
+    private void validateFuelCompatibility(VehicleEnergyType energyType, FuelType fuelType) {
+        boolean compatible = switch (energyType) {
+            case gasoline -> fuelType == FuelType.gasoline_95 || fuelType == FuelType.gasoline_98;
+            case diesel -> fuelType == FuelType.diesel || fuelType == FuelType.diesel_premium
+                    || fuelType == FuelType.biodiesel;
+            case electric -> fuelType == FuelType.electricity;
+            case hybrid_gasoline -> fuelType == FuelType.gasoline_95 || fuelType == FuelType.gasoline_98;
+            case hybrid_diesel -> fuelType == FuelType.diesel || fuelType == FuelType.diesel_premium
+                    || fuelType == FuelType.biodiesel;
+            case plug_in_hybrid_gasoline -> fuelType == FuelType.gasoline_95 || fuelType == FuelType.gasoline_98
+                    || fuelType == FuelType.electricity;
+            case plug_in_hybrid_diesel -> fuelType == FuelType.diesel || fuelType == FuelType.diesel_premium
+                    || fuelType == FuelType.biodiesel || fuelType == FuelType.electricity;
+            case glp -> fuelType == FuelType.glp || fuelType == FuelType.gasoline_95
+                    || fuelType == FuelType.gasoline_98;
+            case gnc -> fuelType == FuelType.gnc || fuelType == FuelType.gasoline_95
+                    || fuelType == FuelType.gasoline_98;
+            case hydrogen -> fuelType == FuelType.hydrogen;
+            case ethanol -> fuelType == FuelType.e85 || fuelType == FuelType.gasoline_95
+                    || fuelType == FuelType.gasoline_98;
+        };
+
+        if (!compatible) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El combustible no es compatible con el tipo de energía del vehículo");
+        }
+    }
+
     private void updateVehicleAverages(Vehicle vehicle) {
         List<FuelEntry> fuelings = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicle.getId());
 
         int count = fuelings.size();
         vehicle.setFuelEntriesCount(count);
 
-        if (count < 5) {
+        ConsumptionCalculator.ConsumptionSummary summary = consumptionCalculator.calculate(fuelings, vehicle);
+
+        if (count < 5 || summary.verifiedCycles() == 0) {
             vehicle.setAvgConsumption(null);
         } else {
-            double totalLiters = fuelings.stream()
-                    .filter(f -> f.getLiters() != null)
-                    .mapToDouble(f -> f.getLiters().doubleValue())
-                    .sum();
-
-            double totalDistance = fuelings.stream()
-                    .filter(f -> f.getDistance() != null)
-                    .mapToDouble(f -> f.getDistance().doubleValue())
-                    .sum();
-
-            if (totalDistance > 0) {
-                double avg = (totalLiters / totalDistance) * 100.0;
-                vehicle.setAvgConsumption(Math.round(avg * 100.0) / 100.0);
-            } else {
-                vehicle.setAvgConsumption(null);
-            }
+            vehicle.setAvgConsumption(summary.averageConsumption().doubleValue());
         }
 
         vehicleRepository.save(vehicle);

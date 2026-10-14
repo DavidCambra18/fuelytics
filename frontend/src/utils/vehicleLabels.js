@@ -29,6 +29,8 @@ const FUEL_TYPE_LABELS = {
   biodiesel: "Biodiésel",
   electricity: "Electricidad",
   e85: "E85",
+  glp: "GLP",
+  gnc: "GNC",
   hydrogen: "Hidrógeno",
 };
 
@@ -95,6 +97,8 @@ export const FUEL_TYPE_OPTIONS = [
   { value: "biodiesel", label: "Biodiésel" },
   { value: "electricity", label: "Electricidad" },
   { value: "e85", label: "E85" },
+  { value: "glp", label: "GLP" },
+  { value: "gnc", label: "GNC" },
   { value: "hydrogen", label: "Hidrógeno" },
 ];
 
@@ -199,12 +203,62 @@ export function formatExpenseType(value) {
 
 export function getConsumptionUnit(vehicleType, vehicleEnergyType) {
   if (vehicleType === "agricultural") {
+    if (vehicleEnergyType === "electric") return "kWh/h";
+    if (vehicleEnergyType === "hydrogen" || vehicleEnergyType === "gnc") return "kg/h";
     return "L/h";
   }
   if (vehicleEnergyType === "electric") {
     return "kWh/100km";
   }
+  if (vehicleEnergyType === "hydrogen" || vehicleEnergyType === "gnc") {
+    return "kg/100km";
+  }
   return "L/100km";
+}
+
+export function getQuantityUnit(vehicleEnergyType) {
+  if (vehicleEnergyType === "electric") return "kWh";
+  if (vehicleEnergyType === "hydrogen" || vehicleEnergyType === "gnc") return "kg";
+  return "L";
+}
+
+export function getUnitPriceLabel(vehicleEnergyType) {
+  return `€/${getQuantityUnit(vehicleEnergyType)}`;
+}
+
+export function getDefaultFuelType(vehicleEnergyType) {
+  const defaults = {
+    gasoline: "gasoline_95",
+    diesel: "diesel",
+    electric: "electricity",
+    hybrid_gasoline: "gasoline_95",
+    hybrid_diesel: "diesel",
+    plug_in_hybrid_gasoline: "gasoline_95",
+    plug_in_hybrid_diesel: "diesel",
+    glp: "glp",
+    gnc: "gnc",
+    hydrogen: "hydrogen",
+    ethanol: "e85",
+  };
+  return defaults[vehicleEnergyType] || "diesel";
+}
+
+export function getFuelOptionsForEnergy(vehicleEnergyType) {
+  const allowed = {
+    gasoline: ["gasoline_95", "gasoline_98"],
+    diesel: ["diesel", "diesel_premium", "biodiesel"],
+    electric: ["electricity"],
+    hybrid_gasoline: ["gasoline_95", "gasoline_98"],
+    hybrid_diesel: ["diesel", "diesel_premium", "biodiesel"],
+    plug_in_hybrid_gasoline: ["gasoline_95", "gasoline_98", "electricity"],
+    plug_in_hybrid_diesel: ["diesel", "diesel_premium", "biodiesel", "electricity"],
+    glp: ["glp", "gasoline_95", "gasoline_98"],
+    gnc: ["gnc", "gasoline_95", "gasoline_98"],
+    hydrogen: ["hydrogen"],
+    ethanol: ["e85", "gasoline_95", "gasoline_98"],
+  };
+  const values = allowed[vehicleEnergyType] || [];
+  return FUEL_TYPE_OPTIONS.filter((option) => values.includes(option.value));
 }
 
 export function getOdometerLabel(vehicleType) {

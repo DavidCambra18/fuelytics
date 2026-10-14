@@ -8,5 +8,7 @@ public enum FuelType {
     biodiesel,
     electricity,
     e85,
+    glp,
+    gnc,
     hydrogen
 }

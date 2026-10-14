@@ -4,6 +4,7 @@ import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles,
 import { apiFetch } from "../services/api";
 import CustomSelect from "../components/CustomSelect";
 import ExportReportModal from "../components/ExportReportModal";
+import { buildFuelingRows } from "../utils/consumption";
 import {
   REFUELING_TYPE_OPTIONS,
   FUEL_TYPE_OPTIONS,
@@ -12,6 +13,11 @@ import {
   formatRefuelingType,
   formatFuelType,
   getConsumptionUnit,
+  getDefaultFuelType,
+  getFuelOptionsForEnergy,
+  getQuantityUnit,
+  getUnitPriceLabel,
+  getOdometerUnit,
 } from "../utils/vehicleLabels";
 import {
   Pagination,
@@ -27,7 +33,7 @@ function createInitialFormData(vehicle) {
     date: new Date().toISOString().split("T")[0],
     odometer: "",
     refueling: "complete",
-    fuelType: vehicle?.fuelType || "diesel",
+    fuelType: getDefaultFuelType(vehicle?.vehicleEnergyType),
     distance: "",
     liters: "",
     priceTotal: "",
@@ -95,83 +101,6 @@ function toNumber(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function buildFuelingRows(fuelings) {
-  const sortedFuelings = [...fuelings].sort((left, right) => {
-    const leftDate = new Date(`${left.date}T00:00:00`).getTime();
-    const rightDate = new Date(`${right.date}T00:00:00`).getTime();
-
-    if (leftDate !== rightDate) {
-      return leftDate - rightDate;
-    }
-
-    return Number(left.id || 0) - Number(right.id || 0);
-  });
-
-  let accumulatedDistance = 0;
-  let accumulatedLiters = 0;
-  let accumulatedPrice = 0;
-  let hasBaseline = false;
-
-  return sortedFuelings.map((fueling) => {
-    const liters = Number(fueling.liters || 0);
-    const distance = Number(fueling.distance || 0);
-    const priceTotal = Number(fueling.priceTotal || 0);
-    const refuelingType = fueling.refueling;
-
-    if (!hasBaseline) {
-      hasBaseline = true;
-
-      if (refuelingType === "partial") {
-        accumulatedDistance = distance;
-        accumulatedLiters = liters;
-        accumulatedPrice = priceTotal;
-
-        return {
-          ...fueling,
-          displayState: "partial",
-          displayConsumption: distance > 0 ? (liters / distance) * 100 : null,
-        };
-      }
-
-      accumulatedDistance = 0;
-      accumulatedLiters = 0;
-      accumulatedPrice = 0;
-
-      return {
-        ...fueling,
-        displayState: "start",
-        displayConsumption: null,
-      };
-    }
-
-    accumulatedDistance += distance;
-    accumulatedLiters += liters;
-    accumulatedPrice += priceTotal;
-
-    if (refuelingType === "complete") {
-      const verifiedConsumption = accumulatedDistance > 0 ? (accumulatedLiters / accumulatedDistance) * 100 : null;
-      const verifiedPricePerLiter = accumulatedLiters > 0 ? accumulatedPrice / accumulatedLiters : null;
-
-      accumulatedDistance = 0;
-      accumulatedLiters = 0;
-      accumulatedPrice = 0;
-
-      return {
-        ...fueling,
-        displayState: "verified",
-        displayConsumption: verifiedConsumption,
-        displayPricePerLiter: verifiedPricePerLiter,
-      };
-    }
-
-    return {
-      ...fueling,
-      displayState: refuelingType === "initial" ? "start" : "estimated",
-      displayConsumption: accumulatedDistance > 0 ? (accumulatedLiters / accumulatedDistance) * 100 : null,
-    };
-  });
-}
-
 export default function Fuelings() {
   const { selectedVehicle } = useOutletContext();
   const [fuelings, setFuelings] = useState([]);
@@ -184,7 +113,16 @@ export default function Fuelings() {
   const [deletingId, setDeletingId] = useState(null);
   const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(() => createInitialFormData(selectedVehicle));
-  const fuelingRows = useMemo(() => buildFuelingRows(fuelings), [fuelings]);
+  const fuelingRows = useMemo(
+    () => buildFuelingRows(fuelings, selectedVehicle?.vehicleType),
+    [fuelings, selectedVehicle?.vehicleType]
+  );
+  const fuelOptions = useMemo(
+    () => getFuelOptionsForEnergy(selectedVehicle?.vehicleEnergyType),
+    [selectedVehicle?.vehicleEnergyType]
+  );
+  const quantityUnit = getQuantityUnit(selectedVehicle?.vehicleEnergyType);
+  const unitPriceLabel = getUnitPriceLabel(selectedVehicle?.vehicleEnergyType);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const exportDateRange = useMemo(() => {
@@ -514,7 +452,7 @@ export default function Fuelings() {
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-white">{formatDateEs(fueling.date)}</p>
-                      <p className="mt-1 text-xs text-slate-400">{pricePerLiter} €/L</p>
+                      <p className="mt-1 text-xs text-slate-400">{pricePerLiter} {unitPriceLabel}</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -543,19 +481,19 @@ export default function Fuelings() {
                     </div>
 
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Kms</p>
+                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">{getOdometerUnit(selectedVehicle?.vehicleType)}</p>
                       <p className="mt-1 text-white font-medium">
-                        {distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} km
+                        {distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} {getOdometerUnit(selectedVehicle?.vehicleType)}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Litros / Total</p>
+                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">{quantityUnit} / Total</p>
                       <p className="mt-1 text-white font-medium">
                         {liters.toLocaleString("es-ES", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })} L
+                        })} {quantityUnit}
                       </p>
                       <p className="mt-1 text-sm text-slate-300">
                         {priceTotal.toLocaleString("es-ES", {
@@ -707,7 +645,7 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Odómetro (km)</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">Odómetro ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
                   <input
                     type="number"
                     name="odometer"
@@ -731,7 +669,7 @@ export default function Fuelings() {
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-300">Tipo de combustible</label>
                   <CustomSelect
-                    options={FUEL_TYPE_OPTIONS}
+                    options={fuelOptions.length > 0 ? fuelOptions : FUEL_TYPE_OPTIONS}
                     value={formData.fuelType}
                     onChange={(value) => handleSelectChange("fuelType", value)}
                     placeholder="Selecciona combustible"
@@ -741,7 +679,7 @@ export default function Fuelings() {
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Distancia (km)</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">Distancia ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
                   <input
                     type="number"
                     step="0.1"
@@ -753,7 +691,7 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Litros</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">Cantidad ({quantityUnit})</label>
                   <input
                     type="number"
                     step="0.01"
