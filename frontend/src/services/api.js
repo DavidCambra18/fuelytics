@@ -76,7 +76,7 @@ export async function apiJson(path, options = {}) {
 	const payload = await response.json().catch(() => ({}));
 
 	if (!response.ok) {
-		throw new Error(payload.message || payload.error || "Error en la solicitud");
+		throw new Error(payload.message || payload.detail || payload.error || "Error en la solicitud");
 	}
 
 	return payload;

@@ -24,13 +24,13 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody UserRegisterDTO dto) {
-        return userService.register(dto);
+    public ResponseEntity<Map<String, String>> register(@RequestBody UserRegisterDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(dto));
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody UserLoginDTO dto) {
-        return userService.login(dto);
+    public ResponseEntity<Map<String, String>> login(@RequestBody UserLoginDTO dto) {
+        return ResponseEntity.ok(userService.login(dto));
     }
 
     @GetMapping("/profile")

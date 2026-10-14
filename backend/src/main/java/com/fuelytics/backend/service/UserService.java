@@ -37,19 +37,22 @@ public class UserService {
         this.jwtService = jwtService;
     }
 
-    public String register(UserRegisterDTO dto) {
+    public Map<String, String> register(UserRegisterDTO dto) {
 
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            return "Email ya en uso";
+        String email = dto.getEmail().trim().toLowerCase();
+        String username = dto.getUsername().trim();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo electrónico ya está registrado");
         }
 
-        if (userRepository.existsByUsername(dto.getUsername())) {
-            return "Username ya en uso";
+        if (userRepository.existsByUsername(username)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de usuario ya está en uso");
         }
 
         User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setEmail(dto.getEmail());
+        user.setUsername(username);
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setFirstName(normalize(dto.getFirstName()));
         user.setLastName(normalize(dto.getLastName()));
@@ -57,7 +60,7 @@ public class UserService {
 
         userRepository.save(user);
 
-        return "Usuario registrado correctamente";
+        return Map.of("message", "Usuario registrado correctamente");
     }
 
     public UserProfileDTO getProfile(String email) {
@@ -162,14 +165,10 @@ public class UserService {
 
     public Map<String, String> login(UserLoginDTO dto) {
 
-        User user = userRepository.findByEmail(dto.getEmail());
+        User user = userRepository.findByEmail(dto.getEmail().trim().toLowerCase());
 
-        if (user == null) {
-            return Map.of("error", "Usuario no encontrado");
-        }
-
-        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            return Map.of("error", "Contraseña incorrecta");
+        if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos");
         }
 
         String token = jwtService.generateToken(user.getEmail());

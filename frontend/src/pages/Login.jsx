@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { apiFetch } from "../services/api";
+import { apiJson } from "../services/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,17 +18,15 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      const res = await apiFetch("/api/users/login", {
+      const data = await apiJson("/api/users/login", {
         method: "POST",
         body: { email, password },
       });
 
-      if (!res.ok) {
-        setErrorMessage("Correo o contraseña incorrectos");
-        return;
+      if (!data.token) {
+        throw new Error("El servidor no devolvió una sesión válida");
       }
 
-      const data = await res.json();
       setAuth({ token: data.token, username: data.username });
       navigate("/dashboard");
 
