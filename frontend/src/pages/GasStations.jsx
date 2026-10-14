@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import L from "leaflet";
 import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { ArrowRight, CarFront, Fuel, LocateFixed, MapPinned, Search, TriangleAlert } from "lucide-react";
+import { ArrowRight, CarFront, Fuel, LocateFixed, MapPinned, Search, TrendingDown } from "lucide-react";
 
 import { apiJson } from "../services/api";
 
@@ -115,38 +115,13 @@ export default function GasStations() {
   const [error, setError] = useState("");
   const [fuelType, setFuelType] = useState("diesel");
   const [location, setLocation] = useState(null);
-  const [locationStatus, setLocationStatus] = useState(() => navigator.geolocation ? "loading" : "unsupported");
+  const [locationStatus, setLocationStatus] = useState(() => navigator.geolocation ? "idle" : "unsupported");
   const [updatedAt, setUpdatedAt] = useState("");
   const [sourceState, setSourceState] = useState("idle");
   const [sourceError, setSourceError] = useState("");
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [searchCenter, setSearchCenter] = useState(DEFAULT_CENTER);
   const [hasSearched, setHasSearched] = useState(false);
-
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const nextLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-
-        setLocation(nextLocation);
-        setMapCenter([nextLocation.lat, nextLocation.lng]);
-        setLocationStatus("ready");
-      },
-      () => {
-        setLocationStatus("denied");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
-      },
-    );
-  }, []);
 
   useEffect(() => {
     if (!hasSearched) return undefined;
@@ -221,8 +196,8 @@ export default function GasStations() {
         setMapCenter([nextLocation.lat, nextLocation.lng]);
         setLocationStatus("ready");
       },
-      () => {
-        setLocationStatus("denied");
+      (locationError) => {
+        setLocationStatus(locationError.code === locationError.PERMISSION_DENIED ? "denied" : "error");
       },
       {
         enableHighAccuracy: true,
@@ -253,7 +228,7 @@ export default function GasStations() {
                   Compara precios oficiales cerca de ti y decide dónde repostar.
                 </h1>
                 <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                  Mueve el centro del mapa donde quieras y pulsa el boton de Buscar ahora, y buscará las gasolineras dentro de un radio fijo de 15 km.
+                  Mueve el centro del mapa donde quieras y pulsa el botón «Buscar ahora» para encontrar gasolineras dentro de un radio fijo de 15 km.
                 </p>
               </div>
 
@@ -261,10 +236,11 @@ export default function GasStations() {
                 <button
                   type="button"
                   onClick={handleUseCurrentLocation}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  disabled={locationStatus === "loading"}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <LocateFixed className="h-4 w-4" />
-                  Usar mi ubicación
+                  {locationStatus === "loading" ? "Obteniendo ubicación..." : "Usar mi ubicación"}
                 </button>
                 <Link
                   to="/dashboard"
@@ -335,7 +311,7 @@ export default function GasStations() {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-sm text-slate-300">
+                <div className="mt-4 flex items-center gap-2 text-sm text-slate-300" role="status" aria-live="polite">
                   <CarFront className="h-4 w-4 text-teal-300" />
                   <span>
                     {locationStatus === "ready"
@@ -344,9 +320,11 @@ export default function GasStations() {
                         ? "Solicitando ubicación..."
                         : locationStatus === "denied"
                           ? "Permiso denegado, mueve el mapa y busca la zona manualmente"
+                          : locationStatus === "error"
+                            ? "No se pudo obtener tu ubicación, mueve el mapa y busca la zona manualmente"
                           : locationStatus === "unsupported"
                             ? "Tu navegador no soporta geolocalización"
-                            : "Mueve el mapa y pulsa buscar para cargar estaciones cercanas"}
+                            : "Usa tu ubicación o mueve el mapa para elegir la zona de búsqueda"}
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
@@ -357,20 +335,20 @@ export default function GasStations() {
             </div>
 
             {error ? (
-              <div className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
+              <div role="alert" className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
                 {error}
               </div>
             ) : null}
 
             {sourceState === "stale" ? (
-              <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
+              <div role="status" aria-live="polite" className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
                 Se muestran los últimos datos disponibles porque la fuente no se pudo actualizar.
                 {sourceError ? ` ${sourceError}` : ""}
               </div>
             ) : null}
 
             {sourceState === "unavailable" ? (
-              <div className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
+              <div role="alert" className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
                 La fuente de precios no está disponible en este momento.
                 {sourceError ? ` ${sourceError}` : ""}
               </div>
@@ -392,7 +370,7 @@ export default function GasStations() {
 
                 <div className="relative min-h-[540px] flex-1 overflow-hidden bg-slate-950/30">
                   {loading ? (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm">
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm" role="status" aria-live="polite">
                       <div className="rounded-2xl border border-white/10 bg-slate-950/90 px-5 py-3 text-sm text-slate-200 shadow-2xl">
                         Cargando estaciones...
                       </div>
@@ -455,13 +433,17 @@ export default function GasStations() {
                       <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Más baratas</p>
                       <h2 className="mt-1 text-xl font-semibold text-white">Top 5 dentro de 15 km</h2>
                     </div>
-                    <TriangleAlert className="h-5 w-5 text-amber-300" />
+                    <TrendingDown className="h-5 w-5 text-teal-300" aria-hidden="true" />
                   </div>
 
                   <div className="mt-4 space-y-3">
                     {topStations.length === 0 ? (
-                      <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
-                        Aún no hay estaciones cargadas. Mueve el mapa al punto deseado y espera un instante.
+                      <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300" role="status" aria-live="polite">
+                        {loading
+                          ? "Buscando gasolineras en la zona seleccionada..."
+                          : hasSearched
+                            ? "No se encontraron gasolineras con precio dentro del radio seleccionado."
+                            : "Mueve el mapa al punto deseado y pulsa «Buscar ahora» para consultar la zona."}
                       </p>
                     ) : (
                       topStations.map((station, index) => (
