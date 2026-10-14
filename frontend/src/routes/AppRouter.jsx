@@ -1,28 +1,38 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "motion/react";
 import PageTransition from "../components/PageTransition";
 
-import Home from "../pages/Home";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import Dashboard from "../pages/Dashboard";
-import VehicleCreate from "../pages/VehicleCreate";
-import VehicleEdit from "../pages/VehicleEdit";
-import Fuelings from "../pages/Fuelings";
-import Expenses from "../pages/Expenses";
-import Statistics from "../pages/Statistics";
-import Settings from "../pages/Settings";
-import MyProfile from "../pages/MyProfile";
-import PublicProfile from "../pages/PublicProfile";
-import PublicVehicle from "../pages/PublicVehicle";
-import Ranking from "../pages/Ranking";
-import TireModule from "../components/TireModule";
-import TripCalculator from "../components/TripCalculator";
-import GasStations from "../pages/GasStations";
 import VehicleLayout from "../layout/VehicleLayout";
-import VehicleOverview from "../pages/VehicleOverview";
 import ProtectedLayout from "../layout/ProtectedLayout";
 import { isTokenValid, useAuth } from "../context/auth";
+
+const Home = lazy(() => import("../pages/Home"));
+const Login = lazy(() => import("../pages/Login"));
+const Register = lazy(() => import("../pages/Register"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const VehicleCreate = lazy(() => import("../pages/VehicleCreate"));
+const VehicleEdit = lazy(() => import("../pages/VehicleEdit"));
+const VehicleOverview = lazy(() => import("../pages/VehicleOverview"));
+const Fuelings = lazy(() => import("../pages/Fuelings"));
+const Expenses = lazy(() => import("../pages/Expenses"));
+const Statistics = lazy(() => import("../pages/Statistics"));
+const Settings = lazy(() => import("../pages/Settings"));
+const MyProfile = lazy(() => import("../pages/MyProfile"));
+const PublicProfile = lazy(() => import("../pages/PublicProfile"));
+const PublicVehicle = lazy(() => import("../pages/PublicVehicle"));
+const Ranking = lazy(() => import("../pages/Ranking"));
+const TireModule = lazy(() => import("../components/TireModule"));
+const TripCalculator = lazy(() => import("../components/TripCalculator"));
+const GasStations = lazy(() => import("../pages/GasStations"));
+
+function RouteFallback() {
+  return (
+    <div className="section-shell flex min-h-[40vh] items-center justify-center text-sm text-slate-400">
+      Cargando contenido...
+    </div>
+  );
+}
 
 function PublicOnlyRoute({ children }) {
   const { token } = useAuth();
@@ -47,7 +57,8 @@ function InnerRoutes() {
 
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes location={location} key={location.pathname}>
 
         <Route path="/" element={<PageTransition><Home /></PageTransition>} />
         <Route
@@ -96,7 +107,8 @@ function InnerRoutes() {
 
         <Route path="*" element={<Navigate to="/" />} />
 
-      </Routes>
+        </Routes>
+      </Suspense>
     </AnimatePresence>
   );
 }
