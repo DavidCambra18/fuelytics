@@ -377,7 +377,7 @@ export default function GasStations() {
             ) : null}
 
             <div className="mt-5 grid gap-5 lg:grid-cols-[1.7fr_0.9fr]">
-              <section className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/40">
+              <section className="flex min-h-0 flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/40">
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
                   <div>
                     <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Mapa en vivo</p>
@@ -390,7 +390,7 @@ export default function GasStations() {
                   </div>
                 </div>
 
-                <div className="relative h-[540px] overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/30">
+                <div className="relative min-h-[540px] flex-1 overflow-hidden bg-slate-950/30">
                   {loading ? (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm">
                       <div className="rounded-2xl border border-white/10 bg-slate-950/90 px-5 py-3 text-sm text-slate-200 shadow-2xl">
@@ -399,7 +399,7 @@ export default function GasStations() {
                     </div>
                   ) : null}
 
-                  <MapContainer center={mapCenter} zoom={location ? 13 : 6} className="h-full w-full" preferCanvas scrollWheelZoom={true}>
+                  <MapContainer center={mapCenter} zoom={location ? 13 : 6} className="absolute inset-0 h-full w-full" preferCanvas scrollWheelZoom={true}>
                     <MapViewController center={mapCenter} />
                     <MapCenterTracker onCenterChange={setMapCenter} />
                     <TileLayer
