@@ -9,17 +9,10 @@ import java.text.Normalizer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLContext;
-// removed unused imports
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,17 +22,15 @@ import org.springframework.stereotype.Service;
 
 import com.fuelytics.backend.dto.GasStationDTO;
 import com.fuelytics.backend.dto.GasStationSearchResponseDTO;
-// sample fallback removed
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class GasStationService {
 
     private static final Logger log = LoggerFactory.getLogger(GasStationService.class);
-    private static final Pattern OBJECT_PATTERN = Pattern.compile("\\{([^{}]*)\\}");
-    private static final Pattern FIELD_PATTERN = Pattern
-            .compile("\"((?:\\\\.|[^\"])*)\"\\s*:\\s*(\"((?:\\\\.|[^\"])*)\"|true|false|null|-?\\d+(?:[.,]\\d+)?)");
-
     private final HttpClient httpClient;
+    private final JsonMapper jsonMapper;
     private final String sourceUrl;
     private final double defaultRadiusKm;
     private final AtomicReference<CachedStations> cache = new AtomicReference<>(
@@ -50,45 +41,15 @@ public class GasStationService {
             @Value("${app.gas-stations.radius-km:15}") double defaultRadiusKm) {
         this.sourceUrl = sourceUrl;
         this.defaultRadiusKm = defaultRadiusKm;
-
-        javax.net.ssl.SSLParameters sslParams = new javax.net.ssl.SSLParameters();
-        sslParams.setProtocols(new String[] { "TLSv1.3", "TLSv1.2" });
-
+        this.jsonMapper = JsonMapper.builder().build();
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(java.time.Duration.ofSeconds(20))
+                .connectTimeout(java.time.Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .version(HttpClient.Version.HTTP_1_1)
-                .sslParameters(sslParams)
                 .build();
     }
 
-    private String attemptExternalCurlFetch(String url) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("curl", "-s", "-m", "10", "--location", url);
-        pb.redirectErrorStream(true);
-        Process proc = pb.start();
-
-        StringBuilder out = new StringBuilder();
-        try (var in = proc.getInputStream();
-                java.util.Scanner s = new java.util.Scanner(in, java.nio.charset.StandardCharsets.UTF_8)) {
-            while (s.hasNextLine()) {
-                out.append(s.nextLine()).append('\n');
-            }
-        }
-
-        int code = proc.waitFor();
-        if (code == 0) {
-            return out.toString();
-        }
-
-        throw new IOException("curl exited with code " + code);
-    }
-
-    @PostConstruct
-    public void warmUp() {
-        refreshCache();
-    }
-
-    @Scheduled(fixedRateString = "${app.gas-stations.refresh-ms:1800000}")
+    @Scheduled(initialDelayString = "${app.gas-stations.initial-delay-ms:1000}",
+            fixedDelayString = "${app.gas-stations.refresh-ms:1800000}")
     public void scheduledRefresh() {
         refreshCache();
     }
@@ -128,205 +89,67 @@ public class GasStationService {
     }
 
     public void refreshCache() {
-        // Try using system curl first (bypasses JVM truststore issues)
         try {
-            log.info("Trying system 'curl' to fetch gas stations (bypass JVM TLS)");
-            String external = attemptExternalCurlFetch(sourceUrl);
-            if (external != null && !external.isBlank()) {
-                List<GasStationRecord> stations = parseStations(external);
-                if (stations != null && !stations.isEmpty()) {
-                    cache.set(new CachedStations(stations, Instant.now(), true, "(external curl)"));
-                    log.info("Gas station cache refreshed with {} stations (external curl)", stations.size());
-                    return;
-                }
-                log.warn("External curl returned payload but no stations parsed");
-            } else {
-                log.warn("External curl returned empty payload");
+            HttpRequest request = HttpRequest.newBuilder(URI.create(sourceUrl))
+                    .timeout(java.time.Duration.ofSeconds(30))
+                    .GET()
+                    .header("Accept", "application/json")
+                    .header("User-Agent", "Fuelytics/1.0")
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new IllegalStateException("La API pública respondió con estado " + response.statusCode());
             }
-        } catch (Exception e) {
-            log.warn("External curl fetch not available or failed: {}", e.getMessage());
-        }
 
-        int attempts = 0;
-        final int maxAttempts = 3;
-        while (attempts < maxAttempts) {
-            attempts++;
-            try {
-                HttpRequest request = HttpRequest.newBuilder(URI.create(sourceUrl))
-                        .GET()
-                        .header("Accept", "application/json")
-                        .header("User-Agent", "Fuelytics/1.0")
-                        .build();
-
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                    throw new IllegalStateException("La API pública respondió con estado " + response.statusCode());
-                }
-
-                String payload = response.body();
-                if (payload == null || payload.isBlank()) {
-                    throw new IllegalStateException("La API pública devolvió una respuesta vacía");
-                }
-
-                List<GasStationRecord> stations = parseStations(payload);
-                cache.set(new CachedStations(stations, Instant.now(), true, ""));
-                log.info("Gas station cache refreshed with {} stations", stations.size());
-                return;
-            } catch (InterruptedException error) {
-                Thread.currentThread().interrupt();
-                keepPreviousCache(error.getMessage());
-                return;
-            } catch (IOException | IllegalStateException error) {
-                log.error("Attempt {} failed to refresh gas station cache: {}", attempts, error.getMessage());
-                // on last attempt try TLSv1.2 fallback
-                if (attempts >= maxAttempts) {
-                    String msg = error.getMessage() == null ? "" : error.getMessage().toLowerCase();
-                    if (msg.contains("handshake") || msg.contains("ssl") || msg.contains("tls")) {
-                        try {
-                            SSLContext sc = SSLContext.getInstance("TLSv1.2");
-                            sc.init(null, null, null);
-                            HttpClient fallback = HttpClient.newBuilder().sslContext(sc)
-                                    .connectTimeout(java.time.Duration.ofSeconds(20)).build();
-
-                            HttpRequest request = HttpRequest.newBuilder(URI.create(sourceUrl))
-                                    .GET()
-                                    .header("Accept", "application/json")
-                                    .header("User-Agent", "Fuelytics/1.0")
-                                    .build();
-
-                            HttpResponse<String> response = fallback.send(request,
-                                    HttpResponse.BodyHandlers.ofString());
-
-                            if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                                String payload = response.body();
-                                List<GasStationRecord> stations = parseStations(payload);
-                                cache.set(new CachedStations(stations, Instant.now(), true, "(fallback TLSv1.2)"));
-                                log.info("Gas station cache refreshed with {} stations (fallback TLSv1.2)",
-                                        stations.size());
-                                return;
-                            } else {
-                                log.warn("Fallback TLS request returned status {}", response.statusCode());
-                            }
-                        } catch (Exception ex) {
-                            log.error("Fallback TLSv1.2 attempt failed: {}", ex.getMessage());
-                        }
-                    }
-
-                    // As a last resort before sample fallback, try using system `curl` to download
-                    // the payload
-                    try {
-                        String external = attemptExternalCurlFetch(sourceUrl);
-                        if (external != null && !external.isBlank()) {
-                            List<GasStationRecord> stations = parseStations(external);
-                            if (stations != null && !stations.isEmpty()) {
-                                cache.set(new CachedStations(stations, Instant.now(), true, "(external curl)"));
-                                log.info("Gas station cache refreshed with {} stations (external curl)",
-                                        stations.size());
-                                return;
-                            }
-                        }
-                    } catch (Exception ex) {
-                        log.warn("External curl fetch failed: {}", ex.getMessage());
-                    }
-
-                    // no sample fallback configured — skip loading sample data
-
-                    keepPreviousCache(error.getMessage());
-                    return;
-                }
-
-                // backoff
-                try {
-                    Thread.sleep(500L * attempts);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    keepPreviousCache(ie.getMessage());
-                    return;
-                }
-            } catch (Exception error) {
-                log.error("Unexpected error refreshing gas station cache: {}", error.getMessage(), error);
-                // no sample fallback configured
-                keepPreviousCache(error.getMessage());
-                return;
+            String payload = response.body();
+            if (payload == null || payload.isBlank()) {
+                throw new IllegalStateException("La API pública devolvió una respuesta vacía");
             }
+
+            List<GasStationRecord> stations = parseStations(payload);
+            if (stations.isEmpty()) {
+                throw new IllegalStateException("La API pública no devolvió estaciones válidas");
+            }
+            cache.set(new CachedStations(stations, Instant.now(), true, ""));
+            log.info("Gas station cache refreshed with {} stations", stations.size());
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            keepPreviousCache("La actualización fue interrumpida");
+        } catch (IOException | RuntimeException error) {
+            keepPreviousCache(error.getMessage());
         }
     }
-
-    // sample fallback removed; no local sample loading
 
     private void keepPreviousCache(String message) {
         CachedStations previous = cache.get();
         cache.set(new CachedStations(previous.stations(), previous.updatedAt(), false, message));
         log.warn("Unable to refresh gas station cache: {}", message);
-        // no sample fallback
     }
 
     private List<GasStationRecord> parseStations(String payload) {
-        String arraySection = payload;
-        int arrayStart = payload.indexOf("\"ListaEESSPrecio\"");
+        try {
+            JsonNode root = jsonMapper.readTree(payload);
+            JsonNode array = root.get("ListaEESSPrecio");
+            if (array == null || !array.isArray()) {
+                throw new IllegalArgumentException("La respuesta no contiene la lista de estaciones");
+            }
 
-        if (arrayStart >= 0) {
-            int bracketStart = payload.indexOf('[', arrayStart);
-            if (bracketStart >= 0) {
-                int bracketEnd = findMatchingBracket(payload, bracketStart);
-                if (bracketEnd > bracketStart) {
-                    arraySection = payload.substring(bracketStart + 1, bracketEnd);
+            List<GasStationRecord> stations = new ArrayList<>();
+            for (JsonNode node : array) {
+                Map<String, String> fields = new java.util.LinkedHashMap<>();
+                node.properties().forEach(entry -> fields.put(
+                        entry.getKey(),
+                        entry.getValue().isNull() ? null : entry.getValue().asText()));
+                GasStationRecord station = GasStationRecord.fromFields(fields);
+                if (station != null) {
+                    stations.add(station);
                 }
             }
+            return stations;
+        } catch (Exception error) {
+            throw new IllegalArgumentException("No se pudo interpretar la respuesta de gasolineras", error);
         }
-
-        List<GasStationRecord> stations = new ArrayList<>();
-        Matcher matcher = OBJECT_PATTERN.matcher(arraySection);
-
-        while (matcher.find()) {
-            GasStationRecord station = GasStationRecord.fromObject(matcher.group(1));
-            if (station != null) {
-                stations.add(station);
-            }
-        }
-
-        return stations;
-    }
-
-    private int findMatchingBracket(String text, int startIndex) {
-        int depth = 0;
-        boolean inString = false;
-        boolean escaping = false;
-
-        for (int index = startIndex; index < text.length(); index++) {
-            char current = text.charAt(index);
-
-            if (escaping) {
-                escaping = false;
-                continue;
-            }
-
-            if (current == '\\') {
-                escaping = true;
-                continue;
-            }
-
-            if (current == '"') {
-                inString = !inString;
-                continue;
-            }
-
-            if (inString) {
-                continue;
-            }
-
-            if (current == '[') {
-                depth++;
-            } else if (current == ']') {
-                depth--;
-                if (depth == 0) {
-                    return index;
-                }
-            }
-        }
-
-        return -1;
     }
 
     private boolean matchesArea(GasStationDTO station, String municipio, String provincia) {
@@ -455,9 +278,7 @@ public class GasStationService {
             this.gasoline98Price = gasoline98Price;
         }
 
-        static GasStationRecord fromObject(String object) {
-            Map<String, String> fields = parseFields(object);
-
+        static GasStationRecord fromFields(Map<String, String> fields) {
             Double latitude = parseDouble(fields.get("Latitud"));
             Double longitude = parseDouble(fields.get("Longitud (WGS84)"));
 
@@ -532,29 +353,6 @@ public class GasStationService {
             return earthRadiusKm * c;
         }
 
-        private static Map<String, String> parseFields(String object) {
-            Map<String, String> fields = new LinkedHashMap<>();
-            Matcher matcher = FIELD_PATTERN.matcher(object);
-
-            while (matcher.find()) {
-                String rawKey = unescapeJsonString(matcher.group(1));
-                String rawToken = matcher.group(2);
-                String value;
-
-                if (rawToken == null || "null".equals(rawToken)) {
-                    value = null;
-                } else if (rawToken.startsWith("\"")) {
-                    value = unescapeJsonString(matcher.group(3));
-                } else {
-                    value = rawToken;
-                }
-
-                fields.put(rawKey, value);
-            }
-
-            return fields;
-        }
-
         private static Double parsePrice(Map<String, String> fields, String key) {
             return parseDouble(fields.get(key));
         }
@@ -580,44 +378,6 @@ public class GasStationService {
             } catch (NumberFormatException error) {
                 return null;
             }
-        }
-
-        private static String unescapeJsonString(String value) {
-            if (value == null) {
-                return null;
-            }
-
-            StringBuilder result = new StringBuilder();
-            boolean escaping = false;
-
-            for (int index = 0; index < value.length(); index++) {
-                char current = value.charAt(index);
-
-                if (escaping) {
-                    result.append(switch (current) {
-                        case '"' -> '"';
-                        case '\\' -> '\\';
-                        case '/' -> '/';
-                        case 'b' -> '\b';
-                        case 'f' -> '\f';
-                        case 'n' -> '\n';
-                        case 'r' -> '\r';
-                        case 't' -> '\t';
-                        default -> current;
-                    });
-                    escaping = false;
-                    continue;
-                }
-
-                if (current == '\\') {
-                    escaping = true;
-                    continue;
-                }
-
-                result.append(current);
-            }
-
-            return result.toString();
         }
 
         private static String labelFor(String fuelType) {

@@ -16,11 +16,6 @@ const FUEL_OPTIONS = [
   { value: "gasoline98", label: "Gasolina 98" },
 ];
 
-function normalizeNumber(value, fallback = null) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
 function getMarkerTone(price, range) {
   if (!Number.isFinite(price) || !range || range.max <= range.min) {
     return "emerald";
@@ -122,6 +117,8 @@ export default function GasStations() {
   const [location, setLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState("idle");
   const [updatedAt, setUpdatedAt] = useState("");
+  const [sourceState, setSourceState] = useState("idle");
+  const [sourceError, setSourceError] = useState("");
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [searchCenter, setSearchCenter] = useState(DEFAULT_CENTER);
   const [hasSearched, setHasSearched] = useState(false);
@@ -159,6 +156,8 @@ export default function GasStations() {
     if (!hasSearched) {
       setStations([]);
       setUpdatedAt("");
+      setSourceState("idle");
+      setSourceError("");
       return;
     }
 
@@ -177,20 +176,13 @@ export default function GasStations() {
         params.set("radiusKm", String(SEARCH_RADIUS_KM));
 
         const path = `/api/external/gas-stations?${params.toString()}`;
-        console.debug("GasStations: fetching", path);
-
-        // Use apiJson directly to log response details for debugging
-        const resp = await apiJson(path, { signal: controller.signal }).catch((e) => {
-          console.error("GasStations: apiJson error:", e);
-          throw e;
-        });
-
-        console.debug("GasStations: response payload", resp);
+        const resp = await apiJson(path, { signal: controller.signal });
         setStations(resp.stations || []);
         setUpdatedAt(resp.updatedAt || "");
+        setSourceState(resp.sourceReady ? "ready" : (resp.stations || []).length > 0 ? "stale" : "unavailable");
+        setSourceError(resp.sourceError || "");
       } catch (fetchError) {
         if (fetchError.name === "AbortError") return;
-        console.error("GasStations: fetch failed", fetchError);
         setError(fetchError.message || "No se pudieron cargar las gasolineras");
       } finally {
         setLoading(false);
@@ -377,6 +369,20 @@ export default function GasStations() {
             {error ? (
               <div className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
                 {error}
+              </div>
+            ) : null}
+
+            {sourceState === "stale" ? (
+              <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
+                Se muestran los últimos datos disponibles porque la fuente no se pudo actualizar.
+                {sourceError ? ` ${sourceError}` : ""}
+              </div>
+            ) : null}
+
+            {sourceState === "unavailable" ? (
+              <div className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
+                La fuente de precios no está disponible en este momento.
+                {sourceError ? ` ${sourceError}` : ""}
               </div>
             ) : null}
 
