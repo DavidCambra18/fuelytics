@@ -74,7 +74,7 @@ public class ExpenseService {
     }
 
     public List<ExpenseResponseDTO> getExpensesByVehicle(Integer vehicleId, String email) {
-        User user = userRepository.findByEmailForUpdate(email);
+        User user = userRepository.findByEmail(email);
 
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
@@ -91,7 +91,7 @@ public class ExpenseService {
 
     @Transactional
     public ExpenseResponseDTO updateExpense(Integer id, ExpenseDTO dto, String email) {
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
 
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gasto no encontrado"));
