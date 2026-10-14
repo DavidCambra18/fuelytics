@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import L from "leaflet";
-import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { ArrowRight, CarFront, Fuel, LocateFixed, MapPinned, Search, TrendingDown } from "lucide-react";
 
@@ -73,16 +73,6 @@ function MapCenterTracker({ onCenterChange }) {
   });
 
   return null;
-}
-
-function CenterOverlay() {
-  return (
-    <div className="pointer-events-none absolute inset-0 z-[401] flex items-center justify-center">
-      <div className="-mt-2 flex items-center justify-center">
-        <div className="h-5 w-5 rounded-full border-2 border-teal-200 bg-teal-400" />
-      </div>
-    </div>
-  );
 }
 
 function buildGoogleMapsUrl(lat, lng) {
@@ -176,8 +166,6 @@ export default function GasStations() {
   const topStations = useMemo(() => stations.slice(0, 5), [stations]);
 
   const currentFuel = FUEL_OPTIONS.find((option) => option.value === fuelType)?.label || "Diesel";
-  const mapRadiusMeters = SEARCH_RADIUS_KM * 1000;
-
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       setLocationStatus("unsupported");
@@ -385,10 +373,6 @@ export default function GasStations() {
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
 
-                    <Marker position={mapCenter} icon={L.divIcon({ className: "", html: "", iconSize: [0, 0], iconAnchor: [0, 0] })} interactive={false} />
-
-                    <Circle center={searchCenter} radius={mapRadiusMeters} pathOptions={{ color: "#2dd4bf", fillColor: "#2dd4bf", fillOpacity: 0.08 }} />
-
                     {stations.map((station) => (
                       <Marker
                         key={station.id}
@@ -422,7 +406,6 @@ export default function GasStations() {
                       </Marker>
                     ))}
                   </MapContainer>
-                  <CenterOverlay />
                 </div>
               </section>
 
