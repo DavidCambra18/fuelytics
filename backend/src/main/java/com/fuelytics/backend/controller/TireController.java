@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fuelytics.backend.dto.TireSetDTO;
 import com.fuelytics.backend.dto.TireSetResponseDTO;
 import com.fuelytics.backend.service.TireService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/vehicles/{vehicleId}/tires")
@@ -25,7 +26,7 @@ public class TireController {
     }
 
     @PostMapping
-    public ResponseEntity<TireSetResponseDTO> createTire(@PathVariable Integer vehicleId, @RequestBody TireSetDTO dto, Principal principal) {
+    public ResponseEntity<TireSetResponseDTO> createTire(@PathVariable Integer vehicleId, @Valid @RequestBody TireSetDTO dto, Principal principal) {
         return ResponseEntity.ok(tireService.createTireSet(vehicleId, dto, principal.getName()));
     }
 

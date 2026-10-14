@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fuelytics.backend.dto.ExpenseDTO;
 import com.fuelytics.backend.dto.ExpenseResponseDTO;
 import com.fuelytics.backend.service.ExpenseService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/expenses")
@@ -29,7 +30,7 @@ public class ExpenseController {
     }
 
     @PostMapping
-    public ExpenseResponseDTO create(@RequestBody ExpenseDTO dto) {
+    public ExpenseResponseDTO create(@Valid @RequestBody ExpenseDTO dto) {
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();
@@ -48,7 +49,7 @@ public class ExpenseController {
     @PutMapping("/{id}")
     public ResponseEntity<ExpenseResponseDTO> update(
             @PathVariable Integer id,
-            @RequestBody ExpenseDTO dto,
+            @Valid @RequestBody ExpenseDTO dto,
             Principal principal) {
 
         ExpenseResponseDTO response = expenseService.updateExpense(id, dto, principal.getName());

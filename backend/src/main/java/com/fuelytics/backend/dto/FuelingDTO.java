@@ -6,18 +6,40 @@ import com.fuelytics.backend.entity.enums.DrivingType;
 import com.fuelytics.backend.entity.enums.FuelType;
 import com.fuelytics.backend.entity.enums.RefuelingType;
 import com.fuelytics.backend.entity.enums.TireType;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 public class FuelingDTO {
 
+    @NotNull(message = "El vehículo es obligatorio")
     private Integer vehicleId;
+    @NotNull(message = "La fecha es obligatoria")
     private LocalDate date;
+    @PositiveOrZero(message = "El odómetro no puede ser negativo")
     private Integer odometer;
+    @NotNull(message = "El tipo de repostaje es obligatorio")
     private RefuelingType refueling;
+    @NotNull(message = "El combustible es obligatorio")
     private FuelType fuelType;
+    @NotNull(message = "La distancia es obligatoria")
+    @PositiveOrZero(message = "La distancia no puede ser negativa")
+    @Digits(integer = 4, fraction = 2, message = "La distancia no tiene un formato válido")
     private BigDecimal distance;
+    @NotNull(message = "La cantidad es obligatoria")
+    @DecimalMin(value = "0.01", message = "La cantidad debe ser mayor que cero")
+    @Digits(integer = 4, fraction = 2, message = "La cantidad no tiene un formato válido")
     private BigDecimal liters;
+    @NotNull(message = "El importe es obligatorio")
+    @PositiveOrZero(message = "El importe no puede ser negativo")
+    @Digits(integer = 6, fraction = 2, message = "El importe no tiene un formato válido")
     private BigDecimal priceTotal;
+    @NotNull(message = "El tipo de conducción es obligatorio")
     private DrivingType drivingType;
+    @NotNull(message = "El tipo de neumático es obligatorio")
     private TireType tireType;
     private Boolean highway;
     private Boolean city;
@@ -25,8 +47,13 @@ public class FuelingDTO {
     private Boolean ac;
     private Boolean trailer;
     private Boolean heating;
+    @PositiveOrZero(message = "El consumo del ordenador no puede ser negativo")
+    @Digits(integer = 3, fraction = 2, message = "El consumo del ordenador no tiene un formato válido")
     private BigDecimal boardConsumption;
+    @PositiveOrZero(message = "La velocidad media no puede ser negativa")
+    @Max(value = 500, message = "La velocidad media no puede superar 500")
     private Integer averageSpeed;
+    @Size(max = 5000, message = "Las notas no pueden superar 5000 caracteres")
     private String notes;
 
     public Integer getVehicleId() {

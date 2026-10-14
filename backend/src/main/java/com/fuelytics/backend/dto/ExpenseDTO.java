@@ -3,15 +3,29 @@ package com.fuelytics.backend.dto;
 import com.fuelytics.backend.entity.enums.ExpenseType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 public class ExpenseDTO {
 
+    @NotNull(message = "El vehículo es obligatorio")
     private Integer vehicleId;
+    @NotNull(message = "La fecha es obligatoria")
     private LocalDate date;
+    @NotNull(message = "El tipo de gasto es obligatorio")
     private ExpenseType type;
+    @Size(max = 255, message = "La descripción no puede superar 255 caracteres")
     private String description;
+    @NotNull(message = "El coste es obligatorio")
+    @PositiveOrZero(message = "El coste no puede ser negativo")
+    @Digits(integer = 6, fraction = 2, message = "El coste no tiene un formato válido")
     private BigDecimal cost;
+    @Positive(message = "El identificador del neumático no es válido")
     private Integer tireSetId;
+    @PositiveOrZero(message = "El próximo mantenimiento no puede ser negativo")
     private Integer nextMaintenanceKm;
     private java.time.LocalDate nextMaintenanceDate;
 

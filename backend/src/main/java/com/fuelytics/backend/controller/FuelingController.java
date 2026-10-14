@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fuelytics.backend.dto.FuelingDTO;
 import com.fuelytics.backend.dto.FuelingResponseDTO;
 import com.fuelytics.backend.service.FuelingService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/fuelings")
@@ -21,7 +22,7 @@ public class FuelingController {
 
     @PostMapping
     public FuelingResponseDTO createFueling(
-            @RequestBody FuelingDTO dto,
+            @Valid @RequestBody FuelingDTO dto,
             Principal principal) {
 
         return fuelingService.createFueling(
@@ -42,7 +43,7 @@ public class FuelingController {
         @PutMapping("/{fuelingId}")
         public FuelingResponseDTO updateFueling(
             @PathVariable Integer fuelingId,
-            @RequestBody FuelingDTO dto,
+            @Valid @RequestBody FuelingDTO dto,
             Principal principal) {
 
         return fuelingService.updateFueling(
