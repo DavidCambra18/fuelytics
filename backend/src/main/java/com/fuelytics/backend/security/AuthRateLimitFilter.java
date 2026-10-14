@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -33,6 +34,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     private final long windowMillis;
     private final Clock clock;
 
+    @Autowired
     public AuthRateLimitFilter(
             @Value("${app.auth-rate-limit.login-max-attempts:10}") int loginMaxAttempts,
             @Value("${app.auth-rate-limit.register-max-attempts:5}") int registerMaxAttempts,
