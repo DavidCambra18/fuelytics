@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
 import { apiFetch } from "../services/api";
 import ExportReportModal from "../components/ExportReportModal";
+import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import {
   Pagination,
   PaginationContent,
@@ -195,6 +196,8 @@ export default function Expenses() {
     setEditingExpense(null);
     setFormData(createInitialFormData());
   };
+
+  const { dialogRef: formDialogRef, titleId: formDialogTitleId } = useDialogAccessibility(showForm, closeForm);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -468,12 +471,24 @@ export default function Expenses() {
       </article>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-black/40 sm:p-8">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeForm();
+          }}
+        >
+          <div
+            ref={formDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={formDialogTitleId}
+            tabIndex={-1}
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-black/40 sm:p-8"
+          >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-amber-400 font-semibold">Gastos</p>
-                <h3 className="mt-2 text-2xl font-bold text-white">
+                <h3 id={formDialogTitleId} className="mt-2 text-2xl font-bold text-white">
                   {editingExpense ? "Editar gasto" : "Nuevo gasto"}
                 </h3>
               </div>

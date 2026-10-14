@@ -4,6 +4,7 @@ import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles,
 import { apiFetch } from "../services/api";
 import CustomSelect from "../components/CustomSelect";
 import ExportReportModal from "../components/ExportReportModal";
+import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import { buildFuelingRows } from "../utils/consumption";
 import {
   REFUELING_TYPE_OPTIONS,
@@ -188,6 +189,10 @@ export default function Fuelings() {
     setEditingFueling(null);
     setFormData(createInitialFormData(selectedVehicle));
   };
+
+  const closeHelp = () => setShowHelp(false);
+  const { dialogRef: formDialogRef, titleId: formDialogTitleId } = useDialogAccessibility(showForm, closeForm);
+  const { dialogRef: helpDialogRef, titleId: helpDialogTitleId } = useDialogAccessibility(showHelp, closeHelp);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -609,12 +614,24 @@ export default function Fuelings() {
       </article>
 
       {showForm ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-black/40 sm:p-8">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeForm();
+          }}
+        >
+          <div
+            ref={formDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={formDialogTitleId}
+            tabIndex={-1}
+            className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-black/40 sm:p-8"
+          >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-teal-400 font-semibold">Repostajes</p>
-                <h3 className="mt-2 text-2xl font-bold text-white">
+                <h3 id={formDialogTitleId} className="mt-2 text-2xl font-bold text-white">
                   {editingFueling ? "Editar repostaje" : "Nuevo repostaje"}
                 </h3>
               </div>
@@ -764,7 +781,7 @@ export default function Fuelings() {
                 {drivingConditionOptions.map(({ key, label, hint, accent, Icon }) => (
                   <label
                     key={key}
-                    className={`group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-[1.35rem] border px-4 py-4 transition duration-200 ${formData[key]
+                    className={`group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-[1.35rem] border px-4 py-4 transition duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal-300/60 ${formData[key]
                       ? "border-teal-300/35 bg-gradient-to-br from-teal-300/15 via-slate-950/80 to-slate-950/70 shadow-[0_10px_30px_rgba(8,145,178,0.12)]"
                       : "border-white/10 bg-slate-950/45 hover:border-white/20 hover:bg-white/[0.04]"
                       }`}
@@ -827,17 +844,29 @@ export default function Fuelings() {
       ) : null}
 
       {showHelp ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/75 p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-6">
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/75 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeHelp();
+          }}
+        >
+          <div
+            ref={helpDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={helpDialogTitleId}
+            tabIndex={-1}
+            className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-6"
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-teal-300">Ayuda rápida</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">Cómo registrar el repostaje</h3>
+                <h3 id={helpDialogTitleId} className="mt-2 text-xl font-semibold text-white">Cómo registrar el repostaje</h3>
               </div>
 
               <button
                 type="button"
-                onClick={() => setShowHelp(false)}
+                onClick={closeHelp}
                 className="rounded-full border border-white/10 px-3 py-1.5 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
               >
                 Cerrar
