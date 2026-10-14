@@ -67,6 +67,7 @@ export default function Statistics() {
   const costRateLabel = selectedVehicle?.vehicleType === "agricultural" ? "Coste por hora" : "Coste por 100 km";
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadFuelings = async () => {
       if (!selectedVehicle?.id) {
         return;
@@ -76,7 +77,9 @@ export default function Statistics() {
       setError("");
 
       try {
-        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`);
+        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar las estadísticas");
@@ -85,6 +88,7 @@ export default function Statistics() {
         const data = await response.json();
         setFuelings(data || []);
       } catch (fetchError) {
+        if (fetchError.name === "AbortError") return;
         setError(fetchError.message || "Error cargando estadísticas");
       } finally {
         setLoading(false);
@@ -92,6 +96,7 @@ export default function Statistics() {
     };
 
     loadFuelings();
+    return () => controller.abort();
   }, [selectedVehicle?.id]);
 
   const chartFuelings = useMemo(

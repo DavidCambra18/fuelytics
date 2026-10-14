@@ -138,38 +138,48 @@ export default function Expenses() {
   }, [selectedVehicle]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadExpenses = async () => {
       if (!selectedVehicle?.id) return;
       setLoading(true);
       setError("");
       try {
-        const response = await apiFetch(`/api/expenses/vehicle/${selectedVehicle.id}`);
+        const response = await apiFetch(`/api/expenses/vehicle/${selectedVehicle.id}`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error("No se pudieron cargar los gastos");
         const data = await response.json();
         setExpenses(data || []);
       } catch (fetchError) {
+        if (fetchError.name === "AbortError") return;
         setError(fetchError.message || "Error cargando gastos");
       } finally {
         setLoading(false);
       }
     };
     loadExpenses();
+    return () => controller.abort();
   }, [selectedVehicle?.id]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadTires = async () => {
       if (!selectedVehicle?.id) return;
       try {
-        const res = await apiFetch(`/api/vehicles/${selectedVehicle.id}/tires`);
+        const res = await apiFetch(`/api/vehicles/${selectedVehicle.id}/tires`, {
+          signal: controller.signal,
+        });
         if (res.ok) {
           const data = await res.json();
           setAvailableTires(data || []);
         }
       } catch (err) {
+        if (err.name === "AbortError") return;
         console.error(err);
       }
     };
     loadTires();
+    return () => controller.abort();
   }, [selectedVehicle?.id]);
 
   const openCreateForm = () => {

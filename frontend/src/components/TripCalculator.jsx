@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Calculator, MapPin, Fuel, Users, Wallet, Droplets, Gauge } from "lucide-react";
 import { apiFetch } from "../services/api";
+import { getConsumptionUnit, getOdometerUnit, getQuantityUnit, getUnitPriceLabel } from "../utils/vehicleLabels";
 
 export default function TripCalculator() {
   const [vehicles, setVehicles] = useState([]);
@@ -14,9 +15,10 @@ export default function TripCalculator() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchVehicles = async () => {
       try {
-        const response = await apiFetch("/api/vehicles");
+        const response = await apiFetch("/api/vehicles", { signal: controller.signal });
         if (response.ok) {
           const data = await response.json();
           setVehicles(data);
@@ -25,19 +27,25 @@ export default function TripCalculator() {
           }
         }
       } catch (error) {
+        if (error.name === "AbortError") return;
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
     fetchVehicles();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchStats = async () => {
+      setConsumption("");
       if (!selectedVehicleId) return;
       try {
-        const response = await apiFetch(`/api/vehicles/${selectedVehicleId}/statistics`);
+        const response = await apiFetch(`/api/vehicles/${selectedVehicleId}/statistics`, {
+          signal: controller.signal,
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.averageConsumption > 0) {
@@ -45,20 +53,29 @@ export default function TripCalculator() {
           } else {
             setConsumption("");
           }
-        }
+        } else setConsumption("");
       } catch (error) {
+        if (error.name === "AbortError") return;
         setConsumption("");
       }
     };
     fetchStats();
+    return () => controller.abort();
   }, [selectedVehicleId]);
+
+  const selectedVehicle = vehicles.find((vehicle) => String(vehicle.id) === selectedVehicleId);
+  const consumptionUnit = getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType);
+  const distanceUnit = getOdometerUnit(selectedVehicle?.vehicleType);
+  const quantityUnit = getQuantityUnit(selectedVehicle?.vehicleEnergyType);
+  const unitPriceLabel = getUnitPriceLabel(selectedVehicle?.vehicleEnergyType);
 
   const numDistance = parseFloat(distance) || 0;
   const numPrice = parseFloat(fuelPrice) || 0;
   const numPeople = parseInt(people, 10) || 1;
   const numConsumption = parseFloat(consumption) || 0;
 
-  const estimatedLiters = (numDistance * numConsumption) / 100;
+  const consumptionFactor = selectedVehicle?.vehicleType === "agricultural" ? 1 : 100;
+  const estimatedLiters = (numDistance * numConsumption) / consumptionFactor;
   const totalCost = estimatedLiters * numPrice;
   const costPerPerson = numPeople > 0 ? totalCost / numPeople : totalCost;
 
@@ -114,7 +131,7 @@ export default function TripCalculator() {
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
                   <Gauge className="h-4 w-4 text-teal-500" />
-                  Consumo (L/100km)
+                  Consumo ({consumptionUnit})
                 </label>
                 <input
                   type="number"
@@ -132,7 +149,7 @@ export default function TripCalculator() {
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
                   <MapPin className="h-4 w-4 text-teal-500" />
-                  Distancia (km)
+                  {selectedVehicle?.vehicleType === "agricultural" ? "Horas de uso" : "Distancia"} ({distanceUnit})
                 </label>
                 <input
                   type="number"
@@ -147,7 +164,7 @@ export default function TripCalculator() {
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
                   <Fuel className="h-4 w-4 text-teal-500" />
-                  Precio combustible (€/L)
+                  Precio de la energía ({unitPriceLabel})
                 </label>
                 <input
                   type="number"
@@ -183,10 +200,10 @@ export default function TripCalculator() {
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div className="flex items-center gap-3 text-slate-300">
                 <Droplets className="h-5 w-5 text-teal-500/70" />
-                <span className="text-sm">Litros necesarios</span>
+                <span className="text-sm">Cantidad necesaria</span>
               </div>
               <span className="font-mono text-lg font-medium text-white">
-                {estimatedLiters.toFixed(2)} L
+                {estimatedLiters.toFixed(2)} {quantityUnit}
               </span>
             </div>
 

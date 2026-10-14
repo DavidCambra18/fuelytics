@@ -9,9 +9,10 @@ export default function VehicleLayout() {
     const [error, setError] = useState("");
 
     useEffect(() => {
+        const controller = new AbortController();
         const loadVehicles = async () => {
             try {
-                const response = await apiFetch("/api/vehicles");
+                const response = await apiFetch("/api/vehicles", { signal: controller.signal });
 
                 if (!response.ok) {
                     throw new Error("No se pudieron cargar los vehículos");
@@ -20,6 +21,7 @@ export default function VehicleLayout() {
                 const data = await response.json();
                 setVehicles(data);
             } catch (fetchError) {
+                if (fetchError.name === "AbortError") return;
                 setError(fetchError.message || "Error cargando vehículos");
             } finally {
                 setLoading(false);
@@ -27,6 +29,7 @@ export default function VehicleLayout() {
         };
 
         loadVehicles();
+        return () => controller.abort();
     }, []);
 
     const selectedVehicle = useMemo(

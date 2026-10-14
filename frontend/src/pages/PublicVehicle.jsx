@@ -24,56 +24,55 @@ export default function PublicVehicle() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadVehicle = async () => {
       setLoading(true);
       try {
-        const response = await apiFetch(`/api/vehicles/${id}`);
+        const response = await apiFetch(`/api/vehicles/${id}`, { signal: controller.signal });
         if (!response.ok) {
           throw new Error("No se pudo cargar la información del vehículo o es privado");
         }
         const data = await response.json();
         setVehicle(data);
       } catch (err) {
+        if (err.name === "AbortError") return;
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
     loadVehicle();
+    return () => controller.abort();
   }, [id]);
 
   useEffect(() => {
     if (!vehicle) return;
+    const controller = new AbortController();
 
     const loadExtraData = async () => {
       try {
         const promises = [];
 
+        const loadResource = async (path, setter, emptyValue) => {
+          try {
+            const response = await apiFetch(path, { signal: controller.signal });
+            if (!response.ok) throw new Error("No se pudo cargar la información pública");
+            setter(await response.json());
+          } catch (resourceError) {
+            if (resourceError.name !== "AbortError") setter(emptyValue);
+          }
+        };
+
         if (vehicle.showFuelData) {
-          promises.push(
-            apiFetch(`/api/vehicles/${id}/fuelings`)
-              .then(res => res.json())
-              .then(data => setFuelings(data))
-              .catch(() => setFuelings([]))
-          );
+          promises.push(loadResource(`/api/vehicles/${id}/fuelings`, setFuelings, []));
         }
 
         if (vehicle.showExpenses) {
-          promises.push(
-            apiFetch(`/api/vehicles/${id}/expenses`)
-              .then(res => res.json())
-              .then(data => setExpenses(data))
-              .catch(() => setExpenses([]))
-          );
+          promises.push(loadResource(`/api/vehicles/${id}/expenses`, setExpenses, []));
         }
 
         if (vehicle.showStatistics) {
-          promises.push(
-            apiFetch(`/api/vehicles/${id}/statistics`)
-              .then(res => res.json())
-              .then(data => setStats(data))
-              .catch(() => setStats(null))
-          );
+          promises.push(loadResource(`/api/vehicles/${id}/statistics`, setStats, null));
         }
 
         await Promise.allSettled(promises);
@@ -83,6 +82,7 @@ export default function PublicVehicle() {
     };
 
     loadExtraData();
+    return () => controller.abort();
   }, [vehicle, id]);
 
   if (loading) {

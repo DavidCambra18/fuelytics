@@ -150,6 +150,7 @@ export default function Fuelings() {
   }, [selectedVehicle]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadFuelings = async () => {
       if (!selectedVehicle?.id) return;
 
@@ -157,7 +158,9 @@ export default function Fuelings() {
       setError("");
 
       try {
-        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`);
+        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar los repostajes");
@@ -166,6 +169,7 @@ export default function Fuelings() {
         const data = await response.json();
         setFuelings(data || []);
       } catch (fetchError) {
+        if (fetchError.name === "AbortError") return;
         setError(fetchError.message || "Error cargando repostajes");
       } finally {
         setLoading(false);
@@ -173,6 +177,7 @@ export default function Fuelings() {
     };
 
     loadFuelings();
+    return () => controller.abort();
   }, [selectedVehicle?.id]);
 
   const openCreateForm = () => {

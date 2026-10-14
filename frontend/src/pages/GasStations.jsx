@@ -162,6 +162,7 @@ export default function GasStations() {
       return;
     }
 
+    const controller = new AbortController();
     const loadStations = async () => {
       setLoading(true);
       setError("");
@@ -179,7 +180,7 @@ export default function GasStations() {
         console.debug("GasStations: fetching", path);
 
         // Use apiJson directly to log response details for debugging
-        const resp = await apiJson(path).catch((e) => {
+        const resp = await apiJson(path, { signal: controller.signal }).catch((e) => {
           console.error("GasStations: apiJson error:", e);
           throw e;
         });
@@ -188,6 +189,7 @@ export default function GasStations() {
         setStations(resp.stations || []);
         setUpdatedAt(resp.updatedAt || "");
       } catch (fetchError) {
+        if (fetchError.name === "AbortError") return;
         console.error("GasStations: fetch failed", fetchError);
         setError(fetchError.message || "No se pudieron cargar las gasolineras");
       } finally {
@@ -196,6 +198,7 @@ export default function GasStations() {
     };
 
     loadStations();
+    return () => controller.abort();
   }, [fuelType, searchCenter, hasSearched]);
 
 
