@@ -1,19 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { ArrowRight, CarFront, Fuel, LocateFixed, MapPinned, Search, TrendingDown } from "lucide-react";
+import { ArrowRight, CarFront, Fuel, LocateFixed, MapPin, MapPinned, Navigation, Search, SlidersHorizontal } from "lucide-react";
+import "./GasStations.css";
 
 import { apiJson } from "../services/api";
 
 const DEFAULT_CENTER = [40.4168, -3.7038];
 const SEARCH_RADIUS_KM = 15;
 
+const USER_LOCATION_ICON = L.divIcon({
+  className: "",
+  html: `
+    <div class="user-location-marker" aria-hidden="true">
+      <span></span>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
 const FUEL_OPTIONS = [
-  { value: "diesel", label: "Diesel" },
+  { value: "diesel", label: "Diésel" },
+  { value: "dieselPremium", label: "Diésel premium" },
   { value: "gasoline95", label: "Gasolina 95" },
   { value: "gasoline98", label: "Gasolina 98" },
+  { value: "glp", label: "GLP" },
+  { value: "gnc", label: "GNC" },
+  { value: "gnl", label: "GNL" },
+  { value: "biodiesel", label: "Biodiésel" },
+  { value: "bioethanol", label: "Bioetanol" },
 ];
 
 function getMarkerTone(price, range) {
@@ -34,32 +52,268 @@ function getMarkerTone(price, range) {
   return "rose";
 }
 
-function createStationIcon(tone) {
+function createStationIcon(tone, price) {
   const toneStyles = {
     emerald: "background: linear-gradient(180deg, #34d399 0%, #059669 100%); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);",
     amber: "background: linear-gradient(180deg, #fbbf24 0%, #f97316 100%); box-shadow: 0 10px 20px rgba(249, 115, 22, 0.35);",
     rose: "background: linear-gradient(180deg, #f87171 0%, #dc2626 100%); box-shadow: 0 10px 20px rgba(220, 38, 38, 0.35);",
   };
+  const priceLabel = Number.isFinite(price)
+    ? `${price.toLocaleString("es-ES", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} €`
+    : "Sin precio";
+  const width = Number.isFinite(price) ? 64 : 76;
 
   return L.divIcon({
     className: "",
     html: `
-      <div style="display:flex;align-items:center;justify-content:center;width:1.85rem;height:1.85rem;border-radius:9999px;border:2px solid rgba(255,255,255,0.9);${toneStyles[tone]}">
-        <div style="width:0.6rem;height:0.6rem;border-radius:9999px;background:rgba(255,255,255,0.95);"></div>
+      <div aria-hidden="true" style="display:flex;align-items:center;justify-content:center;width:${width}px;height:30px;border-radius:10px;border:2px solid rgba(255,255,255,0.94);color:#fff;font-family:inherit;font-size:11px;font-weight:800;line-height:1;white-space:nowrap;${toneStyles[tone]}">
+        ${priceLabel}
       </div>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-    popupAnchor: [0, -10],
+    iconSize: [width, 30],
+    iconAnchor: [width / 2, 15],
+    popupAnchor: [0, -14],
   });
 }
 
-function MapViewController({ center }) {
+function createClusterIcon(cluster, tone) {
+  const toneStyles = {
+    emerald: "background: linear-gradient(145deg, #34d399 0%, #047857 100%); box-shadow: 0 12px 26px rgba(16, 185, 129, 0.4);",
+    amber: "background: linear-gradient(145deg, #fbbf24 0%, #ea580c 100%); box-shadow: 0 12px 26px rgba(249, 115, 22, 0.4);",
+    rose: "background: linear-gradient(145deg, #fb7185 0%, #be123c 100%); box-shadow: 0 12px 26px rgba(225, 29, 72, 0.4);",
+  };
+  const minimumPrice = Number.isFinite(cluster.minimumPrice)
+    ? cluster.minimumPrice.toLocaleString("es-ES", { minimumFractionDigits: 3, maximumFractionDigits: 3 })
+    : null;
+  const width = cluster.stations.length >= 100 ? 70 : 64;
+
+  return L.divIcon({
+    className: "",
+    html: `
+      <div aria-hidden="true" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:${width}px;height:50px;border-radius:18px;border:3px solid rgba(255,255,255,0.94);color:#fff;font-family:inherit;line-height:1;${toneStyles[tone]}">
+        <strong style="font-size:15px;font-weight:800;letter-spacing:-0.02em;">${cluster.stations.length}</strong>
+        <span style="margin-top:4px;font-size:9px;font-weight:700;white-space:nowrap;opacity:0.95;">${minimumPrice ? `desde ${minimumPrice} €` : "sin precio"}</span>
+      </div>
+    `,
+    iconSize: [width, 50],
+    iconAnchor: [width / 2, 25],
+  });
+}
+
+function buildStationClusters(stations, map, zoom) {
+  const clusterRadius = zoom <= 8 ? 68 : zoom <= 11 ? 56 : 44;
+  const clusters = [];
+
+  stations.forEach((station) => {
+    if (!Number.isFinite(station.latitude) || !Number.isFinite(station.longitude)) {
+      return;
+    }
+
+    const point = map.project([station.latitude, station.longitude], zoom);
+    let closestCluster = null;
+    let closestDistance = clusterRadius;
+
+    if (zoom < 16) {
+      clusters.forEach((cluster) => {
+        const distance = point.distanceTo(cluster.point);
+        if (distance < closestDistance) {
+          closestCluster = cluster;
+          closestDistance = distance;
+        }
+      });
+    }
+
+    if (!closestCluster) {
+      clusters.push({
+        point,
+        latitude: station.latitude,
+        longitude: station.longitude,
+        stations: [station],
+      });
+      return;
+    }
+
+    const previousCount = closestCluster.stations.length;
+    const nextCount = previousCount + 1;
+    closestCluster.point = L.point(
+      ((closestCluster.point.x * previousCount) + point.x) / nextCount,
+      ((closestCluster.point.y * previousCount) + point.y) / nextCount,
+    );
+    closestCluster.latitude = ((closestCluster.latitude * previousCount) + station.latitude) / nextCount;
+    closestCluster.longitude = ((closestCluster.longitude * previousCount) + station.longitude) / nextCount;
+    closestCluster.stations.push(station);
+  });
+
+  return clusters.map((cluster) => {
+    const prices = cluster.stations
+      .map((station) => station.price)
+      .filter((price) => Number.isFinite(price));
+
+    return {
+      ...cluster,
+      averagePrice: prices.length > 0 ? prices.reduce((total, price) => total + price, 0) / prices.length : null,
+      minimumPrice: prices.length > 0 ? Math.min(...prices) : null,
+    };
+  });
+}
+
+function StationPopup({ station, tone }) {
+  const priceTone = {
+    emerald: "border-emerald-300/20 bg-emerald-400/10 text-emerald-200",
+    amber: "border-amber-300/20 bg-amber-400/10 text-amber-200",
+    rose: "border-rose-300/20 bg-rose-400/10 text-rose-200",
+  }[tone];
+  const showBrand = station.brand
+    && station.brand.trim().toLocaleLowerCase("es-ES") !== station.name.trim().toLocaleLowerCase("es-ES");
+
+  return (
+    <Popup
+      className="fuelytics-station-popup"
+      maxWidth={300}
+      minWidth={230}
+    >
+      <article className="w-[250px] overflow-hidden text-slate-100 sm:w-[280px]">
+        <header className="border-b border-white/10 bg-gradient-to-br from-teal-400/15 via-slate-900/80 to-slate-950 px-5 py-5 pr-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100">
+            <Fuel className="h-3 w-3" aria-hidden="true" />
+            {station.fuelLabel}
+          </div>
+          <h3 className="mt-3 break-words text-lg font-semibold leading-tight text-white">{station.name}</h3>
+          {showBrand ? <p className="mt-1 text-sm text-slate-400">{station.brand}</p> : null}
+        </header>
+
+        <div className="space-y-4 p-5">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-teal-200">
+              <MapPin className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 text-sm leading-5">
+              <p className="break-words font-medium text-slate-200">{station.address}</p>
+              <p className="mt-1 text-slate-400">{station.municipality} · {station.province}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className={`rounded-2xl border p-3 ${priceTone}`}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">Precio</p>
+              <p className="mt-1 whitespace-nowrap text-lg font-bold text-current">{formatPrice(station.price)}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-slate-200">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                {station.distanceFromUser ? "Desde ti" : "Distancia"}
+              </p>
+              <p className="mt-1 whitespace-nowrap text-lg font-bold text-white">{formatDistance(station.distanceKm)}</p>
+            </div>
+          </div>
+
+          <a
+            href={buildGoogleMapsUrl(station.latitude, station.longitude)}
+            target="_blank"
+            rel="noreferrer"
+            className="station-popup-route flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-300 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-teal-200"
+          >
+            <Navigation className="h-4 w-4" aria-hidden="true" />
+            Cómo llegar
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </div>
+      </article>
+    </Popup>
+  );
+}
+
+function StationMarker({ station, priceRange, selected, onSelect }) {
+  const markerRef = useRef(null);
+  const stationTone = getMarkerTone(station.price, priceRange);
+
+  useEffect(() => {
+    if (selected) {
+      markerRef.current?.openPopup();
+    }
+  }, [selected]);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[station.latitude, station.longitude]}
+      icon={createStationIcon(stationTone, station.price)}
+      title={`${station.name}: ${formatPrice(station.price)}`}
+      eventHandlers={{ click: () => onSelect(station.id) }}
+      zIndexOffset={selected ? 500 : 0}
+    >
+      <StationPopup station={station} tone={stationTone} />
+    </Marker>
+  );
+}
+
+function ClusteredStationMarkers({ stations, priceRange, selectedStationId, onSelectStation }) {
+  const map = useMap();
+  const [zoom, setZoom] = useState(() => map.getZoom());
+
+  useMapEvents({
+    zoomend: (event) => setZoom(event.target.getZoom()),
+  });
+
+  const clusters = useMemo(
+    () => buildStationClusters(stations, map, zoom),
+    [map, stations, zoom],
+  );
+
+  return clusters.map((cluster) => {
+    if (cluster.stations.length === 1) {
+      const station = cluster.stations[0];
+      return (
+        <StationMarker
+          key={station.id}
+          station={station}
+          priceRange={priceRange}
+          selected={station.id === selectedStationId}
+          onSelect={onSelectStation}
+        />
+      );
+    }
+
+    const position = [cluster.latitude, cluster.longitude];
+    const clusterKey = `${cluster.stations[0].id}-${cluster.stations.length}-${position[0].toFixed(5)}-${position[1].toFixed(5)}`;
+    const clusterTone = getMarkerTone(cluster.averagePrice, priceRange);
+
+    return (
+      <Marker
+        key={clusterKey}
+        position={position}
+        icon={createClusterIcon(cluster, clusterTone)}
+        title={`${cluster.stations.length} gasolineras; precio mínimo ${formatPrice(cluster.minimumPrice)}`}
+        eventHandlers={{
+          click: () => {
+            let targetZoom = Math.min(zoom + 1, 17);
+
+            while (
+              targetZoom < 17
+              && buildStationClusters(cluster.stations, map, targetZoom).length === 1
+            ) {
+              targetZoom += 1;
+            }
+
+            map.flyTo(position, targetZoom, { animate: true, duration: 0.45 });
+          },
+        }}
+      />
+    );
+  });
+}
+
+function SelectedStationController({ station }) {
   const map = useMap();
 
   useEffect(() => {
-    map.panTo(center, { animate: true });
-  }, [center, map]);
+    if (!station) return;
+
+    map.flyTo(
+      [station.latitude, station.longitude],
+      Math.max(map.getZoom(), 16),
+      { animate: true, duration: 0.5 },
+    );
+  }, [map, station]);
 
   return null;
 }
@@ -75,6 +329,93 @@ function MapCenterTracker({ onCenterChange }) {
   return null;
 }
 
+function UserLocationMarker({ location }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.flyTo(
+      [location.lat, location.lng],
+      Math.max(map.getZoom(), 13),
+      { animate: true, duration: 0.5 },
+    );
+  }, [location, map]);
+
+  return (
+    <Marker
+      position={[location.lat, location.lng]}
+      icon={USER_LOCATION_ICON}
+      title="Tu ubicación"
+      zIndexOffset={1000}
+      keyboard={false}
+    />
+  );
+}
+
+function MapLocationControl({ location, loading, onRequestLocation }) {
+  const map = useMap();
+
+  const handleClick = (event) => {
+    event.stopPropagation();
+
+    if (location) {
+      map.flyTo(
+        [location.lat, location.lng],
+        Math.max(map.getZoom(), 15),
+        { animate: true, duration: 0.5 },
+      );
+      return;
+    }
+
+    onRequestLocation();
+  };
+
+  return (
+    <div className="leaflet-top leaflet-right">
+      <div className="leaflet-control m-3">
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={loading}
+          className="map-location-control flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-lg transition hover:bg-slate-50 hover:text-blue-600 disabled:cursor-wait disabled:opacity-60"
+          aria-label={location ? "Ir a mi ubicación" : "Obtener mi ubicación"}
+          title={location ? "Ir a mi ubicación" : "Obtener mi ubicación"}
+        >
+          {loading ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" aria-hidden="true" />
+          ) : (
+            <LocateFixed className="h-5 w-5" aria-hidden="true" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MapSearchControl({ loading, onSearch }) {
+  return (
+    <div className="leaflet-bottom leaflet-left w-full">
+      <div className="leaflet-control mb-10 flex w-full justify-center px-4 lg:mb-5">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSearch();
+          }}
+          disabled={loading}
+          className="map-search-control inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/90 px-5 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-xl transition hover:bg-slate-900 disabled:cursor-wait disabled:opacity-70"
+        >
+          {loading ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-300 border-t-transparent" aria-hidden="true" />
+          ) : (
+            <Search className="h-4 w-4 text-teal-300" aria-hidden="true" />
+          )}
+          {loading ? "Buscando..." : "Buscar en esta zona"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function buildGoogleMapsUrl(lat, lng) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
 }
@@ -84,7 +425,10 @@ function formatPrice(price) {
     return "Sin precio";
   }
 
-  return `${price.toFixed(3)} €`;
+  return `${price.toLocaleString("es-ES", {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  })} €`;
 }
 
 function formatDistance(distanceKm) {
@@ -96,7 +440,30 @@ function formatDistance(distanceKm) {
     return `${Math.round(distanceKm * 1000)} m`;
   }
 
-  return `${distanceKm.toFixed(1)} km`;
+  return `${distanceKm.toLocaleString("es-ES", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} km`;
+}
+
+function calculateDistanceKm(origin, latitude, longitude) {
+  if (!origin || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  const earthRadiusKm = 6371;
+  const latitudeDelta = ((latitude - origin.lat) * Math.PI) / 180;
+  const longitudeDelta = ((longitude - origin.lng) * Math.PI) / 180;
+  const originLatitude = (origin.lat * Math.PI) / 180;
+  const destinationLatitude = (latitude * Math.PI) / 180;
+  const haversine = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(originLatitude) * Math.cos(destinationLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+  const normalizedHaversine = Math.min(1, haversine);
+
+  return earthRadiusKm * 2 * Math.atan2(
+    Math.sqrt(normalizedHaversine),
+    Math.sqrt(1 - normalizedHaversine),
+  );
 }
 
 export default function GasStations() {
@@ -105,13 +472,51 @@ export default function GasStations() {
   const [error, setError] = useState("");
   const [fuelType, setFuelType] = useState("diesel");
   const [location, setLocation] = useState(null);
-  const [locationStatus, setLocationStatus] = useState(() => navigator.geolocation ? "idle" : "unsupported");
+  const [locationStatus, setLocationStatus] = useState(() => navigator.geolocation ? "loading" : "unsupported");
   const [updatedAt, setUpdatedAt] = useState("");
   const [sourceState, setSourceState] = useState("idle");
   const [sourceError, setSourceError] = useState("");
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [searchCenter, setSearchCenter] = useState(DEFAULT_CENTER);
   const [hasSearched, setHasSearched] = useState(false);
+  const [sortMode, setSortMode] = useState("price");
+  const [selectedStationId, setSelectedStationId] = useState(null);
+  const selectedCardRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedStationId) {
+      selectedCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [selectedStationId]);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      return undefined;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+
+        setLocation(nextLocation);
+        setMapCenter([nextLocation.lat, nextLocation.lng]);
+        setLocationStatus("ready");
+      },
+      (locationError) => {
+        setLocationStatus(locationError.code === locationError.PERMISSION_DENIED ? "denied" : "error");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      },
+    );
+
+    return undefined;
+  }, []);
 
   useEffect(() => {
     if (!hasSearched) return undefined;
@@ -148,10 +553,41 @@ export default function GasStations() {
     return () => controller.abort();
   }, [fuelType, searchCenter, hasSearched]);
 
+  const displayedStations = useMemo(() => {
+    if (!location) {
+      return stations;
+    }
 
+    return stations.map((station) => ({
+      ...station,
+      distanceKm: calculateDistanceKm(location, station.latitude, station.longitude),
+      distanceFromUser: true,
+    }));
+  }, [location, stations]);
+
+  const sortedStations = useMemo(() => [...displayedStations].sort((firstStation, secondStation) => {
+    const firstPrice = Number.isFinite(firstStation.price) ? firstStation.price : Number.POSITIVE_INFINITY;
+    const secondPrice = Number.isFinite(secondStation.price) ? secondStation.price : Number.POSITIVE_INFINITY;
+    const firstDistance = Number.isFinite(firstStation.distanceKm)
+      ? firstStation.distanceKm
+      : Number.POSITIVE_INFINITY;
+    const secondDistance = Number.isFinite(secondStation.distanceKm)
+      ? secondStation.distanceKm
+      : Number.POSITIVE_INFINITY;
+
+    if (sortMode === "distance" && firstDistance !== secondDistance) {
+      return firstDistance - secondDistance;
+    }
+
+    if (firstPrice !== secondPrice) {
+      return firstPrice - secondPrice;
+    }
+
+    return firstDistance === secondDistance ? 0 : firstDistance - secondDistance;
+  }), [displayedStations, sortMode]);
 
   const priceRange = useMemo(() => {
-    const prices = stations.map((station) => station.price).filter((price) => Number.isFinite(price));
+    const prices = displayedStations.map((station) => station.price).filter((price) => Number.isFinite(price));
 
     if (prices.length === 0) {
       return null;
@@ -161,12 +597,19 @@ export default function GasStations() {
       min: Math.min(...prices),
       max: Math.max(...prices),
     };
-  }, [stations]);
+  }, [displayedStations]);
 
-  const topStations = useMemo(() => stations.slice(0, 5), [stations]);
+  const selectedStation = useMemo(
+    () => displayedStations.find((station) => station.id === selectedStationId) || null,
+    [displayedStations, selectedStationId],
+  );
 
-  const currentFuel = FUEL_OPTIONS.find((option) => option.value === fuelType)?.label || "Diesel";
   const handleUseCurrentLocation = () => {
+    if (location) {
+      setMapCenter([location.lat, location.lng]);
+      return;
+    }
+
     if (!navigator.geolocation) {
       setLocationStatus("unsupported");
       return;
@@ -196,267 +639,251 @@ export default function GasStations() {
   };
 
   const handleSearch = () => {
-    // Create a new array to ensure the state reference changes
+    setSelectedStationId(null);
     setSearchCenter([mapCenter[0], mapCenter[1]]);
     setHasSearched(true);
   };
 
   return (
     <div className="min-h-screen text-slate-100">
-      <main className="pb-10 pt-16 lg:pb-16">
-        <div className="section-shell space-y-6">
-          <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-teal-100">
-                  <MapPinned className="h-3.5 w-3.5" />
-                  Gasolineras cercanas
-                </div>
-                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-                  Compara precios oficiales cerca de ti y decide dónde repostar.
-                </h1>
-                <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                  Mueve el centro del mapa donde quieras y pulsa el botón «Buscar ahora» para encontrar gasolineras dentro de un radio fijo de 15 km.
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[360px]">
-                <button
-                  type="button"
-                  onClick={handleUseCurrentLocation}
-                  disabled={locationStatus === "loading"}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <LocateFixed className="h-4 w-4" />
-                  {locationStatus === "loading" ? "Obteniendo ubicación..." : "Usar mi ubicación"}
-                </button>
-                <Link
-                  to="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-5 py-3 text-sm font-semibold text-teal-50 transition hover:bg-teal-300/20"
-                >
-                  Volver al dashboard
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 lg:grid-cols-[1.3fr_0.9fr]">
-              <div className="glass-panel rounded-3xl p-4 sm:p-5">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2 text-sm text-slate-200">
-                    <span className="block text-xs uppercase tracking-[0.18em] text-slate-400">Combustible</span>
-                    <div className="relative">
-                      <Fuel className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <select
-                        value={fuelType}
-                        onChange={(event) => setFuelType(event.target.value)}
-                        className="w-full appearance-none rounded-2xl border border-white/10 bg-slate-950/60 px-10 py-3 text-sm text-white outline-none transition focus:border-teal-300/40"
-                      >
-                        {FUEL_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value} className="bg-slate-950">
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleSearch}
-                    disabled={loading}
-                    className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-slate-950 transition ${loading ? 'bg-teal-300/70 cursor-not-allowed opacity-80' : 'bg-teal-400 hover:bg-teal-300'}`}
-                  >
-                    {loading ? (
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                    {loading ? 'Cargando...' : 'Buscar ahora'}
-                  </button>
-                  <p className="text-sm text-slate-400">
-                    {mapCenter ? `Centro actual: ${mapCenter[0].toFixed(4)}, ${mapCenter[1].toFixed(4)}` : "Sin centro definido"}
+      <main className="pb-6 pt-16 lg:h-screen lg:overflow-hidden lg:pb-3 lg:pt-14">
+        <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-6 lg:h-full lg:px-8">
+          <section className="glass-panel overflow-hidden rounded-[1.75rem] border border-white/10 lg:flex lg:h-full lg:flex-col">
+            <header className="shrink-0 border-b border-white/10 px-4 py-4 sm:px-6 lg:py-3">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-teal-200">
+                    <MapPinned className="h-4 w-4" aria-hidden="true" />
+                    Gasolineras
+                  </div>
+                  <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                    Encuentra dónde repostar al mejor precio
+                  </h1>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Explora el mapa, compara precios y calcula la distancia desde tu ubicación.
                   </p>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2.5 text-sm font-semibold text-teal-50 transition hover:bg-teal-300/20"
+                  >
+                    Dashboard
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
               </div>
 
-              <div className="glass-panel rounded-3xl p-4 sm:p-5">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Combustible</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{currentFuel}</p>
+              <div className="mt-4 grid gap-3 lg:mt-3 lg:grid-cols-[minmax(210px,0.8fr)_minmax(260px,1.2fr)_auto] lg:items-end">
+                <label className="space-y-1.5 text-sm text-slate-200">
+                  <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Combustible</span>
+                  <div className="relative">
+                    <Fuel className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-300" aria-hidden="true" />
+                    <select
+                      value={fuelType}
+                      onChange={(event) => setFuelType(event.target.value)}
+                      className="h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950/60 px-10 text-sm font-medium text-white outline-none transition focus:border-teal-300/40"
+                    >
+                      {FUEL_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value} className="bg-slate-950">
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Gasolineras</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{stations.length}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Actualizado</p>
-                    <p className="mt-2 text-sm font-semibold text-white">
-                      {updatedAt ? new Intl.DateTimeFormat("es-ES", { dateStyle: "short", timeStyle: "short" }).format(new Date(updatedAt)) : "Pendiente"}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-sm text-slate-300" role="status" aria-live="polite">
-                  <CarFront className="h-4 w-4 text-teal-300" />
-                  <span>
+                </label>
+
+                <div className="flex min-h-11 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2 text-sm text-slate-300" role="status" aria-live="polite">
+                  <CarFront className="h-4 w-4 shrink-0 text-teal-300" aria-hidden="true" />
+                  <span className="line-clamp-2">
                     {locationStatus === "ready"
-                      ? "Geolocalización activa"
+                      ? "Distancias calculadas desde tu ubicación"
                       : locationStatus === "loading"
-                        ? "Solicitando ubicación..."
+                        ? "Solicitando tu ubicación..."
                         : locationStatus === "denied"
-                          ? "Permiso denegado, mueve el mapa y busca la zona manualmente"
-                          : locationStatus === "error"
-                            ? "No se pudo obtener tu ubicación, mueve el mapa y busca la zona manualmente"
+                          ? "Permiso de ubicación denegado"
                           : locationStatus === "unsupported"
-                            ? "Tu navegador no soporta geolocalización"
-                            : "Usa tu ubicación o mueve el mapa para elegir la zona de búsqueda"}
+                            ? "Geolocalización no disponible"
+                            : "Distancias provisionales desde el centro del mapa"}
                   </span>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
-                  <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">Radio fijo: 15 km</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">Centro visible del mapa</span>
-                </div>
-              </div>
-            </div>
 
-            {error ? (
-              <div role="alert" className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
-                {error}
-              </div>
-            ) : null}
-
-            {sourceState === "stale" ? (
-              <div role="status" aria-live="polite" className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
-                Se muestran los últimos datos disponibles porque la fuente no se pudo actualizar.
-                {sourceError ? ` ${sourceError}` : ""}
-              </div>
-            ) : null}
-
-            {sourceState === "unavailable" ? (
-              <div role="alert" className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
-                La fuente de precios no está disponible en este momento.
-                {sourceError ? ` ${sourceError}` : ""}
-              </div>
-            ) : null}
-
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1.7fr_0.9fr]">
-              <section className="flex min-h-0 flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/40">
-                <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Mapa en vivo</p>
-                    <h2 className="mt-1 text-xl font-semibold text-white">Precios oficiales por zona</h2>
-                  </div>
-                  <div className="text-left text-xs text-slate-400 sm:text-right">
-                    <p>Verde = barata</p>
-                    <p>Naranja = normal</p>
-                    <p>Rojo = cara</p>
-                  </div>
-                </div>
-
-                <div className="relative min-h-[420px] flex-1 overflow-hidden bg-slate-950/30 sm:min-h-[540px]">
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-teal-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-teal-200 disabled:cursor-wait disabled:opacity-70"
+                >
                   {loading ? (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm" role="status" aria-live="polite">
-                      <div className="rounded-2xl border border-white/10 bg-slate-950/90 px-5 py-3 text-sm text-slate-200 shadow-2xl">
-                        Cargando estaciones...
-                      </div>
-                    </div>
-                  ) : null}
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
+                  ) : (
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {loading ? "Buscando..." : "Buscar en esta zona"}
+                </button>
+              </div>
 
-                  <MapContainer center={mapCenter} zoom={location ? 13 : 6} className="absolute inset-0 h-full w-full" preferCanvas scrollWheelZoom={true}>
-                    <MapViewController center={mapCenter} />
-                    <MapCenterTracker onCenterChange={setMapCenter} />
-                    <TileLayer
-                      attribution='&copy; OpenStreetMap contributors'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-
-                    {stations.map((station) => (
-                      <Marker
-                        key={station.id}
-                        position={[station.latitude, station.longitude]}
-                        icon={createStationIcon(getMarkerTone(station.price, priceRange))}
-                      >
-                        <Popup>
-                          <div className="space-y-3 text-slate-900">
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{station.fuelLabel}</p>
-                              <h3 className="mt-1 text-base font-semibold text-slate-900">{station.name}</h3>
-                              <p className="text-sm text-slate-600">{station.brand}</p>
-                            </div>
-                            <div className="space-y-1 text-sm text-slate-700">
-                              <p>{station.address}</p>
-                              <p>{station.municipality} · {station.province}</p>
-                              <p>Precio: <strong>{formatPrice(station.price)}</strong></p>
-                              <p>Distancia: <strong>{formatDistance(station.distanceKm)}</strong></p>
-                            </div>
-                            <a
-                              href={buildGoogleMapsUrl(station.latitude, station.longitude)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                            >
-                              Cómo llegar
-                              <ArrowRight className="h-4 w-4" />
-                            </a>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    ))}
-                  </MapContainer>
+              {error || sourceState === "stale" || sourceState === "unavailable" ? (
+                <div
+                  role={error || sourceState === "unavailable" ? "alert" : "status"}
+                  className={`mt-3 rounded-xl border px-4 py-2.5 text-sm ${
+                    error || sourceState === "unavailable"
+                      ? "border-rose-400/20 bg-rose-400/10 text-rose-100"
+                      : "border-amber-400/20 bg-amber-400/10 text-amber-100"
+                  }`}
+                >
+                  {error || (sourceState === "unavailable"
+                    ? "La fuente de precios no está disponible en este momento."
+                    : "Se muestran los últimos datos disponibles.")}
+                  {sourceError ? ` ${sourceError}` : ""}
                 </div>
-              </section>
+              ) : null}
+            </header>
 
-              <aside className="space-y-4">
-                <section className="glass-panel rounded-[1.75rem] p-5">
-                  <div className="flex items-center justify-between">
+            <div className="grid min-h-0 lg:flex-1 lg:grid-cols-[370px_minmax(0,1fr)]">
+              <aside className="relative z-[600] order-2 -mt-7 flex min-h-0 flex-col rounded-t-[1.75rem] border-t border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur-xl lg:static lg:z-auto lg:order-1 lg:mt-0 lg:h-auto lg:min-h-0 lg:rounded-none lg:border-r lg:border-t-0 lg:bg-slate-950/45 lg:shadow-none lg:backdrop-blur-none">
+                <div className="border-b border-white/10 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Más baratas</p>
-                      <h2 className="mt-1 text-xl font-semibold text-white">Top 5 dentro de 15 km</h2>
-                    </div>
-                    <TrendingDown className="h-5 w-5 text-teal-300" aria-hidden="true" />
-                  </div>
-
-                  <div className="mt-4 space-y-3">
-                    {topStations.length === 0 ? (
-                      <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300" role="status" aria-live="polite">
-                        {loading
-                          ? "Buscando gasolineras en la zona seleccionada..."
-                          : hasSearched
-                            ? "No se encontraron gasolineras con precio dentro del radio seleccionado."
-                            : "Mueve el mapa al punto deseado y pulsa «Buscar ahora» para consultar la zona."}
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Resultados</p>
+                      <p className="mt-1 text-sm text-slate-300">
+                        {hasSearched ? `${sortedStations.length} gasolineras en esta zona` : "Prepara tu búsqueda en el mapa"}
                       </p>
-                    ) : (
-                      topStations.map((station, index) => (
-                        <article key={station.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-teal-300/20 hover:bg-white/[0.05]">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-300/10 text-xs font-semibold text-teal-100">
-                                  {index + 1}
-                                </span>
-                                <h3 className="text-base font-semibold text-white">{station.name}</h3>
-                              </div>
-                              <p className="mt-1 text-sm text-slate-400">{station.municipality} · {station.province}</p>
-                            </div>
-                            <p className="text-right text-base font-semibold text-white">{formatPrice(station.price)}</p>
-                          </div>
-
-                          <div className="mt-3 flex items-center justify-between text-sm text-slate-400">
-                            <span>{formatDistance(station.distanceKm)}</span>
-                            <a href={buildGoogleMapsUrl(station.latitude, station.longitude)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-teal-200 transition hover:text-teal-100">
-                              Cómo llegar
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </a>
-                          </div>
-                        </article>
-                      ))
-                    )}
+                    </div>
+                    {updatedAt ? (
+                      <span className="text-right text-[11px] leading-4 text-slate-500">
+                        Actualizado<br />
+                        {new Intl.DateTimeFormat("es-ES", { dateStyle: "short", timeStyle: "short" }).format(new Date(updatedAt))}
+                      </span>
+                    ) : null}
                   </div>
-                </section>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <SlidersHorizontal className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                    <div className="grid flex-1 grid-cols-2 rounded-xl border border-white/10 bg-slate-950/60 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setSortMode("price")}
+                        className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "price" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                      >
+                        Más baratas
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSortMode("distance")}
+                        className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "distance" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                      >
+                        Más cercanas
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="max-h-[520px] flex-1 space-y-2 overflow-y-auto p-3 lg:max-h-none">
+                  {sortedStations.length === 0 ? (
+                    <div className="flex h-full min-h-52 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center">
+                      <Search className="h-7 w-7 text-slate-600" aria-hidden="true" />
+                      <p className="mt-3 text-sm font-medium text-slate-300">
+                        {loading
+                          ? "Buscando gasolineras..."
+                          : hasSearched
+                            ? "No hay gasolineras con precio en esta zona"
+                            : "Mueve el mapa y busca para comparar precios"}
+                      </p>
+                    </div>
+                  ) : (
+                    sortedStations.map((station, index) => {
+                      const selected = station.id === selectedStationId;
+                      const tone = getMarkerTone(station.price, priceRange);
+                      const toneClass = {
+                        emerald: "bg-emerald-400",
+                        amber: "bg-amber-400",
+                        rose: "bg-rose-400",
+                      }[tone];
+
+                      return (
+                        <article
+                          key={station.id}
+                          ref={selected ? selectedCardRef : null}
+                          className={`rounded-2xl border p-3.5 transition ${
+                            selected
+                              ? "border-teal-300/50 bg-teal-300/10 shadow-lg shadow-teal-950/20"
+                              : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
+                          }`}
+                        >
+                          <button type="button" onClick={() => setSelectedStationId(station.id)} className="w-full text-left">
+                            <div className="flex items-start gap-3">
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xs font-bold text-slate-300">
+                                {index + 1}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <h2 className="truncate text-sm font-semibold text-white">{station.name}</h2>
+                                    <p className="mt-0.5 truncate text-xs text-slate-500">{station.municipality} · {station.province}</p>
+                                  </div>
+                                  <div className="shrink-0 text-right">
+                                    <p className="text-base font-bold text-white">{formatPrice(station.price)}</p>
+                                    <span className={`mt-1 inline-block h-1.5 w-8 rounded-full ${toneClass}`} aria-hidden="true" />
+                                  </div>
+                                </div>
+                                <div className="mt-3 flex items-center justify-between gap-3 text-xs">
+                                  <span className="inline-flex items-center gap-1.5 text-slate-400">
+                                    <Navigation className="h-3.5 w-3.5 text-blue-300" aria-hidden="true" />
+                                    {location ? "Desde ti: " : ""}{formatDistance(station.distanceKm)}
+                                  </span>
+                                  <span className="font-medium text-teal-200">Ver en mapa</span>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
               </aside>
+
+              <section className="relative order-1 h-[62vh] min-h-[480px] overflow-hidden bg-slate-950 lg:order-2 lg:h-auto lg:min-h-0">
+                <div className="pointer-events-none absolute left-14 top-3 z-[500] hidden items-center gap-2 rounded-full border border-white/15 bg-slate-950/80 px-3 py-2 text-[10px] font-semibold text-slate-300 shadow-xl backdrop-blur-md sm:flex">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" /> Barata
+                  <span className="h-2 w-2 rounded-full bg-amber-400" /> Normal
+                  <span className="h-2 w-2 rounded-full bg-rose-400" /> Cara
+                </div>
+
+                {loading ? (
+                  <div className="absolute inset-0 z-[700] flex items-center justify-center bg-slate-950/35 backdrop-blur-[2px]" role="status" aria-live="polite">
+                    <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-slate-950/90 px-5 py-3 text-sm font-semibold text-white shadow-2xl">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-300 border-t-transparent" aria-hidden="true" />
+                      Actualizando precios
+                    </div>
+                  </div>
+                ) : null}
+
+                <MapContainer center={mapCenter} zoom={location ? 13 : 6} className="absolute inset-0 h-full w-full" preferCanvas scrollWheelZoom={true}>
+                  <MapCenterTracker onCenterChange={setMapCenter} />
+                  <SelectedStationController station={selectedStation} />
+                  <MapLocationControl
+                    location={location}
+                    loading={locationStatus === "loading"}
+                    onRequestLocation={handleUseCurrentLocation}
+                  />
+                  <MapSearchControl loading={loading} onSearch={handleSearch} />
+                  <TileLayer
+                    attribution='&copy; OpenStreetMap contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {location ? <UserLocationMarker location={location} /> : null}
+                  <ClusteredStationMarkers
+                    stations={displayedStations}
+                    priceRange={priceRange}
+                    selectedStationId={selectedStationId}
+                    onSelectStation={setSelectedStationId}
+                  />
+                </MapContainer>
+
+              </section>
             </div>
           </section>
         </div>

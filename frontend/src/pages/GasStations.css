@@ -1,0 +1,82 @@
+.fuelytics-station-popup .leaflet-popup-content-wrapper {
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 1.5rem;
+  background: rgba(7, 15, 25, 0.97);
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.5);
+  color: #e2e8f0;
+  backdrop-filter: blur(18px);
+}
+
+.fuelytics-station-popup .leaflet-popup-content {
+  width: auto !important;
+  margin: 0;
+}
+
+.fuelytics-station-popup .leaflet-popup-content p {
+  margin: 0;
+}
+
+.fuelytics-station-popup .leaflet-popup-tip {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: #071019;
+  box-shadow: 4px 4px 12px rgba(2, 6, 23, 0.25);
+}
+
+.fuelytics-station-popup .leaflet-popup-close-button {
+  top: 0.75rem !important;
+  right: 0.75rem !important;
+  display: flex;
+  width: 2rem !important;
+  height: 2rem !important;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: #cbd5e1 !important;
+  font-size: 1.25rem !important;
+  line-height: 1 !important;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.fuelytics-station-popup .leaflet-popup-close-button:hover {
+  background: rgba(30, 41, 59, 0.95) !important;
+  color: #ffffff !important;
+}
+
+.fuelytics-station-popup .station-popup-route {
+  color: #042f2e;
+}
+
+.fuelytics-station-popup .station-popup-route:hover {
+  color: #042f2e;
+}
+
+.user-location-marker {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
+}
+
+.user-location-marker span {
+  width: 14px;
+  height: 14px;
+  border: 3px solid #ffffff;
+  border-radius: 9999px;
+  background: #3b82f6;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.45);
+}
+
+.leaflet-container .map-location-control {
+  color: #334155;
+}
+
+.leaflet-container .map-location-control:hover {
+  color: #2563eb;
+}

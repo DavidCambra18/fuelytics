@@ -29,8 +29,8 @@ import tools.jackson.databind.json.JsonMapper;
 public class GasStationService {
 
     private static final Logger log = LoggerFactory.getLogger(GasStationService.class);
+    private static final JsonMapper JSON_MAPPER = JsonMapper.builder().build();
     private final HttpClient httpClient;
-    private final JsonMapper jsonMapper;
     private final String sourceUrl;
     private final double defaultRadiusKm;
     private final AtomicReference<CachedStations> cache = new AtomicReference<>(
@@ -41,7 +41,6 @@ public class GasStationService {
             @Value("${app.gas-stations.radius-km:15}") double defaultRadiusKm) {
         this.sourceUrl = sourceUrl;
         this.defaultRadiusKm = defaultRadiusKm;
-        this.jsonMapper = JsonMapper.builder().build();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(java.time.Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NORMAL)
@@ -127,9 +126,9 @@ public class GasStationService {
         log.warn("Unable to refresh gas station cache: {}", message);
     }
 
-    private List<GasStationRecord> parseStations(String payload) {
+    static List<GasStationRecord> parseStations(String payload) {
         try {
-            JsonNode root = jsonMapper.readTree(payload);
+            JsonNode root = JSON_MAPPER.readTree(payload);
             JsonNode array = root.get("ListaEESSPrecio");
             if (array == null || !array.isArray()) {
                 throw new IllegalArgumentException("La respuesta no contiene la lista de estaciones");
@@ -199,12 +198,37 @@ public class GasStationService {
     private String normalizeFuelType(String fuelType) {
         String normalized = normalize(fuelType);
 
+        if (normalized.equals("dieselpremium") || normalized.equals("diesel_premium")
+                || normalized.equals("gasoleo premium")) {
+            return "dieselPremium";
+        }
+
         if (normalized.contains("98")) {
             return "gasoline98";
         }
 
         if (normalized.contains("95")) {
             return "gasoline95";
+        }
+
+        if (normalized.equals("glp") || normalized.equals("gases licuados del petroleo")) {
+            return "glp";
+        }
+
+        if (normalized.equals("gnc") || normalized.equals("gas natural comprimido")) {
+            return "gnc";
+        }
+
+        if (normalized.equals("gnl") || normalized.equals("gas natural licuado")) {
+            return "gnl";
+        }
+
+        if (normalized.equals("biodiesel")) {
+            return "biodiesel";
+        }
+
+        if (normalized.equals("bioetanol") || normalized.equals("bioethanol")) {
+            return "bioethanol";
         }
 
         return "diesel";
@@ -224,7 +248,7 @@ public class GasStationService {
     private record CachedStations(List<GasStationRecord> stations, Instant updatedAt, boolean ready, String lastError) {
     }
 
-    private static final class GasStationRecord {
+    static final class GasStationRecord {
 
         private final String id;
         private final String brand;
@@ -240,8 +264,14 @@ public class GasStationService {
         private final String schedule;
         private final String margin;
         private final Double dieselPrice;
+        private final Double dieselPremiumPrice;
         private final Double gasoline95Price;
         private final Double gasoline98Price;
+        private final Double glpPrice;
+        private final Double gncPrice;
+        private final Double gnlPrice;
+        private final Double biodieselPrice;
+        private final Double bioethanolPrice;
 
         private GasStationRecord(
                 String id,
@@ -258,8 +288,14 @@ public class GasStationService {
                 String schedule,
                 String margin,
                 Double dieselPrice,
+                Double dieselPremiumPrice,
                 Double gasoline95Price,
-                Double gasoline98Price) {
+                Double gasoline98Price,
+                Double glpPrice,
+                Double gncPrice,
+                Double gnlPrice,
+                Double biodieselPrice,
+                Double bioethanolPrice) {
             this.id = id;
             this.brand = brand;
             this.name = name;
@@ -274,8 +310,14 @@ public class GasStationService {
             this.schedule = schedule;
             this.margin = margin;
             this.dieselPrice = dieselPrice;
+            this.dieselPremiumPrice = dieselPremiumPrice;
             this.gasoline95Price = gasoline95Price;
             this.gasoline98Price = gasoline98Price;
+            this.glpPrice = glpPrice;
+            this.gncPrice = gncPrice;
+            this.gnlPrice = gnlPrice;
+            this.biodieselPrice = biodieselPrice;
+            this.bioethanolPrice = bioethanolPrice;
         }
 
         static GasStationRecord fromFields(Map<String, String> fields) {
@@ -301,9 +343,15 @@ public class GasStationService {
                     fields.getOrDefault("Horario", ""),
                     fields.getOrDefault("Margen", ""),
                     parsePrice(fields, "Precio Gasoleo A"),
+                    parsePrice(fields, "Precio Gasoleo Premium"),
                     parsePreferredPrice(fields, "Precio Gasolina 95 E5", "Precio Gasolina 95 E10",
                             "Precio Gasolina 95 E25"),
-                    parsePreferredPrice(fields, "Precio Gasolina 98 E5", "Precio Gasolina 98 E10"));
+                    parsePreferredPrice(fields, "Precio Gasolina 98 E5", "Precio Gasolina 98 E10"),
+                    parsePrice(fields, "Precio Gases licuados del petróleo"),
+                    parsePrice(fields, "Precio Gas Natural Comprimido"),
+                    parsePrice(fields, "Precio Gas Natural Licuado"),
+                    parsePrice(fields, "Precio Biodiesel"),
+                    parsePrice(fields, "Precio Bioetanol"));
         }
 
         GasStationDTO toDto(String fuelType, Double userLat, Double userLng) {
@@ -332,8 +380,14 @@ public class GasStationService {
 
         Double priceFor(String fuelType) {
             return switch (fuelType) {
+                case "dieselPremium" -> dieselPremiumPrice;
                 case "gasoline95" -> gasoline95Price;
                 case "gasoline98" -> gasoline98Price;
+                case "glp" -> glpPrice;
+                case "gnc" -> gncPrice;
+                case "gnl" -> gnlPrice;
+                case "biodiesel" -> biodieselPrice;
+                case "bioethanol" -> bioethanolPrice;
                 default -> dieselPrice;
             };
         }
@@ -382,9 +436,15 @@ public class GasStationService {
 
         private static String labelFor(String fuelType) {
             return switch (fuelType) {
+                case "dieselPremium" -> "Diésel premium";
                 case "gasoline95" -> "Gasolina 95";
                 case "gasoline98" -> "Gasolina 98";
-                default -> "Diesel";
+                case "glp" -> "GLP";
+                case "gnc" -> "GNC";
+                case "gnl" -> "GNL";
+                case "biodiesel" -> "Biodiésel";
+                case "bioethanol" -> "Bioetanol";
+                default -> "Diésel";
             };
         }
     }
