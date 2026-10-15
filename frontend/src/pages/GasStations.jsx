@@ -222,7 +222,7 @@ function StationPopup({ station, tone }) {
   );
 }
 
-function StationMarker({ station, priceRange, selected, onSelect }) {
+function StationMarker({ station, priceRange, selected, onSelect, onPopupOpen, onPopupClose }) {
   const markerRef = useRef(null);
   const stationTone = getMarkerTone(station.price, priceRange);
 
@@ -238,7 +238,11 @@ function StationMarker({ station, priceRange, selected, onSelect }) {
       position={[station.latitude, station.longitude]}
       icon={createStationIcon(stationTone, station.price)}
       title={`${station.name}: ${formatPrice(station.price)}`}
-      eventHandlers={{ click: () => onSelect(station.id) }}
+      eventHandlers={{
+        click: () => onSelect(station.id),
+        popupopen: () => onPopupOpen(station.id),
+        popupclose: () => onPopupClose(station.id),
+      }}
       zIndexOffset={selected ? 500 : 0}
     >
       <StationPopup station={station} tone={stationTone} />
@@ -246,7 +250,14 @@ function StationMarker({ station, priceRange, selected, onSelect }) {
   );
 }
 
-function ClusteredStationMarkers({ stations, priceRange, selectedStationId, onSelectStation }) {
+function ClusteredStationMarkers({
+  stations,
+  priceRange,
+  selectedStationId,
+  onSelectStation,
+  onStationPopupOpen,
+  onStationPopupClose,
+}) {
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
 
@@ -269,6 +280,8 @@ function ClusteredStationMarkers({ stations, priceRange, selectedStationId, onSe
           priceRange={priceRange}
           selected={station.id === selectedStationId}
           onSelect={onSelectStation}
+          onPopupOpen={onStationPopupOpen}
+          onPopupClose={onStationPopupClose}
         />
       );
     }
@@ -351,7 +364,7 @@ function UserLocationMarker({ location }) {
   );
 }
 
-function MapLocationControl({ location, loading, onRequestLocation }) {
+function MapLocationControl({ location, loading, popupOpen, onRequestLocation }) {
   const map = useMap();
 
   const handleClick = (event) => {
@@ -370,7 +383,7 @@ function MapLocationControl({ location, loading, onRequestLocation }) {
   };
 
   return (
-    <div className="leaflet-top leaflet-right">
+    <div className={`leaflet-top leaflet-right ${popupOpen ? "hidden sm:block" : ""}`}>
       <div className="leaflet-control m-3">
         <button
           type="button"
@@ -394,7 +407,10 @@ function MapLocationControl({ location, loading, onRequestLocation }) {
 function MapSearchControl({ loading, onSearch }) {
   return (
     <div className="leaflet-bottom leaflet-left w-full">
-      <div className="leaflet-control mb-10 flex w-full justify-center px-4 lg:mb-5">
+      <div
+        className="leaflet-control !mb-10 flex w-full justify-center px-4 lg:!mb-5"
+        style={{ marginLeft: 0, marginRight: 0 }}
+      >
         <button
           type="button"
           onClick={(event) => {
@@ -481,10 +497,12 @@ export default function GasStations() {
   const [hasSearched, setHasSearched] = useState(false);
   const [sortMode, setSortMode] = useState("price");
   const [selectedStationId, setSelectedStationId] = useState(null);
+  const [openStationPopupId, setOpenStationPopupId] = useState(null);
   const selectedCardRef = useRef(null);
+  const mapSectionRef = useRef(null);
 
   useEffect(() => {
-    if (selectedStationId) {
+    if (selectedStationId && window.matchMedia("(min-width: 1024px)").matches) {
       selectedCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [selectedStationId]);
@@ -640,8 +658,17 @@ export default function GasStations() {
 
   const handleSearch = () => {
     setSelectedStationId(null);
+    setOpenStationPopupId(null);
     setSearchCenter([mapCenter[0], mapCenter[1]]);
     setHasSearched(true);
+  };
+
+  const handleSelectStationFromList = (stationId) => {
+    setSelectedStationId(stationId);
+
+    if (!window.matchMedia("(min-width: 1024px)").matches) {
+      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   };
 
   return (
@@ -741,8 +768,8 @@ export default function GasStations() {
               ) : null}
             </header>
 
-            <div className="grid min-h-0 lg:flex-1 lg:grid-cols-[370px_minmax(0,1fr)]">
-              <aside className="relative z-[600] order-2 -mt-7 flex min-h-0 flex-col rounded-t-[1.75rem] border-t border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur-xl lg:static lg:z-auto lg:order-1 lg:mt-0 lg:h-auto lg:min-h-0 lg:rounded-none lg:border-r lg:border-t-0 lg:bg-slate-950/45 lg:shadow-none lg:backdrop-blur-none">
+            <div className="grid min-h-0 min-w-0 lg:flex-1 lg:grid-cols-[370px_minmax(0,1fr)]">
+              <aside className="relative z-[600] order-2 flex min-h-0 min-w-0 flex-col border-t border-white/10 bg-slate-950/95 backdrop-blur-xl lg:static lg:z-auto lg:order-1 lg:h-auto lg:min-h-0 lg:border-r lg:border-t-0 lg:bg-slate-950/45 lg:backdrop-blur-none">
                 <div className="border-b border-white/10 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -765,14 +792,14 @@ export default function GasStations() {
                       <button
                         type="button"
                         onClick={() => setSortMode("price")}
-                        className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "price" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                        className={`min-h-11 rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "price" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
                       >
                         Más baratas
                       </button>
                       <button
                         type="button"
                         onClick={() => setSortMode("distance")}
-                        className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "distance" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                        className={`min-h-11 rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "distance" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
                       >
                         Más cercanas
                       </button>
@@ -782,7 +809,7 @@ export default function GasStations() {
 
                 <div className="max-h-[520px] flex-1 space-y-2 overflow-y-auto p-3 lg:max-h-none">
                   {sortedStations.length === 0 ? (
-                    <div className="flex h-full min-h-52 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center">
+                    <div className="flex h-full min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center sm:min-h-52">
                       <Search className="h-7 w-7 text-slate-600" aria-hidden="true" />
                       <p className="mt-3 text-sm font-medium text-slate-300">
                         {loading
@@ -812,7 +839,7 @@ export default function GasStations() {
                               : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
                           }`}
                         >
-                          <button type="button" onClick={() => setSelectedStationId(station.id)} className="w-full text-left">
+                          <button type="button" onClick={() => handleSelectStationFromList(station.id)} className="w-full text-left">
                             <div className="flex items-start gap-3">
                               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xs font-bold text-slate-300">
                                 {index + 1}
@@ -845,7 +872,7 @@ export default function GasStations() {
                 </div>
               </aside>
 
-              <section className="relative order-1 h-[62vh] min-h-[480px] overflow-hidden bg-slate-950 lg:order-2 lg:h-auto lg:min-h-0">
+              <section ref={mapSectionRef} className="relative order-1 h-[62vh] min-h-[480px] min-w-0 overflow-hidden bg-slate-950 lg:order-2 lg:h-auto lg:min-h-0">
                 <div className="pointer-events-none absolute left-14 top-3 z-[500] hidden items-center gap-2 rounded-full border border-white/15 bg-slate-950/80 px-3 py-2 text-[10px] font-semibold text-slate-300 shadow-xl backdrop-blur-md sm:flex">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" /> Barata
                   <span className="h-2 w-2 rounded-full bg-amber-400" /> Normal
@@ -867,6 +894,7 @@ export default function GasStations() {
                   <MapLocationControl
                     location={location}
                     loading={locationStatus === "loading"}
+                    popupOpen={openStationPopupId !== null}
                     onRequestLocation={handleUseCurrentLocation}
                   />
                   <MapSearchControl loading={loading} onSearch={handleSearch} />
@@ -880,6 +908,12 @@ export default function GasStations() {
                     priceRange={priceRange}
                     selectedStationId={selectedStationId}
                     onSelectStation={setSelectedStationId}
+                    onStationPopupOpen={setOpenStationPopupId}
+                    onStationPopupClose={(stationId) => {
+                      setOpenStationPopupId((currentStationId) => (
+                        currentStationId === stationId ? null : currentStationId
+                      ));
+                    }}
                   />
                 </MapContainer>
 

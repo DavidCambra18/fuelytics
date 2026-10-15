@@ -80,3 +80,10 @@
 .leaflet-container .map-location-control:hover {
   color: #2563eb;
 }
+
+@media (max-width: 640px) {
+  .fuelytics-station-popup .leaflet-popup-close-button {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+}
