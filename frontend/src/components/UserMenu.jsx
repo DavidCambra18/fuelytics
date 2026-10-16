@@ -11,7 +11,8 @@ import {
   ChevronRight,
   ChevronDown,
   Trophy,
-  Calculator
+  Calculator,
+  Users
 } from "lucide-react";
 
 export default function UserMenu() {
@@ -69,6 +70,9 @@ export default function UserMenu() {
       <div className="flex items-center justify-between gap-1 rounded-full border border-white/10 bg-slate-950/85 p-1 shadow-2xl shadow-black/30 backdrop-blur-xl sm:justify-start sm:gap-2 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
         <button
           type="button"
+          aria-label="Menú de usuario"
+          aria-expanded={open}
+          aria-controls="user-menu"
           onClick={() => setOpen((current) => !current)}
           className="flex h-11 w-11 shrink-0 items-center justify-center gap-3 rounded-full border border-white/10 bg-slate-950/80 p-1 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-auto sm:w-auto sm:justify-start sm:py-2 sm:pl-2 sm:pr-4"
         >
@@ -110,13 +114,22 @@ export default function UserMenu() {
 
         <Link
           to="/ranking"
-          aria-label="Ir al ranking global"
-          title="Ranking Global"
+          aria-label="Ir a la clasificación"
+          title="Clasificación"
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
         >
           <Trophy className="h-5 w-5 text-teal-200" aria-hidden="true" />
         </Link>
 
+
+        <Link
+          to="/friends"
+          aria-label="Ir a Amigos"
+          title="Amigos"
+          className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:flex"
+        >
+          <Users className="h-5 w-5 text-teal-200" aria-hidden="true" />
+        </Link>
 
         <Link
           to="/calculator"
@@ -129,7 +142,7 @@ export default function UserMenu() {
       </div>
 
       {open ? (
-        <div className="absolute bottom-full left-0 mb-3 w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/30 backdrop-blur-xl sm:bottom-auto sm:top-full sm:mb-0 sm:mt-3 sm:w-80">
+        <div id="user-menu" className="absolute bottom-full left-0 mb-3 w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/30 backdrop-blur-xl sm:bottom-auto sm:top-full sm:mb-0 sm:mt-3 sm:w-80">
           <div className="border-b border-white/10 bg-gradient-to-br from-teal-400/10 via-cyan-400/5 to-transparent px-4 py-4">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 text-base font-semibold text-teal-200 ring-1 ring-teal-300/20">
@@ -163,6 +176,23 @@ export default function UserMenu() {
                 <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-slate-300" />
               </Link>
             ) : null}
+
+            <Link
+              to="/friends"
+              onClick={() => setOpen(false)}
+              className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/[0.08] sm:hidden"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-400/10 text-teal-200">
+                  <Users className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-white">Amigos</p>
+                  <p className="mt-0.5 text-xs text-slate-400">Amistades y solicitudes</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-slate-500" aria-hidden="true" />
+            </Link>
 
             <button
               type="button"

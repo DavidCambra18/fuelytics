@@ -86,6 +86,12 @@ CREATE TYPE tire_axle_enum AS ENUM (
   'REAR'
 );
 
+CREATE TYPE friendship_status AS ENUM (
+  'PENDING',
+  'ACCEPTED',
+  'REJECTED'
+);
+
 -- USERS
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -206,11 +212,30 @@ CREATE TABLE user_badges (
   CONSTRAINT uq_user_badges_user_badge UNIQUE (user_id, badge_id)
 );
 
+-- FRIENDSHIPS
+CREATE TABLE friendships (
+  id SERIAL PRIMARY KEY,
+  requester_id INT NOT NULL,
+  addressee_id INT NOT NULL,
+  status friendship_status NOT NULL DEFAULT 'PENDING',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT chk_friendships_distinct_users CHECK (requester_id <> addressee_id),
+  FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE INDEX idx_vehicles_user_id ON vehicles(user_id);
 CREATE INDEX idx_fuel_entries_vehicle_date ON fuel_entries(vehicle_id, date DESC, id DESC);
 CREATE INDEX idx_expenses_vehicle_date ON expenses(vehicle_id, date DESC, id DESC);
 CREATE INDEX idx_tire_sets_vehicle_date ON tire_sets(vehicle_id, installation_date DESC);
 CREATE INDEX idx_user_badges_user_id ON user_badges(user_id);
+CREATE INDEX idx_friendships_requester_id ON friendships(requester_id);
+CREATE INDEX idx_friendships_addressee_id ON friendships(addressee_id);
+CREATE INDEX idx_friendships_status ON friendships(status);
+CREATE UNIQUE INDEX uq_friendships_user_pair
+  ON friendships(LEAST(requester_id, addressee_id), GREATEST(requester_id, addressee_id));
 CREATE UNIQUE INDEX uq_tire_sets_active_axle
   ON tire_sets(vehicle_id, axle)
   WHERE is_active = TRUE;

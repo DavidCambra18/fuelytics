@@ -1,5 +1,6 @@
 package com.fuelytics.backend.controller;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,7 @@ import com.fuelytics.backend.dto.RankingProjection;
 import com.fuelytics.backend.service.RankingService;
 
 @RestController
-@RequestMapping("/api/ranking")
+@RequestMapping("/api")
 public class RankingController {
 
     private final RankingService rankingService;
@@ -20,8 +21,13 @@ public class RankingController {
         this.rankingService = rankingService;
     }
 
-    @GetMapping
+    @GetMapping("/ranking")
     public ResponseEntity<List<RankingProjection>> getRanking() {
         return ResponseEntity.ok(rankingService.getGlobalRanking());
+    }
+
+    @GetMapping("/rankings/friends")
+    public ResponseEntity<List<RankingProjection>> getFriendsRanking(Principal principal) {
+        return ResponseEntity.ok(rankingService.getFriendsRanking(principal.getName()));
     }
 }
