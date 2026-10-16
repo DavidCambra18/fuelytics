@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
 import { 
@@ -54,8 +54,10 @@ function Toggle({ checked, disabled, onChange, label, hint }) {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { token, username, setAuth } = useAuth();
-  const [activeTab, setActiveTab] = useState("profile");
+  const requestedTab = searchParams.get("tab");
+  const activeTab = ["profile", "privacy"].includes(requestedTab) ? requestedTab : "profile";
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
@@ -399,7 +401,7 @@ export default function Settings() {
                       <button
                         key={tab.id}
                         type="button"
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => setSearchParams(tab.id === "profile" ? {} : { tab: tab.id }, { replace: true })}
                         className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${activeTab === tab.id ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/[0.05] hover:text-white"}`}
                       >
                         <span className="flex items-center gap-3">
@@ -627,6 +629,7 @@ export default function Settings() {
                     </div>
                   </section>
                 ) : null}
+
               </div>
             </div>
           </section>

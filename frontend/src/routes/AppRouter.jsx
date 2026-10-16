@@ -18,6 +18,7 @@ const Fuelings = lazy(() => import("../pages/Fuelings"));
 const Expenses = lazy(() => import("../pages/Expenses"));
 const Statistics = lazy(() => import("../pages/Statistics"));
 const Settings = lazy(() => import("../pages/Settings"));
+const Friends = lazy(() => import("../pages/Friends"));
 const MyProfile = lazy(() => import("../pages/MyProfile"));
 const PublicProfile = lazy(() => import("../pages/PublicProfile"));
 const PublicVehicle = lazy(() => import("../pages/PublicVehicle"));
@@ -91,6 +92,7 @@ function InnerRoutes() {
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
           <Route path="/ranking" element={<PageTransition><Ranking /></PageTransition>} />
+          <Route path="/friends" element={<PageTransition><Friends /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
           <Route path="/calculator" element={<TripCalculator />} />
           <Route path="/my-profile" element={<PageTransition><MyProfile /></PageTransition>} />
