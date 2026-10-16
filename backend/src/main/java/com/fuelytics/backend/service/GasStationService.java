@@ -1,11 +1,15 @@
 package com.fuelytics.backend.service;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,6 +17,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.net.ssl.SSLParameters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +28,8 @@ import org.springframework.stereotype.Service;
 
 import com.fuelytics.backend.dto.GasStationDTO;
 import com.fuelytics.backend.dto.GasStationSearchResponseDTO;
-import tools.jackson.databind.JsonNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.json.JsonMapper;
 
 @Service
@@ -30,6 +37,8 @@ public class GasStationService {
 
     private static final Logger log = LoggerFactory.getLogger(GasStationService.class);
     private static final JsonMapper JSON_MAPPER = JsonMapper.builder().build();
+    private static final int REFRESH_ATTEMPTS = 3;
+    private static final Duration RETRY_DELAY = Duration.ofSeconds(2);
     private final HttpClient httpClient;
     private final String sourceUrl;
     private final double defaultRadiusKm;
@@ -41,9 +50,13 @@ public class GasStationService {
             @Value("${app.gas-stations.radius-km:15}") double defaultRadiusKm) {
         this.sourceUrl = sourceUrl;
         this.defaultRadiusKm = defaultRadiusKm;
+        SSLParameters sslParameters = new SSLParameters();
+        sslParameters.setProtocols(new String[] { "TLSv1.2" });
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .connectTimeout(Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NORMAL)
+                .version(HttpClient.Version.HTTP_1_1)
+                .sslParameters(sslParameters)
                 .build();
     }
 
@@ -88,35 +101,57 @@ public class GasStationService {
     }
 
     public void refreshCache() {
-        try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(sourceUrl))
-                    .timeout(java.time.Duration.ofSeconds(30))
-                    .GET()
-                    .header("Accept", "application/json")
-                    .header("User-Agent", "Fuelytics/1.0")
-                    .build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        Exception lastError = null;
 
+        for (int attempt = 1; attempt <= REFRESH_ATTEMPTS; attempt++) {
+            try {
+                List<GasStationRecord> stations = fetchStations();
+                cache.set(new CachedStations(stations, Instant.now(), true, ""));
+                log.info("Gas station cache refreshed with {} stations", stations.size());
+                return;
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                keepPreviousCache("La actualización fue interrumpida");
+                return;
+            } catch (IOException | RuntimeException error) {
+                lastError = error;
+                log.warn("Gas station refresh attempt {}/{} failed: {}", attempt, REFRESH_ATTEMPTS,
+                        error.getMessage());
+
+                if (attempt < REFRESH_ATTEMPTS) {
+                    try {
+                        Thread.sleep(RETRY_DELAY.toMillis());
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        keepPreviousCache("La actualización fue interrumpida");
+                        return;
+                    }
+                }
+            }
+        }
+
+        keepPreviousCache(lastError == null ? "No se pudo actualizar la fuente de precios" : lastError.getMessage());
+    }
+
+    private List<GasStationRecord> fetchStations() throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(sourceUrl))
+                .timeout(Duration.ofSeconds(45))
+                .GET()
+                .header("Accept", "application/json")
+                .header("User-Agent", "Fuelytics/1.0")
+                .build();
+        HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+        try (InputStream payload = response.body()) {
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new IllegalStateException("La API pública respondió con estado " + response.statusCode());
-            }
-
-            String payload = response.body();
-            if (payload == null || payload.isBlank()) {
-                throw new IllegalStateException("La API pública devolvió una respuesta vacía");
             }
 
             List<GasStationRecord> stations = parseStations(payload);
             if (stations.isEmpty()) {
                 throw new IllegalStateException("La API pública no devolvió estaciones válidas");
             }
-            cache.set(new CachedStations(stations, Instant.now(), true, ""));
-            log.info("Gas station cache refreshed with {} stations", stations.size());
-        } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
-            keepPreviousCache("La actualización fue interrumpida");
-        } catch (IOException | RuntimeException error) {
-            keepPreviousCache(error.getMessage());
+            return stations;
         }
     }
 
@@ -127,26 +162,55 @@ public class GasStationService {
     }
 
     static List<GasStationRecord> parseStations(String payload) {
+        if (payload == null || payload.isBlank()) {
+            throw new IllegalArgumentException("La API pública devolvió una respuesta vacía");
+        }
+
+        return parseStations(new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private static List<GasStationRecord> parseStations(InputStream payload) {
         try {
-            JsonNode root = JSON_MAPPER.readTree(payload);
-            JsonNode array = root.get("ListaEESSPrecio");
-            if (array == null || !array.isArray()) {
-                throw new IllegalArgumentException("La respuesta no contiene la lista de estaciones");
+            List<GasStationRecord> stations = new ArrayList<>();
+            boolean stationListFound = false;
+
+            try (JsonParser parser = JSON_MAPPER.createParser(payload)) {
+                while (parser.nextToken() != null) {
+                    if (parser.currentToken() == JsonToken.PROPERTY_NAME
+                            && "ListaEESSPrecio".equals(parser.currentName())) {
+                        stationListFound = true;
+                        if (parser.nextToken() != JsonToken.START_ARRAY) {
+                            throw new IllegalArgumentException("La lista de estaciones no tiene un formato válido");
+                        }
+
+                        while (parser.nextToken() == JsonToken.START_OBJECT) {
+                            Map<String, String> fields = new java.util.LinkedHashMap<>();
+                            while (parser.nextToken() != JsonToken.END_OBJECT) {
+                                String name = parser.currentName();
+                                JsonToken valueToken = parser.nextToken();
+                                fields.put(name, valueToken == JsonToken.VALUE_NULL ? null : parser.getValueAsString());
+                                if (valueToken == JsonToken.START_OBJECT || valueToken == JsonToken.START_ARRAY) {
+                                    parser.skipChildren();
+                                }
+                            }
+                            GasStationRecord station = GasStationRecord.fromFields(fields);
+                            if (station != null) {
+                                stations.add(station);
+                            }
+                        }
+                        break;
+                    }
+                }
             }
 
-            List<GasStationRecord> stations = new ArrayList<>();
-            for (JsonNode node : array) {
-                Map<String, String> fields = new java.util.LinkedHashMap<>();
-                node.forEachEntry((name, value) -> fields.put(
-                        name,
-                        value.isNull() ? null : value.asString()));
-                GasStationRecord station = GasStationRecord.fromFields(fields);
-                if (station != null) {
-                    stations.add(station);
-                }
+            if (!stationListFound) {
+                throw new IllegalArgumentException("La respuesta no contiene la lista de estaciones");
             }
             return stations;
         } catch (Exception error) {
+            if (error instanceof IllegalArgumentException illegalArgumentException) {
+                throw illegalArgumentException;
+            }
             throw new IllegalArgumentException("No se pudo interpretar la respuesta de gasolineras", error);
         }
     }
