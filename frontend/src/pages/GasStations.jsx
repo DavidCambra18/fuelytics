@@ -331,6 +331,23 @@ function SelectedStationController({ station }) {
   return null;
 }
 
+function MapSizeSync() {
+  const map = useMap();
+  useEffect(() => {
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    });
+    observer.observe(map.getContainer());
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
+  }, [map]);
+  return null;
+}
+
 function MapCenterTracker({ onCenterChange }) {
   useMapEvents({
     moveend: (event) => {
@@ -672,8 +689,8 @@ export default function GasStations() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <main className="pb-6 pt-16 lg:h-screen lg:overflow-hidden lg:pb-3 lg:pt-14">
+    <div className="gas-stations-page min-h-screen text-slate-100">
+      <main className="gas-stations-main pb-6 pt-16 lg:h-screen lg:overflow-hidden lg:pb-3 lg:pt-14">
         <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-6 lg:h-full lg:px-8">
           <section className="glass-panel overflow-hidden rounded-[1.75rem] border border-white/10 lg:flex lg:h-full lg:flex-col">
             <header className="shrink-0 border-b border-white/10 px-4 py-4 sm:px-6 lg:py-3">
@@ -694,7 +711,7 @@ export default function GasStations() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     to="/dashboard"
-                    className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2.5 text-sm font-semibold text-teal-50 transition hover:bg-teal-300/20"
+                    className="gas-stations-dashboard-link inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2.5 text-sm font-semibold text-teal-50 transition hover:bg-teal-300/20"
                   >
                     Dashboard
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -702,7 +719,7 @@ export default function GasStations() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 lg:mt-3 lg:grid-cols-[minmax(210px,0.8fr)_minmax(260px,1.2fr)_auto] lg:items-end">
+              <div className="gas-stations-controls mt-4 grid gap-3 lg:mt-3 lg:grid-cols-[minmax(210px,0.8fr)_minmax(260px,1.2fr)_auto] lg:items-end">
                 <label className="space-y-1.5 text-sm text-slate-200">
                   <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Combustible</span>
                   <div className="relative">
@@ -740,7 +757,7 @@ export default function GasStations() {
                   type="button"
                   onClick={handleSearch}
                   disabled={loading}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-teal-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-teal-200 disabled:cursor-wait disabled:opacity-70"
+                  className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-teal-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-teal-200 disabled:cursor-wait disabled:opacity-70"
                 >
                   {loading ? (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
@@ -768,7 +785,7 @@ export default function GasStations() {
               ) : null}
             </header>
 
-            <div className="grid min-h-0 min-w-0 lg:flex-1 lg:grid-cols-[370px_minmax(0,1fr)]">
+            <div className="gas-stations-results-layout grid min-h-0 min-w-0 lg:flex-1 lg:grid-cols-[370px_minmax(0,1fr)]">
               <aside className="relative z-[600] order-2 flex min-h-0 min-w-0 flex-col border-t border-white/10 bg-slate-950/95 backdrop-blur-xl lg:static lg:z-auto lg:order-1 lg:h-auto lg:min-h-0 lg:border-r lg:border-t-0 lg:bg-slate-950/45 lg:backdrop-blur-none">
                 <div className="border-b border-white/10 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
@@ -889,6 +906,7 @@ export default function GasStations() {
                 ) : null}
 
                 <MapContainer center={mapCenter} zoom={location ? 13 : 6} className="absolute inset-0 h-full w-full" preferCanvas scrollWheelZoom={true}>
+                  <MapSizeSync />
                   <MapCenterTracker onCenterChange={setMapCenter} />
                   <SelectedStationController station={selectedStation} />
                   <MapLocationControl

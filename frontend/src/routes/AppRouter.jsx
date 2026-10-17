@@ -5,6 +5,7 @@ import PageTransition from "../components/PageTransition";
 
 import VehicleLayout from "../layout/VehicleLayout";
 import ProtectedLayout from "../layout/ProtectedLayout";
+import OptionalAppLayout from "../layout/OptionalAppLayout";
 import { isTokenValid, useAuth } from "../context/auth";
 
 const Home = lazy(() => import("../pages/Home"));
@@ -59,9 +60,10 @@ function InnerRoutes() {
   return (
     <AnimatePresence mode="wait" initial={false}>
       <Suspense fallback={<RouteFallback />}>
-        <Routes location={location} key={location.pathname}>
+        <Routes location={location}>
 
         <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+        <Route element={<OptionalAppLayout />}>
         <Route
           path="/gas-stations"
           element={
@@ -70,6 +72,9 @@ function InnerRoutes() {
             </PageTransition>
           }
         />
+        <Route path="/users/:username" element={<PageTransition><PublicProfile /></PageTransition>} />
+        <Route path="/public/vehicles/:id" element={<PageTransition><PublicVehicle /></PageTransition>} />
+        </Route>
         <Route
           path="/login"
           element={
@@ -87,8 +92,6 @@ function InnerRoutes() {
           }
         />
 
-        <Route path="/users/:username" element={<PageTransition><PublicProfile /></PageTransition>} />
-        <Route path="/public/vehicles/:id" element={<PageTransition><PublicVehicle /></PageTransition>} />
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
           <Route path="/ranking" element={<PageTransition><Ranking /></PageTransition>} />

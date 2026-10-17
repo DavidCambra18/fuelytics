@@ -1,226 +1,164 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Fuel, Settings, Warehouse, User, LogOut, ChevronRight, ChevronUp, Trophy, Calculator, Users, PanelLeftClose, PanelLeftOpen, MoreHorizontal, X, Droplets } from "lucide-react";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
-import {
-  Fuel,
-  Settings as SettingsIcon,
-  Warehouse,
-  User,
-  LogOut,
-  ChevronRight,
-  ChevronDown,
-  Trophy,
-  Calculator,
-  Users
-} from "lucide-react";
+import useDialogAccessibility from "../hooks/useDialogAccessibility";
+import ViewportPortal from "./ViewportPortal";
 
-export default function UserMenu() {
+const NAVIGATION = [
+  { to: "/dashboard", label: "Garaje", icon: Warehouse, matches: (path) => path === "/dashboard" || path.startsWith("/vehicles/") },
+  { to: "/gas-stations", label: "Gasolineras", icon: Fuel },
+  { to: "/ranking", label: "Clasificación", icon: Trophy },
+  { to: "/friends", label: "Amigos", icon: Users },
+  { to: "/calculator", label: "Calculadora", icon: Calculator },
+];
+const ACCOUNT_LINKS = [
+  { to: "/my-profile", label: "Mi perfil", icon: User },
+  { to: "/settings", label: "Ajustes", icon: Settings },
+];
+const MOBILE_LINKS = [NAVIGATION[0], NAVIGATION[1], NAVIGATION[3]];
+const MORE_LINKS = [NAVIGATION[2], NAVIGATION[4], ...ACCOUNT_LINKS];
+const isCurrent = (item, pathname) => item.matches ? item.matches(pathname) : pathname === item.to;
+
+function NavigationLink({ item, pathname, onNavigate, compact = false }) {
+  const Icon = item.icon;
+  return (
+    <Link to={item.to} onClick={onNavigate} aria-current={isCurrent(item, pathname) ? "page" : undefined} aria-label={item.label} title={compact ? item.label : undefined} className="app-nav-link">
+      <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+      <span className={compact ? "sr-only" : "min-w-0 truncate"}>{item.label}</span>
+    </Link>
+  );
+}
+
+export default function UserMenu({ expanded, onToggleSidebar }) {
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const { username, clearAuth } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [fullName, setFullName] = useState("");
-  const menuRef = useRef(null);
+  const profileRef = useRef(null);
+  const profileButtonRef = useRef(null);
+  const profilePanelRef = useRef(null);
+  const { dialogRef, titleId } = useDialogAccessibility(mobileOpen, () => setMobileOpen(false));
+  const initial = (username || "U").slice(0, 1).toUpperCase();
 
   useEffect(() => {
     if (!username) return;
-
-    apiFetch("/api/users/profile")
-      .then((res) => (res.ok ? res.json() : null))
+    const controller = new AbortController();
+    apiFetch("/api/users/profile", { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
       .then((data) => {
-        if (data) {
-          const name = [data.firstName, data.lastName].filter(Boolean).join(" ");
-          setFullName(name);
-        }
+        if (data && !controller.signal.aborted) setFullName([data.firstName, data.lastName].filter(Boolean).join(" "));
       })
-      .catch(() => { });
-  }, [username]);
+      .catch(() => {});
+    return () => controller.abort();
+  }, [username, pathname]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setOpen(false);
-      }
+    const closeOnHistoryNavigation = () => {
+      setProfileOpen(false);
+      setMobileOpen(false);
     };
-
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
+    window.addEventListener("popstate", closeOnHistoryNavigation);
+    return () => window.removeEventListener("popstate", closeOnHistoryNavigation);
   }, []);
 
+  useEffect(() => {
+    if (!profileOpen) return;
+    profilePanelRef.current?.querySelector("a")?.focus();
+    const closeOutside = (event) => {
+      if (!profileRef.current?.contains(event.target)) setProfileOpen(false);
+    };
+    const closeWithEscape = (event) => {
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+        profileButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeWithEscape);
+    };
+  }, [profileOpen]);
+
+  const closeNavigation = () => {
+    setProfileOpen(false);
+    setMobileOpen(false);
+  };
+
   const logout = () => {
+    closeNavigation();
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     clearAuth();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (
-    <div ref={menuRef} className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-40 sm:bottom-auto sm:left-5 sm:right-auto sm:top-[calc(1.25rem+env(safe-area-inset-top,0px))]">
-      <div className="flex items-center justify-between gap-1 rounded-full border border-white/10 bg-slate-950/85 p-1 shadow-2xl shadow-black/30 backdrop-blur-xl sm:justify-start sm:gap-2 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
-        <button
-          type="button"
-          aria-label="Menú de usuario"
-          aria-expanded={open}
-          aria-controls="user-menu"
-          onClick={() => setOpen((current) => !current)}
-          className="flex h-11 w-11 shrink-0 items-center justify-center gap-3 rounded-full border border-white/10 bg-slate-950/80 p-1 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-auto sm:w-auto sm:justify-start sm:py-2 sm:pl-2 sm:pr-4"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-400/15 text-sm font-semibold text-teal-200 ring-1 ring-teal-300/20 sm:h-10 sm:w-10">
-            {(username || "U").slice(0, 1).toUpperCase()}
-          </span>
-          <span className="hidden text-sm font-medium text-white sm:block">
-            {username || "Usuario"}
-          </span>
-          <ChevronDown className={`hidden h-4 w-4 text-teal-200/70 transition-transform duration-200 sm:block ${open ? "rotate-180" : ""}`} />
-        </button>
+    <>
+      <aside className="app-sidebar" aria-label="Navegación de Fuelytics">
+        <div className="app-sidebar-brand">
+          <Link to="/dashboard" onClick={closeNavigation} aria-label="Fuelytics · Ir al garaje" title={expanded ? undefined : "Fuelytics"} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-2 focus-visible:outline-teal-300">
+            <span className="app-brand-icon"><Droplets className="h-6 w-6" aria-hidden="true" /></span>
+            {expanded ? <span className="text-lg font-semibold tracking-tight text-white">Fuelytics<span className="text-teal-300">.</span></span> : null}
+          </Link>
+        </div>
 
-        <Link
-          to="/dashboard"
-          aria-label="Ir al garaje"
-          title="Garaje"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
-        >
-          <Warehouse className="h-5 w-5 text-teal-200" aria-hidden="true" />
-        </Link>
-        
-        <Link
-          to="/gas-stations"
-          aria-label="Ir al mapa de gasolineras"
-          title="Gasolineras"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
-        >
-          <Fuel className="h-5 w-5 text-teal-200" aria-hidden="true" />
-        </Link>
+        <div className="app-sidebar-navigation">
+          {expanded ? <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tu espacio</p> : null}
+          <nav aria-label="Navegación principal" className="space-y-1.5">
+            {NAVIGATION.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} compact={!expanded} onNavigate={closeNavigation} />)}
+          </nav>
+        </div>
 
-        <Link
-          to="/ranking"
-          aria-label="Ir a la clasificación"
-          title="Clasificación"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
-        >
-          <Trophy className="h-5 w-5 text-teal-200" aria-hidden="true" />
-        </Link>
+        <div className="app-sidebar-footer">
+          <button type="button" onClick={() => { setProfileOpen(false); onToggleSidebar(); }} aria-label={expanded ? "Contraer menú lateral" : "Expandir menú lateral"} aria-expanded={expanded} className="app-sidebar-toggle">
+            {expanded ? <PanelLeftClose className="h-4 w-4 shrink-0" aria-hidden="true" /> : <PanelLeftOpen className="h-5 w-5" aria-hidden="true" />}
+            {expanded ? <span>Contraer menú</span> : null}
+          </button>
 
-
-        <Link
-          to="/friends"
-          aria-label="Ir a Amigos"
-          title="Amigos"
-          className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:flex"
-        >
-          <Users className="h-5 w-5 text-teal-200" aria-hidden="true" />
-        </Link>
-
-        <Link
-          to="/calculator"
-          aria-label="Ir a la calculadora de viaje"
-          title="Calculadora de viaje"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
-        >
-          <Calculator className="h-5 w-5 text-teal-200" aria-hidden="true" />
-        </Link>
-      </div>
-
-      {open ? (
-        <div id="user-menu" className="absolute bottom-full left-0 mb-3 max-h-[calc(100dvh-6rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] w-full overflow-y-auto overscroll-contain rounded-[1.75rem] border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/30 backdrop-blur-xl sm:bottom-auto sm:top-full sm:mb-0 sm:mt-3 sm:w-80">
-          <div className="border-b border-white/10 bg-gradient-to-br from-teal-400/10 via-cyan-400/5 to-transparent px-4 py-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 text-base font-semibold text-teal-200 ring-1 ring-teal-300/20">
-                {(username || "U").slice(0, 1).toUpperCase()}
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{username || "Usuario"}</p>
-                {fullName ? (
-                  <p className="mt-0.5 truncate text-xs text-slate-400">{fullName}</p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-2 p-3">
-            {username ? (
-              <Link
-                to="/my-profile"
-                onClick={() => setOpen(false)}
-                className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:border-white/15 hover:bg-white/[0.08]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-slate-300 transition group-hover:bg-slate-700 group-hover:text-white">
-                    <User className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">Mi Perfil</p>
-                    <p className="mt-0.5 text-xs text-slate-400">Ver tu perfil</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-slate-300" />
-              </Link>
-            ) : null}
-
-            <Link
-              to="/settings"
-              onClick={() => setOpen(false)}
-              className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:border-white/15 hover:bg-white/[0.08]"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-slate-300 transition group-hover:bg-slate-700 group-hover:text-white">
-                  <SettingsIcon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-white">Ajustes</p>
-                  <p className="mt-0.5 text-xs text-slate-400">Perfil, privacidad y cuenta</p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-slate-300" aria-hidden="true" />
-            </Link>
-
-            <Link
-              to="/friends"
-              onClick={() => setOpen(false)}
-              className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/[0.08] sm:hidden"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-400/10 text-teal-200">
-                  <Users className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-white">Amigos</p>
-                  <p className="mt-0.5 text-xs text-slate-400">Amistades y solicitudes</p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-slate-500" aria-hidden="true" />
-            </Link>
-
-            <button
-              type="button"
-              onClick={logout}
-              className="group flex items-center justify-between rounded-2xl border border-rose-400/20 bg-gradient-to-r from-rose-400/10 to-rose-500/10 p-3 text-left transition hover:border-rose-300/30 hover:from-rose-400/15 hover:to-rose-500/15"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/20 text-rose-300 transition group-hover:bg-rose-500/30 group-hover:text-rose-200">
-                  <LogOut className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-rose-100">Cerrar sesión</p>
-                  <p className="mt-0.5 text-xs text-rose-200/70">Salir de esta cuenta</p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-rose-200/70 transition group-hover:text-rose-100" />
+          <div ref={profileRef} className="relative mt-3 border-t border-white/[0.07] pt-3">
+            <button ref={profileButtonRef} type="button" onClick={() => setProfileOpen((current) => !current)} aria-label="Menú de usuario" aria-expanded={profileOpen} aria-controls={profileOpen ? "profile-options" : undefined} data-current={ACCOUNT_LINKS.some((item) => isCurrent(item, pathname)) || undefined} title={expanded ? undefined : username || "Mi cuenta"} className="app-profile-trigger">
+              <span className="app-profile-avatar">{initial}</span>
+              {expanded ? <><span className="min-w-0 flex-1 text-left"><span className="block truncate text-sm font-semibold text-slate-100">{username || "Usuario"}</span><span className="mt-0.5 block truncate text-xs text-slate-500">{fullName || "Mi cuenta"}</span></span><ChevronUp className={`h-4 w-4 shrink-0 text-slate-500 transition ${profileOpen ? "rotate-180" : ""}`} aria-hidden="true" /></> : null}
             </button>
+            {profileOpen ? (
+              <div ref={profilePanelRef} id="profile-options" className="app-profile-popover">
+                <p className="mb-2 truncate px-3 pt-2 text-xs font-medium text-slate-500">@{username}</p>
+                <nav aria-label="Opciones de la cuenta" className="space-y-1">
+                  {ACCOUNT_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}
+                </nav>
+                <button type="button" onClick={logout} className="app-logout-button"><LogOut className="h-4 w-4" aria-hidden="true" />Cerrar sesión</button>
+              </div>
+            ) : null}
           </div>
         </div>
+      </aside>
+
+      <nav className="app-mobile-navigation" aria-label="Navegación principal móvil">
+        {MOBILE_LINKS.map((item) => {
+          const Icon = item.icon;
+          return <Link key={item.to} to={item.to} onClick={closeNavigation} aria-current={isCurrent(item, pathname) ? "page" : undefined} className="app-mobile-link"><Icon className="h-5 w-5" aria-hidden="true" /><span>{item.label}</span></Link>;
+        })}
+        <button type="button" onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen} aria-controls={mobileOpen ? "mobile-more" : undefined} className={`app-mobile-link ${MORE_LINKS.some((item) => isCurrent(item, pathname)) ? "is-current" : ""}`}><MoreHorizontal className="h-5 w-5" aria-hidden="true" /><span>Más</span></button>
+      </nav>
+
+      {mobileOpen ? (
+        <ViewportPortal>
+          <div className="fixed inset-0 z-[70] flex items-end bg-slate-950/70 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setMobileOpen(false); }}>
+            <div ref={dialogRef} id="mobile-more" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="app-mobile-sheet">
+              <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[0.2em] text-teal-300">Fuelytics</p><h2 id={titleId} className="mt-1 text-xl font-semibold text-white">Más opciones</h2></div><button type="button" onClick={() => setMobileOpen(false)} aria-label="Cerrar más opciones" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-slate-300"><X className="h-5 w-5" /></button></div>
+              <div className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4"><span className="app-profile-avatar">{initial}</span><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{username}</p>{fullName ? <p className="mt-1 truncate text-xs text-slate-500">{fullName}</p> : null}</div></div>
+              <nav aria-label="Más secciones" className="space-y-1.5">{MORE_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}</nav>
+              <button type="button" onClick={logout} className="app-logout-button"><LogOut className="h-4 w-4" aria-hidden="true" />Cerrar sesión<ChevronRight className="ml-auto h-4 w-4" aria-hidden="true" /></button>
+            </div>
+          </div>
+        </ViewportPortal>
       ) : null}
-    </div>
+    </>
   );
 }

@@ -1,5 +1,5 @@
-import { Navigate, Outlet } from "react-router-dom";
-import UserMenu from "../components/UserMenu";
+import { Navigate } from "react-router-dom";
+import AppShell from "./AppShell";
 import { isTokenValid, useAuth } from "../context/auth";
 
 export default function ProtectedLayout() {
@@ -9,12 +9,5 @@ export default function ProtectedLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  return (
-    <>
-      <UserMenu />
-      <div className="protected-page-content">
-        <Outlet />
-      </div>
-    </>
-  );
+  return <AppShell />;
 }

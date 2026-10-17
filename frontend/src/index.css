@@ -104,16 +104,302 @@ a {
 }
 
 @layer utilities {
+  .app-shell {
+    --app-sidebar-width: 0px;
+    --app-content-top: 1.5rem;
+    --app-content-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .protected-page-content {
+    position: relative;
+    z-index: 0;
     min-height: 100dvh;
-    padding-top: 1.5rem;
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    min-width: 0;
+    margin-left: var(--app-sidebar-width);
+    padding-top: var(--app-content-top);
+    padding-bottom: var(--app-content-bottom);
+  }
+
+  .app-sidebar {
+    display: none;
+  }
+
+  .app-brand-icon {
+    display: flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(94, 234, 212, 0.18);
+    border-radius: 0.95rem;
+    background: linear-gradient(145deg, rgba(45, 212, 191, 0.16), rgba(45, 212, 191, 0.03));
+    color: #5eead4;
+  }
+
+  .app-nav-link {
+    display: flex;
+    min-width: 0;
+    min-height: 3rem;
+    align-items: center;
+    gap: 0.8rem;
+    border: 1px solid transparent;
+    border-radius: 0.9rem;
+    padding: 0.75rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+  }
+
+  .app-nav-link:hover {
+    background: rgba(255, 255, 255, 0.035);
+    color: #e2e8f0;
+  }
+
+  .app-nav-link[aria-current="page"] {
+    border-color: rgba(94, 234, 212, 0.13);
+    background: linear-gradient(100deg, rgba(45, 212, 191, 0.12), rgba(45, 212, 191, 0.035));
+    color: #99f6e4;
+  }
+
+  .app-nav-link:focus-visible,
+  .app-mobile-link:focus-visible,
+  .app-sidebar-toggle:focus-visible,
+  .app-profile-trigger:focus-visible,
+  .app-logout-button:focus-visible {
+    outline: 2px solid #5eead4;
+    outline-offset: 3px;
+  }
+
+  .app-profile-avatar {
+    display: flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(94, 234, 212, 0.12);
+    border-radius: 50%;
+    background: rgba(45, 212, 191, 0.1);
+    color: #99f6e4;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .app-mobile-navigation {
+    position: fixed;
+    z-index: 40;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    left: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 1.5rem;
+    padding: 0.4rem;
+    background: rgba(7, 15, 25, 0.96);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(20px);
+  }
+
+  .app-mobile-link {
+    display: flex;
+    min-height: 3.25rem;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.3rem;
+    border: 0;
+    border-radius: 1.05rem;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.625rem;
+    font-weight: 500;
+  }
+
+  .app-mobile-link[aria-current="page"],
+  .app-mobile-link.is-current {
+    background: rgba(45, 212, 191, 0.1);
+    color: #5eead4;
+  }
+
+  .app-mobile-sheet {
+    width: 100%;
+    max-height: calc(100dvh - max(1rem, env(safe-area-inset-top, 0px)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 1.75rem 1.75rem 0 0;
+    padding: 1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    background: #09131e;
+    box-shadow: 0 -20px 80px rgba(0, 0, 0, 0.35);
+  }
+
+  .app-logout-button {
+    display: flex;
+    min-height: 3rem;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    color: #fda4af;
+    font-size: 0.8rem;
+    transition: background-color 150ms ease;
+  }
+
+  .app-logout-button:hover {
+    background: rgba(251, 113, 133, 0.06);
+  }
+
+  .app-shell .public-app-page,
+  .app-shell .public-app-page > main,
+  .app-shell .public-app-loading {
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  .app-shell .gas-stations-main {
+    padding-top: 0;
+  }
+
+  .app-shell .gas-stations-page {
+    min-height: 0;
+  }
+
+  .app-shell .gas-stations-dashboard-link {
+    display: none;
   }
 
   @media (min-width: 640px) {
-    .protected-page-content {
-      padding-top: calc(6rem + env(safe-area-inset-top, 0px));
-      padding-bottom: 1.5rem;
+    .app-shell {
+      --app-sidebar-width: 5rem;
+      --app-content-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+      --app-content-bottom: 1.5rem;
+    }
+
+    .app-shell[data-sidebar="expanded"] {
+      --app-sidebar-width: 15rem;
+    }
+
+    .app-mobile-navigation {
+      display: none;
+    }
+
+    .app-sidebar {
+      position: fixed;
+      z-index: 40;
+      inset: 0 auto 0 0;
+      display: flex;
+      width: var(--app-sidebar-width);
+      height: 100dvh;
+      flex-direction: column;
+      border-right: 1px solid rgba(148, 163, 184, 0.1);
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(7, 15, 24, 0.95);
+      backdrop-filter: blur(24px);
+    }
+
+    .app-sidebar-brand {
+      display: flex;
+      min-height: 6.5rem;
+      flex-shrink: 0;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .app-sidebar-navigation {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0.75rem 0.75rem 1rem;
+    }
+
+    .app-sidebar-footer {
+      flex-shrink: 0;
+      padding: 0.75rem 0.75rem 1rem;
+    }
+
+    .app-sidebar-toggle {
+      display: flex;
+      min-height: 2.75rem;
+      width: 100%;
+      align-items: center;
+      gap: 0.8rem;
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+
+    .app-sidebar-toggle:hover {
+      background: rgba(255, 255, 255, 0.025);
+      color: #cbd5e1;
+    }
+
+    .app-profile-trigger {
+      display: flex;
+      min-height: 3.5rem;
+      width: 100%;
+      align-items: center;
+      gap: 0.75rem;
+      border-radius: 1rem;
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    .app-profile-trigger:hover {
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .app-profile-trigger[data-current="true"] {
+      background: rgba(45, 212, 191, 0.07);
+      outline: 1px solid rgba(94, 234, 212, 0.12);
+    }
+
+    .app-profile-popover {
+      position: absolute;
+      bottom: 0;
+      left: calc(100% + 1.5rem);
+      width: 18rem;
+      max-width: calc(100vw - var(--app-sidebar-width) - 2rem);
+      max-height: calc(100dvh - 3rem - env(safe-area-inset-bottom, 0px));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 1.25rem;
+      padding: 0.5rem;
+      background: #0a1420;
+      box-shadow: 0 16px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .app-shell[data-sidebar="collapsed"] .app-sidebar-brand,
+    .app-shell[data-sidebar="collapsed"] .app-sidebar-navigation .app-nav-link,
+    .app-shell[data-sidebar="collapsed"] .app-sidebar-toggle,
+    .app-shell[data-sidebar="collapsed"] .app-profile-trigger {
+      justify-content: center;
+    }
+
+  }
+
+  @media (min-width: 1024px) {
+    .app-shell .gas-stations-main {
+      height: calc(100dvh - var(--app-content-top) - var(--app-content-bottom));
+    }
+
+    .app-shell .gas-stations-controls {
+      grid-template-columns: minmax(160px, 0.8fr) minmax(0, 1.2fr) auto;
+    }
+
+    .app-shell .gas-stations-results-layout {
+      grid-template-columns: minmax(0, clamp(280px, 25vw, 370px)) minmax(0, 1fr);
     }
   }
 
