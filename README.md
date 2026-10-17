@@ -1,11 +1,15 @@
 # Fuelytics
 
-![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange)
-![Java](https://img.shields.io/badge/Java-17-FFA500?logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4-6DB33F?logo=springboot)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql)
-[![Licencia](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
+![Status](https://img.shields.io/badge/Status-En%20Desarrollo-orange?style=for-the-badge)
+![Version](https://img.shields.io/github/v/release/davidcambra18/fuelytics?style=for-the-badge&color=blue)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![React](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-8.0.16-646CFF?logo=vite)](https://vite.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3.0-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.6-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-17-FFA500?logo=openjdk)](https://java.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql)](https://www.postgresql.org/)
+![Last Commit](https://img.shields.io/github/last-commit/davidcambra18/fuelytics/main)
 
 Fuelytics es una aplicación para registrar vehículos, repostajes, gastos, neumáticos y alertas de mantenimiento. Calcula consumos a partir de ciclos de llenado completos, genera informes PDF y permite publicar de forma selectiva perfiles y vehículos.
 
