@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Loader2, Check, X } from "lucide-react";
-import { apiFetch, apiJson } from "../services/api";
+import { apiJson } from "../services/api";
+import useRegistrationAvailability from "../hooks/useRegistrationAvailability";
+import { normalizeRegistration, validateRegistration, REGISTRATION_LIMITS } from "../utils/registrationValidation";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -13,17 +15,21 @@ export default function Register() {
 
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [usernameError, setUsernameError] = useState("");
-  const [usernameStatus, setUsernameStatus] = useState("idle");
-
-  const [emailError, setEmailError] = useState("");
-  const [emailStatus, setEmailStatus] = useState("idle");
-
-  const passwordError = password && password.length < 6 ? "Debe tener al menos 6 caracteres" : "";
+  const [serverErrors, setServerErrors] = useState({});
+  const [attempted, setAttempted] = useState(false);
+  const body = normalizeRegistration({ username, email, password, firstName, lastName });
+  const validation = validateRegistration(body, confirmPassword);
+  const usernameAvailability = useRegistrationAvailability("username", body.username, validation.username);
+  const emailAvailability = useRegistrationAvailability("email", body.email, validation.email);
+  const usernameError = ((username || attempted) && validation.username) || serverErrors.username || usernameAvailability.error;
+  const emailError = ((email || attempted) && validation.email) || serverErrors.email || emailAvailability.error;
+  const usernameStatus = usernameError ? "error" : usernameAvailability.status;
+  const emailStatus = emailError ? "error" : emailAvailability.status;
+  const firstNameError = validation.firstName || serverErrors.firstName;
+  const lastNameError = validation.lastName || serverErrors.lastName;
+  const passwordError = ((password || attempted) && validation.password) || serverErrors.password;
   const passwordStatus = !password ? "idle" : passwordError ? "error" : "success";
-  const confirmPasswordError = confirmPassword && confirmPassword !== password
-    ? "Las contraseñas no coinciden"
-    : "";
+  const confirmPasswordError = (confirmPassword || attempted) ? validation.confirmPassword : "";
   const confirmPasswordStatus = !confirmPassword
     ? "idle"
     : confirmPasswordError || passwordStatus !== "success"
@@ -34,68 +40,25 @@ export default function Register() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const val = username.trim();
-    if (!val) return undefined;
-
-    const timer = setTimeout(async () => {
-      setUsernameStatus("checking");
-      try {
-        const res = await apiFetch(`/api/users/check-username?username=${encodeURIComponent(val)}`);
-        if (!res.ok) {
-          setUsernameError("Este nombre de usuario ya está en uso");
-          setUsernameStatus("error");
-        } else {
-          setUsernameError("");
-          setUsernameStatus("success");
-        }
-      } catch {
-        setUsernameStatus("idle");
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [username]);
-
-  useEffect(() => {
-    const val = email.trim();
-    if (!val || !val.includes("@")) return undefined;
-
-    const timer = setTimeout(async () => {
-      setEmailStatus("checking");
-      try {
-        const res = await apiFetch(`/api/users/check-email?email=${encodeURIComponent(val)}`);
-        if (!res.ok) {
-          setEmailError("Este correo electrónico ya está registrado");
-          setEmailStatus("error");
-        } else {
-          setEmailError("");
-          setEmailStatus("success");
-        }
-      } catch {
-        setEmailStatus("idle");
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [email]);
+  const clearServerError = (field) => {
+    setServerErrors((current) => ({ ...current, [field]: "" }));
+    setErrorMessage("");
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
-    if (usernameError || emailError || passwordError || confirmPasswordError) {
+    if (submitting) return;
+    setAttempted(true);
+    if (Object.values(validation).some(Boolean) || usernameAvailability.error || emailAvailability.error) {
       setErrorMessage("Por favor, corrige los errores del formulario antes de continuar.");
       return;
     }
+    if (isChecking) return;
 
     setErrorMessage("");
     setSubmitting(true);
 
     try {
-      const body = { username, email, password };
-      if (firstName?.trim()) body.firstName = firstName.trim();
-      if (lastName?.trim()) body.lastName = lastName.trim();
-
       await apiJson("/api/users/register", {
         method: "POST",
         body,
@@ -103,13 +66,14 @@ export default function Register() {
 
       navigate("/login");
     } catch (err) {
+      setServerErrors(err.fields || {});
       setErrorMessage(err.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const hasErrors = !!usernameError || !!emailError || !!passwordError || !!confirmPasswordError;
+  const hasErrors = !!usernameError || !!emailError || !!passwordError || !!confirmPasswordError || !!firstNameError || !!lastNameError;
   const isChecking = usernameStatus === "checking" || emailStatus === "checking";
 
   return (
@@ -127,6 +91,7 @@ export default function Register() {
 
         <form
           onSubmit={handleRegister}
+          noValidate
           className="order-1 glass-panel w-full rounded-[2rem] p-6 shadow-2xl shadow-black/25 sm:p-8 lg:order-2"
         >
           <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Registro</p>
@@ -136,12 +101,12 @@ export default function Register() {
           </p>
 
           {errorMessage ? (
-            <div className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+            <div role="alert" className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
               {errorMessage}
             </div>
           ) : null}
 
-          <div className="mt-8 space-y-4">
+          <fieldset disabled={submitting} className="mt-8 space-y-4">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-300">Nombre de usuario</span>
               <div className="relative">
@@ -151,12 +116,18 @@ export default function Register() {
                     : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
                     }`}
                   placeholder="Tu nombre de usuario"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  minLength={REGISTRATION_LIMITS.usernameMin}
+                  maxLength={REGISTRATION_LIMITS.usernameMax}
+                  aria-invalid={!!usernameError}
+                  aria-describedby="register-username-feedback"
                   required
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
-                    setUsernameStatus("idle");
-                    setUsernameError("");
+                    clearServerError("username");
                   }}
                 />
                 <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center">
@@ -165,7 +136,9 @@ export default function Register() {
                   {usernameStatus === "error" && <X className="h-5 w-5 text-rose-500" />}
                 </div>
               </div>
-              {usernameError && <span className="mt-2 block text-sm text-rose-400">{usernameError}</span>}
+              <span id="register-username-feedback" aria-live="polite" className={`mt-2 block text-sm ${usernameError ? "text-rose-400" : "text-slate-400"}`}>
+                {usernameError || usernameAvailability.warning || "Entre 3 y 15 caracteres: letras sin tildes, números, puntos, guiones y guiones bajos."}
+              </span>
             </label>
 
             <label className="block">
@@ -178,12 +151,17 @@ export default function Register() {
                     }`}
                   placeholder="tu@email.com"
                   type="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={REGISTRATION_LIMITS.emailMax}
+                  aria-invalid={!!emailError}
+                  aria-describedby="register-email-feedback"
                   required
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setEmailStatus("idle");
-                    setEmailError("");
+                    clearServerError("email");
                   }}
                 />
                 <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center">
@@ -192,7 +170,9 @@ export default function Register() {
                   {emailStatus === "error" && <X className="h-5 w-5 text-rose-500" />}
                 </div>
               </div>
-              {emailError && <span className="mt-2 block text-sm text-rose-400">{emailError}</span>}
+              <span id="register-email-feedback" aria-live="polite" className={`mt-2 block text-sm ${emailError ? "text-rose-400" : "text-slate-400"}`}>
+                {emailError || emailAvailability.warning}
+              </span>
             </label>
 
             <label className="block">
@@ -200,9 +180,14 @@ export default function Register() {
               <input
                 className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
                 placeholder="Tu nombre"
-                onChange={(e) => setFirstName(e.target.value)}
+                autoComplete="given-name"
+                maxLength={REGISTRATION_LIMITS.nameMax}
+                aria-invalid={!!firstNameError}
+                aria-describedby="register-first-name-feedback"
+                onChange={(e) => { setFirstName(e.target.value); clearServerError("firstName"); }}
                 value={firstName}
               />
+              {firstNameError && <span id="register-first-name-feedback" className="mt-2 block text-sm text-rose-400">{firstNameError}</span>}
             </label>
 
             <label className="block">
@@ -210,9 +195,14 @@ export default function Register() {
               <input
                 className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
                 placeholder="Tu apellido"
-                onChange={(e) => setLastName(e.target.value)}
+                autoComplete="family-name"
+                maxLength={REGISTRATION_LIMITS.nameMax}
+                aria-invalid={!!lastNameError}
+                aria-describedby="register-last-name-feedback"
+                onChange={(e) => { setLastName(e.target.value); clearServerError("lastName"); }}
                 value={lastName}
               />
+              {lastNameError && <span id="register-last-name-feedback" className="mt-2 block text-sm text-rose-400">{lastNameError}</span>}
             </label>
 
             <label className="block">
@@ -225,15 +215,23 @@ export default function Register() {
                     : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
                     }`}
                   placeholder="Define tu contraseña"
+                  autoComplete="new-password"
+                  minLength={REGISTRATION_LIMITS.passwordMin}
+                  maxLength={REGISTRATION_LIMITS.passwordMax}
+                  aria-invalid={!!passwordError}
+                  aria-describedby="register-password-feedback"
                   required
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); clearServerError("password"); }}
                 />
                 <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center">
                   {passwordStatus === "success" && <Check className="h-5 w-5 text-teal-400" />}
                   {passwordStatus === "error" && <X className="h-5 w-5 text-rose-500" />}
                 </div>
               </div>
-              {passwordError && <span className="mt-2 block text-sm text-rose-400">{passwordError}</span>}
+              <span id="register-password-feedback" aria-live="polite" className={`mt-2 block text-sm ${passwordError ? "text-rose-400" : "text-slate-400"}`}>
+                {passwordError || "Entre 8 y 72 caracteres. Los caracteres especiales pueden reducir el máximo permitido."}
+              </span>
             </label>
 
             <label className="block">
@@ -246,7 +244,12 @@ export default function Register() {
                     : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
                     }`}
                   placeholder="Repite tu contraseña"
+                  autoComplete="new-password"
+                  maxLength={REGISTRATION_LIMITS.passwordMax}
+                  aria-invalid={!!confirmPasswordError}
+                  aria-describedby="register-confirm-password-feedback"
                   required
+                  value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
                 <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center">
@@ -254,9 +257,9 @@ export default function Register() {
                   {confirmPasswordStatus === "error" && <X className="h-5 w-5 text-rose-500" />}
                 </div>
               </div>
-              {confirmPasswordError && <span className="mt-2 block text-sm text-rose-400">{confirmPasswordError}</span>}
+              {confirmPasswordError && <span id="register-confirm-password-feedback" aria-live="polite" className="mt-2 block text-sm text-rose-400">{confirmPasswordError}</span>}
             </label>
-          </div>
+          </fieldset>
 
           <button
             disabled={submitting || hasErrors || isChecking}

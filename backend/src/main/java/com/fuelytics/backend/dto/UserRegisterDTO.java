@@ -1,5 +1,8 @@
 package com.fuelytics.backend.dto;
 
+import java.util.Locale;
+import com.fuelytics.backend.validation.Utf8Size;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -19,6 +22,7 @@ public class UserRegisterDTO {
 
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, max = 72, message = "La contraseña debe tener entre 8 y 72 caracteres")
+    @Utf8Size(max = 72, message = "La contraseña supera el límite de 72 bytes; las tildes y los emojis ocupan más de un byte")
     private String password;
 
     @Size(max = 100, message = "El nombre no puede superar 100 caracteres")
@@ -32,7 +36,7 @@ public class UserRegisterDTO {
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.username = username == null ? null : username.trim();
     }
 
     public String getEmail() {
@@ -40,7 +44,7 @@ public class UserRegisterDTO {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
     public String getPassword() {
@@ -56,7 +60,7 @@ public class UserRegisterDTO {
     }
 
     public void setFirstName(String firstName) {
-        this.firstName = firstName;
+        this.firstName = firstName == null ? null : firstName.trim();
     }
 
     public String getLastName() {
@@ -64,6 +68,6 @@ public class UserRegisterDTO {
     }
 
     public void setLastName(String lastName) {
-        this.lastName = lastName;
+        this.lastName = lastName == null ? null : lastName.trim();
     }
 }

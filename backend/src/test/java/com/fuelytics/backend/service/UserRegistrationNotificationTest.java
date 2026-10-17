@@ -47,4 +47,12 @@ class UserRegistrationNotificationTest {
         dto.setPassword("password-test");
         return dto;
     }
+
+    @Test
+    void availabilityChecksUseTheSameNormalizationAsRegistration() {
+        service.emailExists(" NEW@example.com ");
+        service.usernameExists(" usuario ");
+        verify(users).existsByEmail("new@example.com");
+        verify(users).existsByUsername("usuario");
+    }
 }

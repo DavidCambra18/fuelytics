@@ -2,6 +2,7 @@ package com.fuelytics.backend.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,7 @@ public class UserService {
     @Transactional
     public Map<String, String> register(UserRegisterDTO dto) {
 
-        String email = dto.getEmail().trim().toLowerCase();
+        String email = dto.getEmail().trim().toLowerCase(Locale.ROOT);
         String username = dto.getUsername().trim();
 
         if (userRepository.existsByEmail(email)) {
@@ -187,7 +188,7 @@ public class UserService {
 
     public Map<String, String> login(UserLoginDTO dto) {
 
-        User user = userRepository.findByEmail(dto.getEmail().trim().toLowerCase());
+        User user = userRepository.findByEmail(dto.getEmail().trim().toLowerCase(Locale.ROOT));
 
         if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos");
@@ -202,10 +203,10 @@ public class UserService {
     }
 
     public boolean usernameExists(String username) {
-        return userRepository.existsByUsername(username);
+        return userRepository.existsByUsername(username.trim());
     }
 
     public boolean emailExists(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByEmail(email.trim().toLowerCase(Locale.ROOT));
     }
 }
