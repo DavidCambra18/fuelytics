@@ -88,44 +88,40 @@ export default function FriendsPanel({ onNotify }) {
     };
   }, []);
 
-  const refreshSearch = async () => {
-    if (actionInProgress.current) return;
+  useEffect(() => {
     const normalizedQuery = query.trim();
-    if (normalizedQuery.length < 2) {
-      setError("Escribe al menos 2 caracteres para buscar usuarios");
-      return;
-    }
+    if (!overviewLoaded || normalizedQuery.length < 2 || activeAction) return;
 
-    setSearching(true);
-    setResults([]);
-    setSearched(false);
+    const controller = new AbortController();
+    let active = true;
     const version = ++searchVersion.current;
-    setError("");
-    try {
-      const data = await apiJson(`/api/friendships/search?username=${encodeURIComponent(normalizedQuery)}`);
-      if (version === searchVersion.current) {
-        setResults(data);
-        setSearched(true);
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      setResults([]);
+      setSearched(false);
+      try {
+        const data = await apiJson(`/api/friendships/search?username=${encodeURIComponent(normalizedQuery)}`, {
+          signal: controller.signal,
+        });
+        if (active && version === searchVersion.current) {
+          setResults(data);
+          setSearched(true);
+        }
+      } catch (searchError) {
+        if (active && version === searchVersion.current && searchError.name !== "AbortError") {
+          setError(searchError.message || "No se pudo completar la búsqueda");
+        }
+      } finally {
+        if (active && version === searchVersion.current) setSearching(false);
       }
-    } catch (searchError) {
-      if (version === searchVersion.current) setError(searchError.message || "No se pudo completar la búsqueda");
-    } finally {
-      if (version === searchVersion.current) setSearching(false);
-    }
-  };
+    }, 600);
 
-  const handleSearch = (event) => {
-    event.preventDefault();
-    refreshSearch();
-  };
-
-  const synchronizeRelationships = async (version) => {
-    await loadOverview();
-    if (searched && query.trim().length >= 2 && version === searchVersion.current) {
-      const data = await apiJson(`/api/friendships/search?username=${encodeURIComponent(query.trim())}`);
-      if (version === searchVersion.current) setResults(data);
-    }
-  };
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, activeAction, overviewLoaded]);
 
   const refreshRelationships = async () => {
     if (actionInProgress.current) return;
@@ -133,7 +129,7 @@ export default function FriendsPanel({ onNotify }) {
     setActiveAction("refresh");
     setError("");
     try {
-      await synchronizeRelationships(searchVersion.current);
+      await loadOverview();
     } catch (loadError) {
       setError(loadError.message || "No se pudieron actualizar tus amistades");
     } finally {
@@ -145,14 +141,13 @@ export default function FriendsPanel({ onNotify }) {
   const runAction = async (key, action, successMessage) => {
     if (actionInProgress.current) return;
     actionInProgress.current = true;
-    const version = searchVersion.current;
     setActiveAction(key);
     setError("");
     try {
       await action();
       onNotify(successMessage);
       try {
-        await synchronizeRelationships(version);
+        await loadOverview();
       } catch {
         setError("La acción se ha completado, pero no se pudo actualizar la lista. Recarga la página para ver los cambios.");
       }
@@ -162,7 +157,7 @@ export default function FriendsPanel({ onNotify }) {
       onNotify(message, "error");
       // A request may have been answered or cancelled from another session.
       try {
-        await synchronizeRelationships(version);
+        await loadOverview();
       } catch {
         // Keep the original error; the refresh button lets the user try again.
       }
@@ -256,15 +251,16 @@ export default function FriendsPanel({ onNotify }) {
           <UserPlus className="h-5 w-5 text-teal-300" />
           <div>
             <h2 className="text-lg font-semibold text-white">Añadir amigos</h2>
-            <p className="mt-0.5 text-xs text-slate-400">Busca por nombre de usuario.</p>
           </div>
         </div>
 
-        <form onSubmit={handleSearch} className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <div role="search" aria-label="Buscar amigos" className="mt-4">
           <label className="flex min-h-12 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 px-4 focus-within:border-teal-300/40">
             <Search className="h-4 w-4 shrink-0 text-slate-500" />
             <span className="sr-only">Nombre de usuario</span>
             <input
+              type="search"
+              aria-describedby="friend-search-hint"
               value={query}
               onChange={(event) => {
                 searchVersion.current += 1;
@@ -278,16 +274,12 @@ export default function FriendsPanel({ onNotify }) {
               placeholder="Ejemplo: david"
               className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
             />
+            {searching ? <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin text-teal-300" /> : null}
           </label>
-          <button
-            type="submit"
-            disabled={searching || Boolean(activeAction) || query.trim().length < 2}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-teal-300 px-5 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            Buscar
-          </button>
-        </form>
+          <p role="status" className="mt-2 text-xs text-slate-400">
+            {searching ? "Buscando usuarios…" : searched ? `${results.length} ${results.length === 1 ? "usuario encontrado" : "usuarios encontrados"}` : ""}
+          </p>
+        </div>
 
         {searched ? (
           <div className="mt-4 space-y-2">
