@@ -54,8 +54,8 @@ export default function VehicleLayout() {
 
     return (
         <PageTransition>
-        <div className="min-h-screen text-slate-100 pt-12">
-            <main className="pb-10 pt-6 sm:pt-8 lg:pb-16">
+        <div className="text-slate-100">
+            <main className="pb-10 lg:pb-16">
                 <div className="section-shell space-y-6">
                     {loading || (!error && selectedVehicle) ? (
                     <section className="glass-panel rounded-[1.5rem] p-3 sm:rounded-[2rem] sm:p-4">

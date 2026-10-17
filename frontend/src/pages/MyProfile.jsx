@@ -70,7 +70,7 @@ export default function MyProfile() {
 
   if (loading) {
     return (
-      <div className="section-shell py-10 text-slate-100">
+      <div className="section-shell pb-10 text-slate-100">
         <section className="glass-panel mx-auto max-w-5xl rounded-[2rem] p-8 text-sm text-slate-300">
           Cargando perfil...
         </section>
@@ -79,8 +79,8 @@ export default function MyProfile() {
   }
 
   return (
-    <div className="min-h-screen text-slate-100 pt-15">
-      <main className="pb-10 pt-6 lg:pb-16">
+    <div className="text-slate-100">
+      <main className="pb-10 lg:pb-16">
         <div className="section-shell">
 
           <div className="mx-auto max-w-5xl">

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
 import DeleteAccountSection from "../components/DeleteAccountSection";
+import ViewportPortal from "../components/ViewportPortal";
 import { 
   ArrowLeft, 
   ChevronDown, 
@@ -358,15 +359,15 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="section-shell py-10 text-slate-100">
+      <div className="section-shell pb-10 text-slate-100">
         <section className="glass-panel rounded-[2rem] p-8 text-sm text-slate-300">Cargando ajustes...</section>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <main className="pb-10 pt-6 lg:pb-16">
+    <div className="text-slate-100">
+      <main className="pb-10 lg:pb-16">
         <div className="section-shell space-y-6">
           <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -640,6 +641,7 @@ export default function Settings() {
         </div>
       </main>
 
+      <ViewportPortal>
       <div className="pointer-events-none fixed inset-x-4 top-4 z-50 space-y-3 sm:left-auto sm:right-6 sm:top-6">
         {toasts.map((toast) => (
           <div
@@ -659,6 +661,7 @@ export default function Settings() {
           </div>
         ))}
       </div>
+      </ViewportPortal>
     </div>
   );
 }

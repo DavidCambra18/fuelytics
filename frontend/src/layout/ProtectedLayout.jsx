@@ -12,7 +12,7 @@ export default function ProtectedLayout() {
   return (
     <>
       <UserMenu />
-      <div className="pb-20 sm:pb-0">
+      <div className="protected-page-content">
         <Outlet />
       </div>
     </>

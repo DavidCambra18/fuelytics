@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, ArrowRight, CheckCircle2, Trophy, Users, X } from "lucide-react";
 import FriendsPanel from "../components/FriendsPanel";
+import ViewportPortal from "../components/ViewportPortal";
 
 export default function Friends() {
   const [notification, setNotification] = useState(null);
@@ -13,7 +14,7 @@ export default function Friends() {
   }, [notification]);
 
   return (
-    <main className="min-h-screen pb-10 pt-8 text-slate-100 sm:pt-24 lg:pb-16">
+    <main className="pb-10 text-slate-100 lg:pb-16">
       <div className="section-shell space-y-6">
         <header className="glass-panel rounded-[2rem] p-5 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -43,6 +44,7 @@ export default function Friends() {
         <FriendsPanel onNotify={(message, tone = "success") => setNotification({ message, tone })} />
       </div>
 
+      <ViewportPortal>
       <div className="pointer-events-none fixed inset-x-4 top-4 z-50 sm:left-auto sm:right-6 sm:top-6" aria-live="polite" aria-atomic="true">
         {notification ? (
           <div className={`pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border bg-slate-950/95 p-4 shadow-2xl backdrop-blur-xl ${notification.tone === "error" ? "border-rose-400/30 text-rose-100" : "border-teal-300/30 text-teal-100"}`}>
@@ -54,6 +56,7 @@ export default function Friends() {
           </div>
         ) : null}
       </div>
+      </ViewportPortal>
     </main>
   );
 }

@@ -4,6 +4,7 @@ import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles,
 import { apiFetch } from "../services/api";
 import CustomSelect from "../components/CustomSelect";
 import ExportReportModal from "../components/ExportReportModal";
+import ViewportPortal from "../components/ViewportPortal";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import { buildFuelingRows } from "../utils/consumption";
 import {
@@ -614,6 +615,7 @@ export default function Fuelings() {
       </article>
 
       {showForm ? (
+        <ViewportPortal>
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
           onMouseDown={(event) => {
@@ -841,9 +843,11 @@ export default function Fuelings() {
             </form>
           </div>
         </div>
+        </ViewportPortal>
       ) : null}
 
       {showHelp ? (
+        <ViewportPortal>
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/75 p-4"
           onMouseDown={(event) => {
@@ -898,6 +902,7 @@ export default function Fuelings() {
             </div>
           </div>
         </div>
+        </ViewportPortal>
       ) : null}
 
       {exportTarget ? (

@@ -94,8 +94,8 @@ export default function VehicleCreate() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <div className="section-shell grid min-h-screen items-center gap-5 py-4 lg:grid-cols-[0.88fr_1.12fr] lg:py-6">
+    <div className="text-slate-100">
+      <div className="section-shell grid items-center gap-5 lg:grid-cols-[0.88fr_1.12fr]">
         <section className="order-2 space-y-5 lg:order-1">
           <div className="glass-panel rounded-[2rem] p-5 sm:p-6">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Alta de vehículo</p>

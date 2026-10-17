@@ -66,7 +66,7 @@ export default function UserMenu() {
   };
 
   return (
-    <div ref={menuRef} className="fixed inset-x-3 bottom-3 z-40 sm:bottom-auto sm:left-5 sm:right-auto sm:top-5">
+    <div ref={menuRef} className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-40 sm:bottom-auto sm:left-5 sm:right-auto sm:top-[calc(1.25rem+env(safe-area-inset-top,0px))]">
       <div className="flex items-center justify-between gap-1 rounded-full border border-white/10 bg-slate-950/85 p-1 shadow-2xl shadow-black/30 backdrop-blur-xl sm:justify-start sm:gap-2 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
         <button
           type="button"
@@ -133,7 +133,7 @@ export default function UserMenu() {
       </div>
 
       {open ? (
-        <div id="user-menu" className="absolute bottom-full left-0 mb-3 w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/30 backdrop-blur-xl sm:bottom-auto sm:top-full sm:mb-0 sm:mt-3 sm:w-80">
+        <div id="user-menu" className="absolute bottom-full left-0 mb-3 max-h-[calc(100dvh-6rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] w-full overflow-y-auto overscroll-contain rounded-[1.75rem] border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/30 backdrop-blur-xl sm:bottom-auto sm:top-full sm:mb-0 sm:mt-3 sm:w-80">
           <div className="border-b border-white/10 bg-gradient-to-br from-teal-400/10 via-cyan-400/5 to-transparent px-4 py-4">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 text-base font-semibold text-teal-200 ring-1 ring-teal-300/20">

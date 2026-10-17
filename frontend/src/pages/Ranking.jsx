@@ -142,7 +142,7 @@ export default function Ranking() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-20 text-slate-100">
+      <div className="text-slate-100">
         <div className="section-shell flex items-center gap-2 text-sm text-slate-300">
           <Loader2 className="h-5 w-5 animate-spin text-teal-300" />
           Cargando clasificación...
@@ -152,8 +152,8 @@ export default function Ranking() {
   }
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <main className="pb-10 pt-20 lg:pb-16">
+    <div className="text-slate-100">
+      <main className="pb-10 lg:pb-16">
         <div className="section-shell space-y-6">
           <header className="glass-panel rounded-[2rem] p-6 sm:p-8">
             <div className="flex items-center gap-4">

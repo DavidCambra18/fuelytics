@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { exportReportFile } from "../services/exportReports";
+import ViewportPortal from "./ViewportPortal";
 
 const REPORT_TITLES = {
   fuelings: "Exportar repostajes",
@@ -95,6 +96,7 @@ function ExportReportDialog({
   };
 
   return (
+    <ViewportPortal>
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
       onMouseDown={(event) => {
@@ -179,5 +181,6 @@ function ExportReportDialog({
         </form>
       </div>
     </div>
+    </ViewportPortal>
   );
 }

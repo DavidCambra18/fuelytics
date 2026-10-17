@@ -104,6 +104,19 @@ a {
 }
 
 @layer utilities {
+  .protected-page-content {
+    min-height: 100dvh;
+    padding-top: 1.5rem;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    .protected-page-content {
+      padding-top: calc(6rem + env(safe-area-inset-top, 0px));
+      padding-bottom: 1.5rem;
+    }
+  }
+
   .glass-panel {
     background: rgba(9, 15, 23, 0.68);
     border: 1px solid rgba(148, 163, 184, 0.16);

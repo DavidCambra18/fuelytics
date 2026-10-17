@@ -30,8 +30,8 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <main className="pb-10 pt-20 lg:pb-16">
+    <div className="text-slate-100">
+      <main className="pb-10 lg:pb-16">
         <div className="section-shell">
           <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

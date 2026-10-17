@@ -81,7 +81,7 @@ export default function TripCalculator() {
 
   if (loading) {
     return (
-      <div className="w-full py-10 text-slate-100">
+      <div className="section-shell pb-10 text-slate-100">
         <section className="glass-panel mx-auto max-w-3xl rounded-[2rem] p-8 text-sm text-slate-300">
           Cargando calculadora...
         </section>
@@ -90,7 +90,7 @@ export default function TripCalculator() {
   }
 
   return (
-    <section className="w-full pt-8 space-y-6 lg:pt-30">
+    <section className="section-shell space-y-6 pb-10">
       <article className="glass-panel mx-auto max-w-5xl rounded-[2rem] p-6 sm:p-8">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>

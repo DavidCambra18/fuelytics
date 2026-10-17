@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
 import { apiFetch } from "../services/api";
 import ExportReportModal from "../components/ExportReportModal";
+import ViewportPortal from "../components/ViewportPortal";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import {
   Pagination,
@@ -471,6 +472,7 @@ export default function Expenses() {
       </article>
 
       {showForm && (
+        <ViewportPortal>
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
           onMouseDown={(event) => {
@@ -608,6 +610,7 @@ export default function Expenses() {
             </form>
           </div>
         </div>
+        </ViewportPortal>
       )}
 
       {exportTarget && (
