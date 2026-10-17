@@ -26,6 +26,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_PATH = "/api/users/login";
     private static final String REGISTER_PATH = "/api/users/register";
+    private static final String DELETE_ACCOUNT_PATH = "/api/users/account";
 
     private final Map<String, RequestWindow> windows = new ConcurrentHashMap<>();
     private final AtomicLong requestCounter = new AtomicLong();
@@ -54,6 +55,9 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        if ("DELETE".equalsIgnoreCase(request.getMethod()) && DELETE_ACCOUNT_PATH.equals(request.getRequestURI())) {
+            return false;
+        }
         if (!"POST".equalsIgnoreCase(request.getMethod())) return true;
         String path = request.getRequestURI();
         return !LOGIN_PATH.equals(path) && !REGISTER_PATH.equals(path);
@@ -65,7 +69,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
-        int limit = LOGIN_PATH.equals(path) ? loginMaxAttempts : registerMaxAttempts;
+        int limit = REGISTER_PATH.equals(path) ? registerMaxAttempts : loginMaxAttempts;
         long now = clock.millis();
         String key = path + ':' + request.getRemoteAddr();
 

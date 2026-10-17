@@ -37,7 +37,22 @@ class AuthRateLimitFilterTest {
     }
 
     private MockHttpServletResponse execute(AuthRateLimitFilter filter, String path) throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", path);
+        return execute(filter, "POST", path);
+    }
+
+    @Test
+    void limitsAccountDeletionPasswordAttemptsWithoutLimitingProfileReads() throws Exception {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-14T12:00:00Z"), ZoneOffset.UTC);
+        AuthRateLimitFilter filter = new AuthRateLimitFilter(2, 1, 60_000, clock);
+        assertEquals(200, execute(filter, "DELETE", "/api/users/account").getStatus());
+        assertEquals(200, execute(filter, "DELETE", "/api/users/account").getStatus());
+        assertEquals(429, execute(filter, "DELETE", "/api/users/account").getStatus());
+        assertEquals(200, execute(filter, "GET", "/api/users/profile").getStatus());
+        assertEquals(200, execute(filter, "/api/users/login").getStatus());
+    }
+
+    private MockHttpServletResponse execute(AuthRateLimitFilter filter, String method, String path) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest(method, path);
         request.setRemoteAddr("203.0.113.10");
         MockHttpServletResponse response = new MockHttpServletResponse();
         filter.doFilter(request, response, new MockFilterChain());

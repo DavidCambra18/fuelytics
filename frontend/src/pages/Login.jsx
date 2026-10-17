@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiJson } from "../services/api";
 
@@ -11,6 +11,7 @@ export default function Login() {
   const { setAuth } = useAuth();
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -70,6 +71,9 @@ export default function Login() {
           onSubmit={handleLogin}
           className="glass-panel w-full rounded-[2rem] p-6 shadow-2xl shadow-black/25 sm:p-8"
         >
+          {location.state?.accountDeleted ? (
+            <p role="status" className="mb-4 rounded-2xl border border-teal-300/20 bg-teal-400/10 px-4 py-3 text-sm text-teal-100">Tu cuenta y sus datos se han eliminado correctamente.</p>
+          ) : null}
           {errorMessage ? (
             <div role="alert" className="mb-4 rounded-lg border border-rose-400/30 bg-rose-400/8 px-4 py-3 text-sm text-rose-100">
               {errorMessage}

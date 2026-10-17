@@ -90,6 +90,20 @@ Antes de aplicar un script en Neon:
 
 No guardes valores reales, credenciales ni secretos en el repositorio.
 
+## Eliminación de cuenta
+
+En **Ajustes → Cuenta**, el usuario puede eliminar permanentemente su cuenta tras introducir
+su contraseña actual y confirmar que comprende la pérdida de datos. La operación
+`DELETE /api/users/account` requiere autenticación y un cuerpo JSON con `password`.
+El backend identifica la cuenta desde la sesión, limita los intentos y realiza el borrado
+en una transacción. Las relaciones `ON DELETE CASCADE` del esquema eliminan los vehículos,
+repostajes, gastos, neumáticos, insignias obtenidas y amistades asociados.
+
+Los JWT incluyen el identificador de la cuenta para impedir que una sesión de una cuenta
+eliminada acceda a otra registrada después con el mismo correo. Las sesiones anteriores
+a este cambio deben iniciar sesión de nuevo. No se requieren cambios del esquema si las
+relaciones de borrado coinciden con `database/schema.sql`.
+
 ## Validación
 
 ```bash

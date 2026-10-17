@@ -12,6 +12,7 @@ import com.fuelytics.backend.dto.UserPrivacyDTO;
 import com.fuelytics.backend.dto.UserLoginDTO;
 import com.fuelytics.backend.dto.UserProfileDTO;
 import com.fuelytics.backend.dto.UserRegisterDTO;
+import com.fuelytics.backend.dto.DeleteAccountDTO;
 import com.fuelytics.backend.service.UserService;
 
 @RestController
@@ -37,6 +38,12 @@ public class UserController {
     @GetMapping("/profile")
     public UserProfileDTO getProfile(Principal principal) {
         return userService.getProfile(principal.getName());
+    }
+
+    @DeleteMapping("/account")
+    public ResponseEntity<Void> deleteAccount(Principal principal, @Valid @RequestBody DeleteAccountDTO request) {
+        userService.deleteAccount(principal.getName(), request.password());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/public/{username}")

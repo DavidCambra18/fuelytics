@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
+import DeleteAccountSection from "../components/DeleteAccountSection";
 import { 
   ArrowLeft, 
   ChevronDown, 
@@ -16,7 +17,8 @@ import {
   AlertCircle,
   Loader2,
   Check,
-  X
+  X,
+  Settings as SettingsIcon
 } from "lucide-react";
 
 function createToast(message, tone = "success") {
@@ -57,7 +59,7 @@ export default function Settings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { token, username, setAuth } = useAuth();
   const requestedTab = searchParams.get("tab");
-  const activeTab = ["profile", "privacy"].includes(requestedTab) ? requestedTab : "profile";
+  const activeTab = ["profile", "privacy", "account"].includes(requestedTab) ? requestedTab : "profile";
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
@@ -174,6 +176,7 @@ export default function Settings() {
     () => [
       { id: "profile", label: "Perfil", icon: User },
       { id: "privacy", label: "Privacidad", icon: Shield },
+      { id: "account", label: "Cuenta", icon: SettingsIcon },
     ],
     []
   );
@@ -415,7 +418,8 @@ export default function Settings() {
                 </div>
               </aside>
 
-              <div className="space-y-6">
+              <div className="min-w-0 space-y-6">
+                {activeTab === "account" ? <DeleteAccountSection /> : null}
                 {activeTab === "profile" ? (
                   <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-5 sm:p-7">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

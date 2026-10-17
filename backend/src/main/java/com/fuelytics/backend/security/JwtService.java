@@ -34,13 +34,27 @@ public class JwtService {
         this.expirationTime = expirationTime;
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, Integer userId) {
+        if (userId == null || userId < 1) {
+            throw new IllegalArgumentException("El token debe estar vinculado a una cuenta existente");
+        }
         return Jwts.builder()
                 .subject(email)
+                .claim("userId", userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(key)
                 .compact();
+    }
+
+    public boolean belongsToUser(String token, Integer userId) {
+        try {
+            Integer tokenUserId = Jwts.parser().verifyWith(key).build()
+                    .parseSignedClaims(token).getPayload().get("userId", Integer.class);
+            return userId != null && userId.equals(tokenUserId);
+        } catch (Exception exception) {
+            return false;
+        }
     }
 
     public String extractEmail(String token) {

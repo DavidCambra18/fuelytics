@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fuelytics.backend.dto.UserPrivacyDTO;
@@ -66,6 +67,20 @@ public class UserService {
     public UserProfileDTO getProfile(String email) {
         User user = findUserByEmail(email);
         return toProfileDTO(user);
+    }
+
+    @Transactional
+    public void deleteAccount(String email, String password) {
+        User user = userRepository.findByEmailForUpdate(email);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+        }
+        if (password == null || password.isBlank() || !passwordEncoder.matches(password, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La contraseña no es correcta");
+        }
+        // PostgreSQL removes dependent data through the schema's ON DELETE CASCADE constraints.
+        userRepository.delete(user);
+        userRepository.flush();
     }
 
     public UserProfileDTO getPublicProfile(String username, String currentEmail) {
@@ -171,7 +186,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos");
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(user.getEmail(), user.getId());
 
         return Map.of(
                 "token", token,

@@ -86,15 +86,6 @@ export default function UserMenu() {
         </button>
 
         <Link
-          to="/settings"
-          aria-label="Editar perfil y ajustes"
-          title="Ajustes"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-teal-300/30 hover:bg-slate-900/90 sm:h-12 sm:w-12"
-        >
-          <SettingsIcon className="h-5 w-5 text-teal-200" aria-hidden="true" />
-        </Link>
-
-        <Link
           to="/dashboard"
           aria-label="Ir al garaje"
           title="Garaje"
@@ -176,6 +167,23 @@ export default function UserMenu() {
                 <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-slate-300" />
               </Link>
             ) : null}
+
+            <Link
+              to="/settings"
+              onClick={() => setOpen(false)}
+              className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:border-white/15 hover:bg-white/[0.08]"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-slate-300 transition group-hover:bg-slate-700 group-hover:text-white">
+                  <SettingsIcon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-white">Ajustes</p>
+                  <p className="mt-0.5 text-xs text-slate-400">Perfil, privacidad y cuenta</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-slate-300" aria-hidden="true" />
+            </Link>
 
             <Link
               to="/friends"

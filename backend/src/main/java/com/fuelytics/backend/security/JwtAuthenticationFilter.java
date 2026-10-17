@@ -13,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 import com.fuelytics.backend.repository.UserRepository;
+import com.fuelytics.backend.entity.User;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -47,7 +48,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String email = jwtService.extractEmail(token);
 
-        if (userRepository.findByEmail(email) == null) {
+        User user = userRepository.findByEmail(email);
+        if (user == null || !jwtService.belongsToUser(token, user.getId())) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
