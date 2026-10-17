@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Fuel, Settings, Warehouse, User, LogOut, ChevronRight, ChevronUp, Trophy, Calculator, Users, PanelLeftClose, PanelLeftOpen, MoreHorizontal, X, Droplets } from "lucide-react";
+import { Fuel, Settings, Warehouse, User, LogOut, ChevronRight, ChevronUp, Trophy, Calculator, Users, PanelLeftClose, PanelLeftOpen, MoreHorizontal, X, Droplets, Activity, ExternalLink } from "lucide-react";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
@@ -28,6 +28,17 @@ function NavigationLink({ item, pathname, onNavigate, compact = false }) {
       <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
       <span className={compact ? "sr-only" : "min-w-0 truncate"}>{item.label}</span>
     </Link>
+  );
+}
+
+function ServiceStatusLink({ onNavigate, compact = false }) {
+  return (
+    <a href="https://status.davidcambra.com/status/fuelytics" target="_blank" rel="noopener noreferrer" onClick={onNavigate} title={compact ? "Estado del servicio (se abre en otra pestaña)" : undefined} className={`app-nav-link ${compact ? "justify-center" : ""}`}>
+      <Activity className="h-5 w-5 shrink-0" aria-hidden="true" />
+      <span className={compact ? "sr-only" : "min-w-0 flex-1 truncate"}>Estado del servicio</span>
+      {compact ? null : <ExternalLink className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />}
+      <span className="sr-only">(se abre en otra pestaña)</span>
+    </a>
   );
 }
 
@@ -116,6 +127,7 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
         </div>
 
         <div className="app-sidebar-footer">
+          <ServiceStatusLink onNavigate={closeNavigation} compact={!expanded} />
           <button type="button" onClick={() => { setProfileOpen(false); onToggleSidebar(); }} aria-label={expanded ? "Contraer menú lateral" : "Expandir menú lateral"} aria-expanded={expanded} className="app-sidebar-toggle">
             {expanded ? <PanelLeftClose className="h-4 w-4 shrink-0" aria-hidden="true" /> : <PanelLeftOpen className="h-5 w-5" aria-hidden="true" />}
             {expanded ? <span>Contraer menú</span> : null}
@@ -153,7 +165,10 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
             <div ref={dialogRef} id="mobile-more" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="app-mobile-sheet">
               <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[0.2em] text-teal-300">Fuelytics</p><h2 id={titleId} className="mt-1 text-xl font-semibold text-white">Más opciones</h2></div><button type="button" onClick={() => setMobileOpen(false)} aria-label="Cerrar más opciones" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-slate-300"><X className="h-5 w-5" /></button></div>
               <div className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4"><span className="app-profile-avatar">{initial}</span><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{username}</p>{fullName ? <p className="mt-1 truncate text-xs text-slate-500">{fullName}</p> : null}</div></div>
-              <nav aria-label="Más secciones" className="space-y-1.5">{MORE_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}</nav>
+              <nav aria-label="Más secciones" className="space-y-1.5">
+                {MORE_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}
+                <ServiceStatusLink onNavigate={closeNavigation} />
+              </nav>
               <button type="button" onClick={logout} className="app-logout-button"><LogOut className="h-4 w-4" aria-hidden="true" />Cerrar sesión<ChevronRight className="ml-auto h-4 w-4" aria-hidden="true" /></button>
             </div>
           </div>
