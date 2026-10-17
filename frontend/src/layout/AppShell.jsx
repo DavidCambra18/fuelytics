@@ -7,17 +7,16 @@ const SIDEBAR_PREFERENCE = "fuelytics:sidebar-mode";
 
 export default function AppShell() {
   const { pathname } = useLocation();
-  const largeScreen = useMediaQuery("(min-width: 1024px)");
   const hasSidebar = useMediaQuery("(min-width: 640px)");
   const [sidebarMode, setSidebarMode] = useState(() => {
     try {
       const saved = localStorage.getItem(SIDEBAR_PREFERENCE);
-      return saved === "collapsed" || saved === "expanded" ? saved : "auto";
+      return saved === "expanded" ? "expanded" : "collapsed";
     } catch {
-      return "auto";
+      return "collapsed";
     }
   });
-  const expanded = sidebarMode === "expanded" || (sidebarMode === "auto" && largeScreen);
+  const expanded = sidebarMode === "expanded";
 
   const toggleSidebar = () => {
     const nextMode = expanded ? "collapsed" : "expanded";

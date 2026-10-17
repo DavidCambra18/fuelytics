@@ -28,6 +28,11 @@ export default function Login() {
         throw new Error("El servidor no devolvió una sesión válida");
       }
 
+      try {
+        localStorage.setItem("fuelytics:sidebar-mode", "collapsed");
+      } catch {
+        // A browser preference must not prevent signing in.
+      }
       setAuth({ token: data.token, username: data.username });
       navigate("/dashboard");
 
