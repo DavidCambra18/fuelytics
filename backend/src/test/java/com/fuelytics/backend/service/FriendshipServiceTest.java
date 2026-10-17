@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.context.ApplicationEventPublisher;
+import com.fuelytics.backend.notification.MailNotification;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.data.domain.PageRequest;
 
@@ -35,13 +37,16 @@ class FriendshipServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private FriendshipService friendshipService;
     private User currentUser;
     private User otherUser;
 
     @BeforeEach
     void setUp() {
-        friendshipService = new FriendshipService(friendshipRepository, userRepository);
+        friendshipService = new FriendshipService(friendshipRepository, userRepository, events);
         currentUser = user(1, "current", "current@example.com");
         otherUser = user(2, "friend", "friend@example.com");
         when(userRepository.findByEmail(currentUser.getEmail())).thenReturn(currentUser);
@@ -54,6 +59,7 @@ class FriendshipServiceTest {
         assertThrows(ResponseStatusException.class,
                 () -> friendshipService.sendRequest(currentUser.getEmail(), currentUser.getUsername()));
         verify(friendshipRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        org.mockito.Mockito.verifyNoInteractions(events);
     }
 
     @Test
@@ -108,6 +114,7 @@ class FriendshipServiceTest {
 
         assertEquals("PENDING", result.status());
         assertEquals("OUTGOING", result.direction());
+        verify(events).publishEvent(MailNotification.friendRequest("friend@example.com", "friend", "current"));
         assertEquals("friend", result.username());
     }
 
@@ -136,6 +143,7 @@ class FriendshipServiceTest {
         var error = assertThrows(ResponseStatusException.class,
                 () -> friendshipService.sendRequest(currentUser.getEmail(), "friend"));
         assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
+        org.mockito.Mockito.verifyNoInteractions(events);
     }
 
     @Test

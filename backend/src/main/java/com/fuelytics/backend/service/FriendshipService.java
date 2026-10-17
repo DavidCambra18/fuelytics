@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,16 +17,20 @@ import com.fuelytics.backend.entity.User;
 import com.fuelytics.backend.entity.enums.FriendshipStatus;
 import com.fuelytics.backend.repository.FriendshipRepository;
 import com.fuelytics.backend.repository.UserRepository;
+import com.fuelytics.backend.notification.MailNotification;
 
 @Service
 public class FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher events;
 
-    public FriendshipService(FriendshipRepository friendshipRepository, UserRepository userRepository) {
+    public FriendshipService(FriendshipRepository friendshipRepository, UserRepository userRepository,
+            ApplicationEventPublisher events) {
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -108,7 +113,9 @@ public class FriendshipService {
         friendship.setRequester(requester);
         friendship.setAddressee(addressee);
         friendship.setStatus(FriendshipStatus.PENDING);
-        return toDTO(friendshipRepository.save(friendship), requester);
+        Friendship saved = friendshipRepository.save(friendship);
+        events.publishEvent(MailNotification.friendRequest(addressee.getEmail(), addressee.getUsername(), requester.getUsername()));
+        return toDTO(saved, requester);
     }
 
     @Transactional

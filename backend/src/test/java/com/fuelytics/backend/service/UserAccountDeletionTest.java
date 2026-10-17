@@ -12,13 +12,14 @@ import com.fuelytics.backend.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 class UserAccountDeletionTest {
     private final UserRepository users = mock(UserRepository.class);
     private final BCryptPasswordEncoder encoder = mock(BCryptPasswordEncoder.class);
-    private final UserService service = new UserService(users, mock(VehicleRepository.class), encoder, mock(JwtService.class));
+    private final UserService service = new UserService(users, mock(VehicleRepository.class), encoder, mock(JwtService.class), mock(ApplicationEventPublisher.class));
     private User user;
 
     @BeforeEach

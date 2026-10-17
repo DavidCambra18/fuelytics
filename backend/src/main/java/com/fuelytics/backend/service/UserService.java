@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import com.fuelytics.backend.entity.User;
 import com.fuelytics.backend.repository.UserRepository;
 import com.fuelytics.backend.repository.VehicleRepository;
 import com.fuelytics.backend.security.JwtService;
+import com.fuelytics.backend.notification.MailNotification;
 
 @Service
 public class UserService {
@@ -27,17 +29,20 @@ public class UserService {
     private final VehicleRepository vehicleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final ApplicationEventPublisher events;
 
     public UserService(UserRepository userRepository,
             VehicleRepository vehicleRepository,
             BCryptPasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+            JwtService jwtService, ApplicationEventPublisher events) {
         this.userRepository = userRepository;
         this.vehicleRepository = vehicleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.events = events;
     }
 
+    @Transactional
     public Map<String, String> register(UserRegisterDTO dto) {
 
         String email = dto.getEmail().trim().toLowerCase();
@@ -60,6 +65,8 @@ public class UserService {
         user.setProfilePublic(true);
 
         userRepository.save(user);
+
+        events.publishEvent(MailNotification.welcome(user.getEmail(), user.getUsername()));
 
         return Map.of("message", "Usuario registrado correctamente");
     }

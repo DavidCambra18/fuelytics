@@ -90,6 +90,82 @@ Antes de aplicar un script en Neon:
 
 No guardes valores reales, credenciales ni secretos en el repositorio.
 
+## Correos de bienvenida y solicitudes de amistad
+
+El backend envía correo directamente al servidor **SMTP** del proveedor configurado.
+Se genera un aviso al registrar una cuenta y otro para el destinatario de una nueva solicitud
+de amistad. Los mensajes incluyen texto plano y HTML, con enlaces al garaje o a Amigos;
+no contienen contraseñas ni exponen el correo de otros usuarios.
+
+Las variables de [backend/.env.example](backend/.env.example) permiten configurar la cuenta
+de correo y el remitente por separado:
+
+| Variable | Valor que debes configurar |
+| --- | --- |
+| `MAIL_ENABLED` | `true` para activar los envíos o `false` para desactivarlos. Si se omite, vale `false`. |
+| `MAIL_HOST` | Nombre del servidor SMTP indicado por tu proveedor, por ejemplo `smtp.proveedor.example`. |
+| `MAIL_PORT` | Puerto de envío con STARTTLS indicado por tu proveedor; habitualmente `587`. |
+| `MAIL_USERNAME` | Usuario de autenticación SMTP. Puede ser una dirección de correo o un identificador proporcionado por el proveedor. |
+| `MAIL_PASSWORD` | Contraseña SMTP, contraseña específica de aplicación o credencial SMTP que admita tu proveedor. |
+| `MAIL_FROM` | Dirección que aparecerá como remitente. Puede ser una dirección de tu dominio personalizado, autorizada en la cuenta que utilizas para autenticarte. Si se omite, se utiliza `MAIL_USERNAME`. |
+| `MAIL_FROM_NAME` | Nombre visible del remitente; por ejemplo, `Fuelytics`. |
+| `MAIL_FRONTEND_URL` | URL del frontend que se usará en los enlaces del correo. Para desarrollo local: `http://localhost:5173`. Si se omite, se utiliza `FRONTEND_URL`. |
+
+El archivo de ejemplo es una plantilla y deja `MAIL_ENABLED=false`. Reemplaza los textos
+de ejemplo por tus datos y cambia el valor a `true` cuando quieras activar los envíos. Completa `MAIL_HOST`
+y `MAIL_PORT` con los datos de tu proveedor; no los dejes vacíos ni dependas del servidor
+preconfigurado en el backend. Un valor vacío no activa los valores por defecto;
+esto también se aplica a `MAIL_FROM` y `MAIL_FRONTEND_URL`.
+
+Define las variables en tu terminal, IDE o plataforma de despliegue: Spring no carga
+`.env.example` automáticamente. El envío permanece desactivado si no defines `MAIL_ENABLED`.
+
+Solicita al proveedor el servidor, el puerto y las credenciales para **envío SMTP autenticado
+con STARTTLS**. Comprueba también qué direcciones permite utilizar como remitente y si
+debes verificar tu dominio o configurar sus registros DNS antes de enviar.
+
+Ejemplo genérico (sustituye todos los valores de ejemplo por los de tu proveedor):
+
+```dotenv
+MAIL_ENABLED=true
+MAIL_HOST=smtp.proveedor.example
+MAIL_PORT=587
+MAIL_USERNAME=usuario-smtp-del-proveedor
+MAIL_PASSWORD=credencial-smtp-del-proveedor
+MAIL_FROM=notificaciones@tu-dominio.com
+MAIL_FROM_NAME=Fuelytics
+MAIL_FRONTEND_URL=https://tu-frontend.example
+```
+
+`MAIL_USERNAME` y `MAIL_PASSWORD` sirven para autenticar el envío; `MAIL_FROM` es la
+dirección que verán los destinatarios. Pueden ser diferentes si tu proveedor lo permite.
+Define siempre `MAIL_FROM` cuando el usuario SMTP sea un identificador que no sea una
+dirección de correo válida. `MAIL_FRONTEND_URL` debe ser la URL pública de tu frontend,
+sin parámetros ni fragmentos.
+
+La implementación actual requiere autenticación con usuario y contraseña SMTP, **STARTTLS
+obligatorio** y un certificado de servidor válido. No admite directamente proveedores que
+exijan exclusivamente OAuth2 ni conexiones con TLS implícito (habitualmente en el puerto
+465): cambiar solo `MAIL_PORT` no cambia el modo de conexión. Consulta la documentación
+de tu proveedor para comprobar que ofrece un servicio compatible.
+No guardes credenciales reales en archivos versionados ni en variables `VITE_*` del frontend.
+
+Los avisos se encolan **después de confirmar la transacción de base de datos**. Un único
+trabajador realiza el envío en segundo plano, con una cola limitada a 100 mensajes y tiempos
+de espera de conexión, lectura y escritura de 5 segundos. Un fallo SMTP o una cola llena no
+deshace el registro ni la solicitud. Los logs indican el tipo de aviso y el fallo, sin imprimir
+destinatarios, credenciales ni contenido de los correos. El arranque y las comprobaciones
+de salud no abren conexiones SMTP.
+
+La cola reside en memoria: no hay reintentos automáticos ni recuperación de mensajes tras
+un reinicio. Los avisos creados mientras `MAIL_ENABLED=false` no se guardan para enviarlos
+más tarde. No son necesarios cambios en PostgreSQL, Neon ni `database/schema.sql`.
+
+**Render gratuito bloquea las conexiones SMTP salientes a los puertos 25, 465 y 587**.
+Mantén `MAIL_ENABLED=false` en esa instancia. El mismo código podrá enviar desde tu equipo
+o desde un alojamiento con SMTP saliente permitido y credenciales válidas; activar el flag
+no elimina el bloqueo de Render. Véanse las [limitaciones oficiales de Render](https://render.com/docs/free).
+
 ## Eliminación de cuenta
 
 En **Ajustes → Cuenta**, el usuario puede eliminar permanentemente su cuenta tras introducir
