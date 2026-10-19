@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
-import DeleteAccountSection from "../components/DeleteAccountSection";
+import AccountAccessSection from "../components/AccountAccessSection";
 import ViewportPortal from "../components/ViewportPortal";
 import { 
   ArrowLeft, 
@@ -420,7 +420,7 @@ export default function Settings() {
               </aside>
 
               <div className="min-w-0 space-y-6">
-                {activeTab === "account" ? <DeleteAccountSection /> : null}
+                {activeTab === "account" ? <AccountAccessSection /> : null}
                 {activeTab === "profile" ? (
                   <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-5 sm:p-7">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

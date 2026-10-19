@@ -1,4 +1,4 @@
-export const REGISTRATION_LIMITS = { usernameMin: 3, usernameMax: 15, emailMax: 50, nameMax: 100, passwordMin: 8, passwordMax: 72 };
+export const REGISTRATION_LIMITS = { usernameMin: 3, usernameMax: 15, emailMax: 254, nameMax: 100, passwordMin: 8, passwordMax: 72 };
 
 export function validateUsername(value) {
   if (!value) return "El nombre de usuario es obligatorio";
@@ -9,11 +9,12 @@ export function validateUsername(value) {
 
 export function validateEmail(value) {
   if (!value) return "El correo electrónico es obligatorio";
-  if (value.length > 50) return "El correo electrónico no puede superar 50 caracteres";
+  if (value.length > 254) return "El correo electrónico no puede superar 254 caracteres";
   // Match the email input's syntax and reject local-part dots that @Email also rejects.
   const syntax = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/;
   const local = value.split("@")[0];
-  if (!syntax.test(value) || local.startsWith(".") || local.endsWith(".") || local.includes("..")) return "El correo electrónico no es válido";
+  const domain = value.split("@")[1] || "";
+  if (local.length > 64 || domain.split(".").some((part) => part.length > 63) || !syntax.test(value) || local.startsWith(".") || local.endsWith(".") || local.includes("..")) return "El correo electrónico no es válido";
   return "";
 }
 

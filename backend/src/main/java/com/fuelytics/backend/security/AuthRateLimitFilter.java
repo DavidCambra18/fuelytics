@@ -55,6 +55,8 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        if (request.getRequestURI().startsWith("/api/auth/google/")
+                && ("POST".equalsIgnoreCase(request.getMethod()) || "DELETE".equalsIgnoreCase(request.getMethod()))) return false;
         if ("DELETE".equalsIgnoreCase(request.getMethod()) && DELETE_ACCOUNT_PATH.equals(request.getRequestURI())) {
             return false;
         }
@@ -69,7 +71,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
-        int limit = REGISTER_PATH.equals(path) ? registerMaxAttempts : loginMaxAttempts;
+        int limit = REGISTER_PATH.equals(path) || "/api/auth/google/register".equals(path) ? registerMaxAttempts : loginMaxAttempts;
         long now = clock.millis();
         String key = path + ':' + request.getRemoteAddr();
 

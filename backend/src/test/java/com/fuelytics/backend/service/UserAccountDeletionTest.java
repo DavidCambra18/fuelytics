@@ -74,4 +74,12 @@ class UserAccountDeletionTest {
         verifyNoInteractions(encoder);
         verify(users, never()).delete(any());
     }
+
+    @Test
+    void googleOnlyAccountCannotBeDeletedWithLocalPassword() {
+        user.setPassword(null);
+        assertThrows(ResponseStatusException.class, () -> service.deleteAccount(user.getEmail(), "any-password"));
+        verifyNoInteractions(encoder);
+        verify(users, never()).delete(any());
+    }
 }

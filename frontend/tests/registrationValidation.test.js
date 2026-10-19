@@ -7,9 +7,10 @@ test("el usuario exige 3–15 caracteres y el formato permitido por el backend",
   for (const value of ["", "ab", "a".repeat(16), "José", "dos nombres", "<user>"]) assert.ok(validateUsername(value), value);
 });
 
-test("el correo respeta el máximo de 50 caracteres y rechaza formatos incompletos", () => {
-  for (const value of ["user+tag@example.com", "a".repeat(44) + "@b.com"]) assert.equal(validateEmail(value), "");
-  for (const value of ["", "user@", "a@@b.com", "a..b@example.com", ".a@example.com", "a.@example.com", "a@-example.com", "a@exa mple.com", "a".repeat(45) + "@b.com"]) assert.ok(validateEmail(value), value);
+test("el correo admite hasta 254 caracteres con parte local de hasta 64", () => {
+  const longest = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + "." + "d".repeat(61);
+  for (const value of ["user+tag@example.com", "a".repeat(45) + "@b.com", longest]) assert.equal(validateEmail(value), "");
+  for (const value of ["", "user@", "a@@b.com", "a..b@example.com", ".a@example.com", "a.@example.com", "a@-example.com", "a@exa mple.com", "a".repeat(65) + "@b.com", longest + "e"]) assert.ok(validateEmail(value), value);
 });
 
 test("la contraseña respeta el mínimo de 8 y el máximo de 72 bytes sin recortarla", () => {

@@ -83,7 +83,7 @@ public class UserService {
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
         }
-        if (password == null || password.isBlank() || !passwordEncoder.matches(password, user.getPassword())) {
+        if (password == null || password.isBlank() || user.getPassword() == null || !passwordEncoder.matches(password, user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La contraseña no es correcta");
         }
         // PostgreSQL removes dependent data through the schema's ON DELETE CASCADE constraints.
@@ -190,7 +190,7 @@ public class UserService {
 
         User user = userRepository.findByEmail(dto.getEmail().trim().toLowerCase(Locale.ROOT));
 
-        if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+        if (user == null || user.getPassword() == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos");
         }
 

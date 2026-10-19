@@ -4,6 +4,7 @@ import { Loader2, Check, X } from "lucide-react";
 import { apiJson } from "../services/api";
 import useRegistrationAvailability from "../hooks/useRegistrationAvailability";
 import { normalizeRegistration, validateRegistration, REGISTRATION_LIMITS } from "../utils/registrationValidation";
+import GoogleSignInPanel from "../components/GoogleSignInPanel";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -14,6 +15,7 @@ export default function Register() {
   const [lastName, setLastName] = useState("");
 
   const [errorMessage, setErrorMessage] = useState("");
+  const [googleRegistration, setGoogleRegistration] = useState(false);
 
   const [serverErrors, setServerErrors] = useState({});
   const [attempted, setAttempted] = useState(false);
@@ -89,9 +91,7 @@ export default function Register() {
           </div>
         </section>
 
-        <form
-          onSubmit={handleRegister}
-          noValidate
+        <section
           className="order-1 glass-panel w-full rounded-[2rem] p-6 shadow-2xl shadow-black/25 sm:p-8 lg:order-2"
         >
           <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Registro</p>
@@ -100,6 +100,7 @@ export default function Register() {
             Accede al sistema Fuelytics con un único usuario y empieza a registrar tu información.
           </p>
 
+          <form onSubmit={handleRegister} noValidate hidden={googleRegistration}>
           {errorMessage ? (
             <div role="alert" className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
               {errorMessage}
@@ -263,18 +264,20 @@ export default function Register() {
 
           <button
             disabled={submitting || hasErrors || isChecking}
-            className="mt-6 w-full rounded-2xl bg-white px-4 py-3 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="mx-auto mt-6 block min-h-11 w-full max-w-[400px] rounded-full bg-white px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {submitting ? "Creando cuenta..." : "Crear cuenta"}
           </button>
 
-          <p className="mt-5 text-sm text-slate-400">
+          </form>
+          <GoogleSignInPanel onRegistrationChange={setGoogleRegistration} />
+          <p hidden={googleRegistration} className="mt-5 text-sm text-slate-400">
             ¿Ya tienes cuenta?{" "}
             <Link to="/login" className="font-medium text-white transition hover:text-teal-200">
               Inicia sesión
             </Link>
           </p>
-        </form>
+        </section>
       </div>
     </div>
   );

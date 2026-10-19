@@ -45,11 +45,12 @@ class UserRegisterValidationTest {
     @Test
     void enforcesEmailAndNameLimits() {
         var dto = registration();
-        dto.setEmail("a".repeat(44) + "@b.com");
+        String longest = "a".repeat(64) + "@" + "b".repeat(63) + "." + "c".repeat(63) + "." + "d".repeat(61);
+        dto.setEmail(longest);
         dto.setFirstName("a".repeat(100));
         dto.setLastName("b".repeat(100));
         assertTrue(VALIDATOR.validate(dto).isEmpty());
-        dto.setEmail("a".repeat(45) + "@b.com");
+        dto.setEmail(longest + "e");
         dto.setFirstName("a".repeat(101));
         dto.setLastName("b".repeat(101));
         assertInvalid(dto, "email");

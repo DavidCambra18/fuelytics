@@ -8,7 +8,7 @@ public class UserLoginDTO {
 
     @NotBlank(message = "El correo electrónico es obligatorio")
     @Email(message = "El correo electrónico no es válido")
-    @Size(max = 50, message = "El correo electrónico no puede superar 50 caracteres")
+    @Size(max = 254, message = "El correo electrónico no puede superar 254 caracteres")
     private String email;
 
     @NotBlank(message = "La contraseña es obligatoria")

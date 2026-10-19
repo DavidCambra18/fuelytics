@@ -14,10 +14,10 @@ public class User {
     @Column(unique = true, nullable = false, length = 15)
     private String username;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(unique = true, nullable = false, length = 254)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(name = "first_name")

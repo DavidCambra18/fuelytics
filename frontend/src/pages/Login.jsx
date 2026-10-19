@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiJson } from "../services/api";
+import GoogleSignInPanel from "../components/GoogleSignInPanel";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleRegistration, setGoogleRegistration] = useState(false);
   const { setAuth } = useAuth();
 
   const navigate = useNavigate();
@@ -72,10 +74,13 @@ export default function Login() {
           </div>
         </section>
 
-        <form
-          onSubmit={handleLogin}
+        <section
           className="glass-panel w-full rounded-[2rem] p-6 shadow-2xl shadow-black/25 sm:p-8"
         >
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Bienvenido</p>
+          <h2 className="mt-3 text-3xl font-semibold text-white">Iniciar sesión</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-400">Elige cómo quieres acceder a tu cuenta de Fuelytics.</p>
+          <form onSubmit={handleLogin} hidden={googleRegistration}>
           {location.state?.accountDeleted ? (
             <p role="status" className="mb-4 rounded-2xl border border-teal-300/20 bg-teal-400/10 px-4 py-3 text-sm text-teal-100">Tu cuenta y sus datos se han eliminado correctamente.</p>
           ) : null}
@@ -84,11 +89,6 @@ export default function Login() {
               {errorMessage}
             </div>
           ) : null}
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Bienvenido</p>
-          <h2 className="mt-3 text-3xl font-semibold text-white">Iniciar sesión</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-400">
-            Usa tu correo y contraseña para acceder al dashboard personal.
-          </p>
 
           <div className="mt-8 space-y-4">
             <label className="block">
@@ -112,17 +112,19 @@ export default function Login() {
             </label>
           </div>
 
-          <button disabled={submitting} className="mt-6 w-full rounded-2xl bg-teal-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-teal-300 disabled:opacity-60">
+          <button disabled={submitting} className="mx-auto mt-6 block min-h-11 w-full max-w-[400px] rounded-full bg-teal-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-teal-300 disabled:opacity-60">
             {submitting ? "Entrando…" : "Entrar en el panel"}
           </button>
 
-          <p className="mt-5 text-sm text-slate-400">
+          </form>
+          <GoogleSignInPanel onRegistrationChange={setGoogleRegistration} />
+          <p hidden={googleRegistration} className="mt-5 text-sm text-slate-400">
             ¿No tienes cuenta?{" "}
             <Link to="/register" className="font-medium text-white transition hover:text-teal-200">
               Regístrate ahora
             </Link>
           </p>
-        </form>
+        </section>
       </div>
     </div>
   );

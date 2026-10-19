@@ -58,4 +58,20 @@ class AuthRateLimitFilterTest {
         filter.doFilter(request, response, new MockFilterChain());
         return response;
     }
+
+    @Test
+    void googleLoginRegistrationAndDeletionAreRateLimited() throws Exception {
+        AuthRateLimitFilter filter = new AuthRateLimitFilter(2, 1, 60_000, Clock.systemUTC());
+        for (String path : new String[]{ "/api/auth/google/challenge", "/api/auth/google/login", "/api/auth/google/link" }) {
+            assertEquals(200, execute(filter, path).getStatus());
+            assertEquals(200, execute(filter, path).getStatus());
+            assertEquals(429, execute(filter, path).getStatus());
+        }
+        assertEquals(200, execute(filter, "/api/auth/google/register").getStatus());
+        assertEquals(429, execute(filter, "/api/auth/google/register").getStatus());
+        assertEquals(200, execute(filter, "DELETE", "/api/auth/google/account").getStatus());
+        assertEquals(200, execute(filter, "DELETE", "/api/auth/google/account").getStatus());
+        assertEquals(429, execute(filter, "DELETE", "/api/auth/google/account").getStatus());
+        assertEquals(200, execute(filter, "GET", "/api/auth/google/status").getStatus());
+    }
 }

@@ -96,12 +96,18 @@ CREATE TYPE friendship_status AS ENUM (
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(15) UNIQUE NOT NULL,
-  email VARCHAR(50) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
+  email VARCHAR(254) UNIQUE NOT NULL,
+  password VARCHAR(255),
   first_name VARCHAR(100),
   last_name VARCHAR(100),
   profile_public BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- GOOGLE ACCOUNTS
+CREATE TABLE google_accounts (
+  user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  google_subject VARCHAR(255) UNIQUE NOT NULL
 );
 
 -- VEHICLES

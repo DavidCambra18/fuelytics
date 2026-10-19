@@ -20,7 +20,6 @@ Fuelytics es una aplicación para registrar vehículos, repostajes, gastos, neum
 - `backend/`: API REST con Java 17, Spring Boot y Maven.
 - `database/schema.sql`: esquema completo para crear una base PostgreSQL local vacía.
 - `database/docker-compose.yml`: PostgreSQL local de desarrollo.
-- `database/neon/`: cambios SQL manuales para una base Neon ya existente.
 
 El esquema local y los scripts de Neon tienen propósitos distintos. El backend usa `ddl-auto=validate`: comprueba la estructura, pero no crea ni modifica tablas al arrancar.
 
@@ -67,11 +66,11 @@ La aplicación estará en `http://localhost:5173` y la API en `http://localhost:
 
 ## Neon y cambios de base de datos
 
-La aplicación desplegada puede apuntar a Neon mediante `DB_URL`, `DB_USER` y `DB_PASS`. Los archivos de `database/neon/` son scripts versionados para aplicar manualmente y en orden. No se ejecutan desde el backend, Docker ni CI.
+La aplicación desplegada puede apuntar a Neon mediante `DB_URL`, `DB_USER` y `DB_PASS`. Los cambios de estructura en una base existente deben aplicarse manualmente. El backend no actualiza automáticamente el esquema.
 
 Antes de aplicar un script en Neon:
 
-1. revisa las consultas previas incluidas en el propio archivo;
+1. revisa el script y comprueba que el cambio no esté aplicado ya;
 2. crea una copia o rama de la base;
 3. ejecuta el script en una ventana de mantenimiento;
 4. valida el esquema y arranca el backend con `ddl-auto=validate`.
@@ -86,6 +85,7 @@ Antes de aplicar un script en Neon:
 | `FRONTEND_URL` | Backend | Origen permitido por CORS |
 | `JWT_SECRET` | Backend | Clave de firma JWT de 32 bytes como mínimo |
 | `JWT_EXPIRATION_MS` | Backend | Duración de sesión; por defecto, una hora |
+| `GOOGLE_CLIENT_ID` | Backend | Identificador del cliente web de Google Identity Services; vacío desactiva el acceso con Google |
 | `AUTH_LOGIN_MAX_ATTEMPTS` | Backend | Intentos de acceso permitidos por IP y ventana |
 | `AUTH_REGISTER_MAX_ATTEMPTS` | Backend | Registros permitidos por IP y ventana |
 | `AUTH_RATE_LIMIT_WINDOW_MS` | Backend | Ventana temporal del límite de autenticación |
@@ -94,6 +94,84 @@ Antes de aplicar un script en Neon:
 | `VITE_BACKEND_URL` | Frontend | URL pública de la API |
 
 No guardes valores reales, credenciales ni secretos en el repositorio.
+
+## Registro e inicio de sesión con Google
+
+Fuelytics utiliza **Google Identity Services** para comprobar la identidad del usuario y
+después abrir una sesión propia con el mismo JWT que el acceso con contraseña. No solicita
+acceso a Gmail, Drive, Calendar ni a otros datos de Google; solo identidad básica y correo
+verificado. No necesita un secreto de cliente ni configurar SMTP para iniciar sesión.
+
+### Preparar la base de datos
+
+Antes de arrancar esta versión con una base **ya existente**, comprueba que su estructura
+incluye los cambios descritos a continuación, tanto si utilizas una base local como una
+alojada en Neon. Si falta alguno, aplícalo manualmente tras hacer una copia de seguridad.
+El backend no modifica automáticamente el esquema.
+
+El cambio crea `google_accounts`, permite contraseñas nulas para cuentas creadas con Google
+y amplía el correo a 254 caracteres. Las cuentas y contraseñas existentes se conservan.
+La vinculación se elimina automáticamente al borrar la cuenta gracias a `ON DELETE CASCADE`.
+Para una base local **nueva**, `database/schema.sql` ya incluye estos cambios. Actualizar
+el archivo no modifica volúmenes Docker
+que ya existan. El esquema debe estar actualizado aunque Google siga desactivado, porque
+Hibernate valida todas las entidades al arrancar.
+
+### Configurar Google Cloud
+
+1. En [Google Cloud Console](https://console.cloud.google.com/), crea o selecciona el proyecto
+   y configura Google Auth Platform: nombre de aplicación, correo de soporte y audiencia.
+   Añade los usuarios de prueba si corresponde al modo de publicación elegido.
+2. Crea un cliente OAuth de tipo **Aplicación web**. En **Orígenes autorizados de JavaScript**,
+   añade el origen exacto del frontend que usará el botón, incluyendo protocolo y puerto:
+   `http://localhost:5173` para desarrollo y el dominio HTTPS del frontend para el despliegue.
+   No pongas rutas como `/login` ni utilices comodines para los despliegues de vista previa.
+3. Este flujo utiliza ventana emergente y callback JavaScript: no necesita una URI de
+   redirección del backend. Copia el **ID de cliente**, terminado en `.apps.googleusercontent.com`.
+4. Define en el entorno del **backend** y reinícialo:
+
+   ```dotenv
+   GOOGLE_CLIENT_ID=tu-identificador.apps.googleusercontent.com
+   FRONTEND_URL=http://localhost:5173
+   ```
+
+   En producción, `FRONTEND_URL` debe ser el origen HTTPS real del frontend, sin barra final.
+   Además de CORS, el backend comprueba este origen en las operaciones de Google. El mismo
+   cliente debe autorizar ese origen en Google Cloud. No es necesaria una variable `VITE_*`:
+   el frontend obtiene el identificador público desde `/api/auth/google/config`.
+
+Si `GOOGLE_CLIENT_ID` está vacío, el botón no se muestra y el acceso con contraseña sigue
+funcionando. Si el navegador bloquea el script o la ventana emergente de Google, permite
+el servicio para ese sitio o utiliza el acceso con contraseña cuando la cuenta disponga de él.
+La [guía oficial de Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
+detalla la configuración, los orígenes autorizados y los requisitos de CSP/COOP si añades
+esas políticas al alojamiento.
+
+### Comportamiento de las cuentas
+
+- En **Acceso** y **Registro**, el botón oficial de Google permite entrar con una cuenta ya
+  vinculada. Si es una identidad nueva, se solicita un nombre de usuario disponible antes
+  de crear la cuenta; no se genera una contraseña ficticia. El correo de bienvenida, si está
+  activado, solo se solicita tras guardar correctamente la nueva cuenta.
+- Si el correo ya pertenece a otra cuenta de Fuelytics, no se vincula automáticamente.
+  Primero hay que iniciar sesión en la cuenta existente y conectar Google en **Ajustes →
+  Cuenta → Métodos de acceso**, confirmando la contraseña local actual.
+- La identidad se relaciona mediante el identificador estable `sub` de Google, no mediante
+  el correo o el nombre. Vincular una cuenta de Google con otro correo no modifica el correo
+  principal de Fuelytics ni combina los datos de dos cuentas.
+- Una cuenta con contraseña local puede desvincular Google confirmando esa contraseña.
+  Una cuenta creada únicamente con Google no puede desvincular su único método de acceso.
+- Para eliminar una cuenta sin contraseña, se escribe **ELIMINAR**, se confirma la pérdida
+  de datos y se vuelve a verificar la identidad de Google vinculada. Las cuentas con
+  contraseña mantienen la confirmación por contraseña existente.
+
+El backend verifica firma RS256, emisor, audiencia, caducidad, antigüedad, correo verificado
+y un `nonce` aleatorio de un solo uso. No se envían credenciales ni JWT de sesión en URLs.
+Las confirmaciones caducan a los 5 minutos y los registros pendientes a los 10 minutos;
+se guardan en memoria con capacidad limitada. Si se reinicia el backend durante el proceso,
+el usuario debe comenzar de nuevo. En un despliegue con múltiples instancias habría que
+compartir ese almacenamiento entre ellas. Las pruebas automatizadas usan claves RSA y
+respuestas simuladas, sin cuentas reales de Google ni cambios en la base desplegada.
 
 ## Correos de bienvenida y solicitudes de amistad
 
@@ -174,8 +252,10 @@ no elimina el bloqueo de Render. Véanse las [limitaciones oficiales de Render](
 ## Eliminación de cuenta
 
 En **Ajustes → Cuenta**, el usuario puede eliminar permanentemente su cuenta tras introducir
-su contraseña actual y confirmar que comprende la pérdida de datos. La operación
+su contraseña actual (o confirmar su identidad de Google si no tiene contraseña) y confirmar que comprende la pérdida de datos. La operación
 `DELETE /api/users/account` requiere autenticación y un cuerpo JSON con `password`.
+Las cuentas sin contraseña utilizan `DELETE /api/auth/google/account` con un ID token
+de Google y un desafío de eliminación de un solo uso, vinculado al usuario autenticado.
 El backend identifica la cuenta desde la sesión, limita los intentos y realiza el borrado
 en una transacción. Las relaciones `ON DELETE CASCADE` del esquema eliminan los vehículos,
 repostajes, gastos, neumáticos, insignias obtenidas y amistades asociados.

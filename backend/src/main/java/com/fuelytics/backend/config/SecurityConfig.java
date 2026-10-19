@@ -39,6 +39,9 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
+                    .requestMatchers(HttpMethod.GET, "/api/auth/google/config").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/google/challenge", "/api/auth/google/login", "/api/auth/google/register").permitAll()
+
                     .requestMatchers("/api/users/register", "/api/users/login", "/api/users/public/**", "/api/health", "/api/ranking").permitAll()
 
                     .requestMatchers("/api/users/check-username", "/api/users/check-email").permitAll()
