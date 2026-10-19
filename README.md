@@ -140,8 +140,7 @@ Hibernate valida todas las entidades al arrancar.
    cliente debe autorizar ese origen en Google Cloud. No es necesaria una variable `VITE_*`:
    el frontend obtiene el identificador público desde `/api/auth/google/config`.
 
-Si `GOOGLE_CLIENT_ID` está vacío, el botón no se muestra y el acceso con contraseña sigue
-funcionando. Si el navegador bloquea el script o la ventana emergente de Google, permite
+Si el navegador bloquea el script o la ventana emergente de Google, permite
 el servicio para ese sitio o utiliza el acceso con contraseña cuando la cuenta disponga de él.
 La [guía oficial de Google](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
 detalla la configuración, los orígenes autorizados y los requisitos de CSP/COOP si añades
