@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
 import AccountAccessSection from "../components/AccountAccessSection";
+import { validateUsername } from "../utils/registrationValidation";
 import ViewportPortal from "../components/ViewportPortal";
 import { 
   ArrowLeft, 
@@ -154,23 +155,36 @@ export default function Settings() {
       return;
     }
 
+    const validationError = validateUsername(val);
+    if (validationError) {
+      const validationTimer = setTimeout(() => {
+        setUsernameError(validationError);
+        setUsernameStatus("error");
+      }, 0);
+      return () => clearTimeout(validationTimer);
+    }
+
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       setUsernameStatus("checking");
       try {
-        const res = await apiFetch(`/api/users/check-username?username=${encodeURIComponent(val)}`);
+        const res = await apiFetch(`/api/users/check-username?username=${encodeURIComponent(val)}`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         if (!res.ok) {
-          setUsernameError("El nombre de usuario ya está en uso");
+          const payload = await res.json().catch(() => ({}));
+          if (controller.signal.aborted) return;
+          setUsernameError(payload.message || "El nombre de usuario ya está en uso");
           setUsernameStatus("error");
         } else {
           setUsernameError("");
           setUsernameStatus("success");
         }
       } catch {
-        setUsernameStatus("idle");
+        if (!controller.signal.aborted) setUsernameStatus("idle");
       }
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [profileForm.username, username, loading]);
 
   const tabs = useMemo(
@@ -219,6 +233,13 @@ export default function Settings() {
 
   const saveProfile = async (event) => {
     event.preventDefault();
+    const nextUsername = profileForm.username.trim();
+    const validationError = nextUsername !== username ? validateUsername(nextUsername) : "";
+    if (validationError) {
+      setUsernameError(validationError);
+      setUsernameStatus("error");
+      return;
+    }
     
     if (usernameError || usernameStatus === "checking") {
       return;

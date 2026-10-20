@@ -21,6 +21,7 @@ import com.fuelytics.backend.entity.User;
 import com.fuelytics.backend.repository.UserRepository;
 import com.fuelytics.backend.repository.VehicleRepository;
 import com.fuelytics.backend.security.JwtService;
+import com.fuelytics.backend.validation.ReservedUsernames;
 import com.fuelytics.backend.notification.MailNotification;
 
 @Service
@@ -48,6 +49,7 @@ public class UserService {
 
         String email = dto.getEmail().trim().toLowerCase(Locale.ROOT);
         String username = dto.getUsername().trim();
+        ReservedUsernames.requireAllowed(username);
 
         if (userRepository.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo electrónico ya está registrado");
@@ -128,6 +130,7 @@ public class UserService {
     public UserProfileDTO updateProfile(String email, UserProfileDTO dto) {
         User user = findUserByEmail(email);
         String nextUsername = normalize(dto.getUsername());
+        if (nextUsername != null && !nextUsername.equals(user.getUsername())) ReservedUsernames.requireAllowed(nextUsername);
 
         if (nextUsername != null && !nextUsername.equals(user.getUsername())
                 && userRepository.existsByUsernameAndIdNot(nextUsername, user.getId())) {
@@ -203,6 +206,7 @@ public class UserService {
     }
 
     public boolean usernameExists(String username) {
+        ReservedUsernames.requireAllowed(username);
         return userRepository.existsByUsername(username.trim());
     }
 

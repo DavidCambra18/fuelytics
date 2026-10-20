@@ -24,7 +24,7 @@ class UserRegistrationNotificationTest {
     @Test
     void successfulRegistrationPublishesWelcomeAfterSavingUser() {
         var dto = registration();
-        when(encoder.encode("password-test")).thenReturn("hash");
+        when(encoder.encode("Password-test")).thenReturn("hash");
         service.register(dto);
         var order = inOrder(users, events);
         order.verify(users).existsByEmail("new@example.com");
@@ -44,7 +44,7 @@ class UserRegistrationNotificationTest {
         var dto = new UserRegisterDTO();
         dto.setUsername(" usuario ");
         dto.setEmail(" NEW@example.com ");
-        dto.setPassword("password-test");
+        dto.setPassword("Password-test");
         return dto;
     }
 

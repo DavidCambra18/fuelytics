@@ -1,9 +1,19 @@
 export const REGISTRATION_LIMITS = { usernameMin: 3, usernameMax: 15, emailMax: 254, nameMax: 100, passwordMin: 8, passwordMax: 72 };
 
+const RESERVED_USERNAMES = new Set([
+  "root", "sysroot", "rootuser", "admin", "admins", "administrator", "administrador",
+  "administradora", "administradores", "administracion", "administration", "manager",
+  "superadmin", "superuser", "sysadmin", "webadmin", "webmaster", "system", "sistema",
+  "mod", "moderator", "moderador", "moderadora", "support", "soporte", "staff",
+  "official", "oficial", "security", "seguridad", "owner", "propietario", "fuelytics",
+]);
+
 export function validateUsername(value) {
   if (!value) return "El nombre de usuario es obligatorio";
   if (value.length < 3 || value.length > 15) return "El nombre de usuario debe tener entre 3 y 15 caracteres";
   if (!/^[A-Za-z0-9._-]+$/.test(value)) return "Utiliza solo letras sin tildes, números, puntos, guiones y guiones bajos";
+  const canonical = value.toLowerCase().replace(/[._-]/g, "").replace(/[0-9]+$/, "");
+  if (RESERVED_USERNAMES.has(canonical)) return "Este nombre de usuario está reservado. Elige otro nombre";
   return "";
 }
 
@@ -22,6 +32,7 @@ export function validatePassword(value) {
   if (!value.trim()) return "La contraseña es obligatoria";
   if (value.length < 8 || value.length > 72) return "La contraseña debe tener entre 8 y 72 caracteres";
   if (new TextEncoder().encode(value).length > 72) return "La contraseña supera el límite de 72 bytes; las tildes y los emojis ocupan más de un byte";
+  if (!/\p{Lu}/u.test(value) || !/\p{Ll}/u.test(value)) return "La contraseña debe incluir al menos una letra mayúscula y una minúscula";
   return "";
 }
 

@@ -58,6 +58,12 @@ class GoogleAccountServiceTest {
     }
 
     @Test
+    void googleRegistrationCannotChooseAReservedName() {
+        assertThrows(ResponseStatusException.class, () -> service.register(identity, "ADMIN_01"));
+        verifyNoInteractions(users, accounts, events, jwt);
+    }
+
+    @Test
     void usernameConflictDoesNotSaveUserOrSendMail() {
         when(users.existsByUsername("ocupado")).thenReturn(true);
         assertThrows(ResponseStatusException.class, () -> service.register(identity, "ocupado"));

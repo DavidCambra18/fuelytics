@@ -30,16 +30,38 @@ class UserRegisterValidationTest {
 
     @Test
     void enforcesPasswordCharacterMinimumAndBcryptByteMaximum() {
-        for (String value : List.of("12345678", "a".repeat(72), "é".repeat(36), "🚗".repeat(18), "  clave  ")) {
+        for (String value : List.of("Abcdefgh", "Aa" + "a".repeat(70), "É" + "é".repeat(35), "Aa" + "🚗".repeat(17) + "é", "  Clave  ")) {
             var dto = registration();
             dto.setPassword(value);
             assertTrue(VALIDATOR.validate(dto).isEmpty(), value);
         }
-        for (String value : List.of("", "        ", "1234567", "a".repeat(73), "é".repeat(37), "🚗".repeat(19))) {
+        for (String value : List.of("", "        ", "Abcdefg", "Aa" + "a".repeat(71), "É" + "é".repeat(36), "Aa" + "🚗".repeat(18))) {
             var dto = registration();
             dto.setPassword(value);
             assertInvalid(dto, "password");
         }
+    }
+
+    @Test
+    void requiresUppercaseAndLowercaseButNotDigitsOrSymbols() {
+        for (String value : List.of("abcdefgh", "ABCDEFGH", "12345678", "🚗".repeat(8), "abcdef1!", "ABCDEF1!")) {
+            var dto = registration();
+            dto.setPassword(value);
+            assertInvalid(dto, "password");
+        }
+        for (String value : List.of("Abcdefgh", "ÁrbolesÉ", "Жж".repeat(4), "Clave123", "Clave!!!", "Clave\ncon saltos")) {
+            var dto = registration();
+            dto.setPassword(value);
+            assertTrue(VALIDATOR.validate(dto).isEmpty(), value);
+        }
+    }
+
+    @Test
+    void existingPasswordsCanStillBeUsedToSignIn() {
+        var login = new UserLoginDTO();
+        login.setEmail("user@example.com");
+        login.setPassword("12345678");
+        assertTrue(VALIDATOR.validate(login).isEmpty());
     }
 
     @Test
@@ -69,12 +91,12 @@ class UserRegisterValidationTest {
         dto.setEmail(" NEW@EXAMPLE.COM ");
         dto.setFirstName(" María ");
         dto.setLastName(" García ");
-        dto.setPassword("  clave  ");
+        dto.setPassword("  Clave  ");
         assertEquals("Usuario", dto.getUsername());
         assertEquals("new@example.com", dto.getEmail());
         assertEquals("María", dto.getFirstName());
         assertEquals("García", dto.getLastName());
-        assertEquals("  clave  ", dto.getPassword());
+        assertEquals("  Clave  ", dto.getPassword());
         assertTrue(VALIDATOR.validate(dto).isEmpty());
     }
 
@@ -86,7 +108,7 @@ class UserRegisterValidationTest {
         var dto = new UserRegisterDTO();
         dto.setUsername("usuario");
         dto.setEmail("user@example.com");
-        dto.setPassword("12345678");
+        dto.setPassword("Abcdefgh");
         return dto;
     }
 }

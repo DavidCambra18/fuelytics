@@ -17,6 +17,7 @@ import com.fuelytics.backend.repository.GoogleAccountRepository;
 import com.fuelytics.backend.repository.UserRepository;
 import com.fuelytics.backend.security.GoogleIdentity;
 import com.fuelytics.backend.security.JwtService;
+import com.fuelytics.backend.validation.ReservedUsernames;
 
 @Service
 public class GoogleAccountService {
@@ -50,6 +51,7 @@ public class GoogleAccountService {
 
     @Transactional
     public Map<String, Object> register(GoogleIdentity identity, String username) {
+        ReservedUsernames.requireAllowed(username);
         if (accounts.findByGoogleSubject(identity.subject()).isPresent() || users.existsByEmail(identity.email())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Esta cuenta ya está registrada. Vuelve a iniciar sesión.");
         }
