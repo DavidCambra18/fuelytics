@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
+import PublicFooter from "../components/PublicFooter";
 
 export default function Home() {
   return (
-    <div className="min-h-screen text-slate-100">
+    <div className="flex min-h-dvh flex-col text-slate-100">
       <header className="section-shell flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-6">
         <div className="flex items-center gap-3">
           <div>
@@ -23,7 +24,7 @@ export default function Home() {
         </nav>
       </header>
 
-      <main className="section-shell pb-12 pt-6 sm:pb-16 sm:pt-10 lg:pb-20 lg:pt-16">
+      <main className="section-shell flex-1 pb-12 pt-6 sm:pb-16 sm:pt-10 lg:pb-20 lg:pt-16">
         <div className="hero-grid items-center">
           <section className="hero-copy space-y-7 sm:space-y-8">
 
@@ -60,6 +61,7 @@ export default function Home() {
           </section>
         </div>
       </main>
+      <PublicFooter />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { apiJson } from "../services/api";
 import useRegistrationAvailability from "../hooks/useRegistrationAvailability";
 import { normalizeRegistration, validateRegistration, validatePassword, REGISTRATION_LIMITS } from "../utils/registrationValidation";
 import GoogleSignInPanel from "../components/GoogleSignInPanel";
+import PublicFooter from "../components/PublicFooter";
 
 const STEPS = [
   { label: "Correo", title: "Empieza con tu correo", description: "Lo usarás para acceder a tu cuenta de Fuelytics.", fields: ["email"] },
@@ -210,8 +211,8 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <div className="section-shell grid min-h-screen items-center gap-8 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:py-10">
+    <div className="flex min-h-dvh flex-col text-slate-100">
+      <div className="section-shell grid flex-1 items-center gap-8 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:py-6">
         <section className="order-2 space-y-8 lg:order-1">
           <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Nuevo usuario</p>
@@ -268,6 +269,7 @@ export default function Register() {
           <p hidden={googleRegistration} className="mt-5 text-sm text-slate-400">¿Ya tienes cuenta? <Link to="/login" className="font-medium text-white transition hover:text-teal-200">Inicia sesión</Link></p>
         </section>
       </div>
+      <PublicFooter />
     </div>
   );
 }

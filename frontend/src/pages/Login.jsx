@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiJson } from "../services/api";
 import GoogleSignInPanel from "../components/GoogleSignInPanel";
+import PublicFooter from "../components/PublicFooter";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -46,8 +47,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <div className="section-shell grid min-h-screen items-center gap-8 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:py-10">
+    <div className="flex min-h-dvh flex-col text-slate-100">
+      <div className="section-shell grid flex-1 items-center gap-8 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:py-6">
         <section className="space-y-8 pr-0 lg:pr-8">
           <p className="text-sm uppercase tracking-[0.28em] text-slate-400">Acceso</p>
 
@@ -126,6 +127,7 @@ export default function Login() {
           </p>
         </section>
       </div>
+      <PublicFooter />
     </div>
   );
 }
