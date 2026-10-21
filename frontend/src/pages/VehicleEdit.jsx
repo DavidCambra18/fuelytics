@@ -12,7 +12,7 @@ import CustomSelect from "../components/CustomSelect";
 
 export default function VehicleEdit() {
   const navigate = useNavigate();
-  const { selectedVehicle } = useOutletContext();
+  const { selectedVehicle, updateVehicle } = useOutletContext();
   const [form, setForm] = useState({
     vehicleType: selectedVehicle?.vehicleType || "",
     brand: selectedVehicle?.brand || "",
@@ -79,9 +79,11 @@ export default function VehicleEdit() {
       });
 
       if (!response.ok) {
-        throw new Error("No se pudo actualizar el coche");
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message || "No se pudo actualizar el coche");
       }
 
+      updateVehicle(await response.json());
       navigate(`/vehicles/${selectedVehicle.id}`);
     } catch (submitError) {
       setErrorMessage(submitError.message || "No se pudo actualizar el coche");

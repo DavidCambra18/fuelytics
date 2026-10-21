@@ -42,6 +42,12 @@ export default function VehicleLayout() {
         [vehicles, vehicleId]
     );
 
+    const updateVehicle = (updatedVehicle) => {
+        setVehicles((current) => current.map((vehicle) =>
+            vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
+        ));
+    };
+
     const navigationItems = [
         { label: "Resumen", to: "" },
         { label: "Repostajes", to: "fuelings" },
@@ -106,7 +112,7 @@ export default function VehicleLayout() {
                                 </div>
                             ) : (
                                 <Suspense fallback={<VehicleLoadingSkeleton />}>
-                                    <Outlet context={{ selectedVehicle }} />
+                                    <Outlet context={{ selectedVehicle, updateVehicle }} />
                                 </Suspense>
                             )}
                         </motion.div>
