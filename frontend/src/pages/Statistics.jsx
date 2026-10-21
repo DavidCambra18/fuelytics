@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Download } from "lucide-react";
+import { Download, Check } from "lucide-react";
 import { apiFetch } from "../services/api";
 import { getConsumptionUnit, getOdometerUnit, getQuantityUnit, getUnitPriceLabel } from "../utils/vehicleLabels";
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
 import ExportReportModal from "../components/ExportReportModal";
 import { buildFuelingRows, summarizeConsumption } from "../utils/consumption";
 import {
@@ -56,7 +58,7 @@ function formatFullDate(value) {
 export default function Statistics() {
   const { selectedVehicle } = useOutletContext();
   const [fuelings, setFuelings] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedMetric, setSelectedMetric] = useState("consumption");
   const [exportTarget, setExportTarget] = useState(null);
@@ -135,6 +137,12 @@ export default function Statistics() {
     };
   }, [fuelings, fuelingRows, selectedVehicle]);
 
+  const chartColors = useMemo(() => {
+    const styles = getComputedStyle(document.documentElement);
+    const read = (name) => styles.getPropertyValue(name).trim();
+    return { primary: read("--primary"), foreground: read("--foreground"), muted: read("--muted-foreground"), surface: read("--popover"), border: read("--border-subtle"), font: read("--font-sans") };
+  }, []);
+
   const chartData = useMemo(() => {
     const cumulativeFuelings = [];
     const verifiedPoints = [];
@@ -157,12 +165,12 @@ export default function Statistics() {
           {
             label: `Media acumulada (${consumptionUnit})`,
             data: verifiedPoints.map((point) => point.summary.averageConsumption),
-            borderColor: "#f8fafc",
-            backgroundColor: "rgba(248, 250, 252, 0.12)",
-            pointBackgroundColor: "#e2e8f0",
-            pointBorderColor: "#ffffff",
-            pointRadius: 4,
-            pointHoverRadius: 6,
+            borderColor: chartColors.primary,
+            backgroundColor: "rgba(56, 216, 195, 0.08)",
+            pointBackgroundColor: chartColors.primary,
+            pointBorderColor: chartColors.surface,
+            pointRadius: 3,
+            pointHoverRadius: 5,
             tension: 0.35,
             fill: true,
           },
@@ -178,9 +186,9 @@ export default function Statistics() {
             borderColor: "#fbbf24",
             backgroundColor: "rgba(251, 191, 36, 0.12)",
             pointBackgroundColor: "#fcd34d",
-            pointBorderColor: "#ffffff",
-            pointRadius: 4,
-            pointHoverRadius: 6,
+            pointBorderColor: chartColors.surface,
+            pointRadius: 3,
+            pointHoverRadius: 5,
             tension: 0.35,
             fill: true,
           },
@@ -193,32 +201,35 @@ export default function Statistics() {
           {
             label: `Precio medio (${unitPriceLabel})`,
             data: verifiedPoints.map((point) => point.summary.averageUnitPrice),
-            borderColor: "#10b981",
-            backgroundColor: "rgba(16, 185, 129, 0.12)",
-            pointBackgroundColor: "#6ee7b7",
-            pointBorderColor: "#ffffff",
-            pointRadius: 4,
-            pointHoverRadius: 6,
+            borderColor: chartColors.foreground,
+            backgroundColor: "rgba(234, 242, 247, 0.06)",
+            pointBackgroundColor: chartColors.foreground,
+            pointBorderColor: chartColors.surface,
+            pointRadius: 3,
+            pointHoverRadius: 5,
             tension: 0.35,
             fill: true,
           },
         ],
       };
     }
-  }, [chartFuelings, selectedMetric, consumptionUnit, costRateLabel, unitPriceLabel, selectedVehicle]);
+  }, [chartFuelings, selectedMetric, consumptionUnit, costRateLabel, unitPriceLabel, selectedVehicle, chartColors]);
 
   const chartOptions = useMemo(
     () => ({
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
       plugins: {
         legend: {
           display: false,
         },
         tooltip: {
-          backgroundColor: "rgba(2, 6, 23, 0.95)",
-          titleColor: "#ffffff",
-          bodyColor: "#e2e8f0",
+          backgroundColor: chartColors.surface,
+          titleColor: chartColors.foreground,
+          bodyColor: chartColors.foreground,
+          titleFont: { family: chartColors.font },
+          bodyFont: { family: chartColors.font },
           padding: 12,
           displayColors: false,
           callbacks: {
@@ -237,34 +248,36 @@ export default function Statistics() {
       scales: {
         x: {
           ticks: {
-            color: "#94a3b8",
+            color: chartColors.muted,
+            font: { family: chartColors.font, size: 12 },
             maxRotation: 0,
             autoSkip: true,
             maxTicksLimit: 8,
           },
           grid: {
-            color: "rgba(148, 163, 184, 0.08)",
+            color: chartColors.border,
           },
         },
         y: {
           beginAtZero: false,
           ticks: {
-            color: "#94a3b8",
+            color: chartColors.muted,
+            font: { family: chartColors.font, size: 12 },
           },
           grid: {
-            color: "rgba(148, 163, 184, 0.12)",
+            color: chartColors.border,
           },
         },
       },
     }),
-    [selectedMetric, consumptionUnit, unitPriceLabel]
+    [selectedMetric, consumptionUnit, unitPriceLabel, chartColors]
   );
 
   const cards = [
     {
       label: "Consumo medio",
       value: `${metrics.averageConsumption.toFixed(2)} ${consumptionUnit}`,
-      note: `Cantidad verificada dividida entre ${distanceUnit === "h" ? "horas" : "kilómetros"} recorridos`,
+      note: `Cantidad verificada dividida entre ${distanceUnit === "h" ? "horas de uso" : "kilómetros recorridos"}`,
     },
     {
       label: costRateLabel,
@@ -302,39 +315,24 @@ export default function Statistics() {
   }, [fuelings]);
 
   return (
-    <section className="space-y-8">
-      <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Estadísticas</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white">
-          Métricas de {selectedVehicle.brand} {selectedVehicle.model}
-        </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-          Resumen rápido del comportamiento del vehículo a partir de sus repostajes.
-        </p>
-
-        <div className="mt-5 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setExportTarget({ reportType: "summary", vehicle: selectedVehicle })}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-teal-300/40 hover:bg-white/10 hover:text-white"
-            aria-label="Exportar resumen"
-            title="Exportar resumen"
-          >
-            <Download className="h-5 w-5" />
-          </button>
-        </div>
+    <section className="space-y-6 fl-statistics">
+      <Surface as="article" className="fl-workspace">
+        <header className="fl-workspace-heading">
+          <div><h2 className="fl-page-title">Estadísticas</h2><p className="fl-supporting mt-3">Resumen del comportamiento del vehículo a partir de sus repostajes.</p></div>
+          <Button type="button" variant="outline" onClick={() => setExportTarget({ reportType: "summary", vehicle: selectedVehicle })} aria-label="Exportar resumen"><Download aria-hidden="true" />Exportar resumen</Button>
+        </header>
 
         {error ? (
-          <div className="mt-6 rounded-lg border border-red-500/30 bg-red-500/20 p-4 text-sm text-red-300">
+          <div role="alert" className="fl-feedback-error">
             {error}
           </div>
         ) : null}
 
         {loading ? (
-          <div className="mt-6 py-8 text-center text-slate-400">Cargando estadísticas...</div>
+          <div role="status" className="fl-expense-state">Cargando estadísticas...</div>
         ) : (
           <>
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="fl-metric-selector" role="group" aria-label="Métrica de la gráfica">
               {cards.map((card, index) => {
                 const cardMetricKey = index === 0 ? "consumption" : index === 1 ? "costPer100Km" : "fuelPrice";
                 const isSelected = selectedMetric === cardMetricKey;
@@ -343,24 +341,23 @@ export default function Statistics() {
                   <button
                     key={card.label}
                     onClick={() => setSelectedMetric(cardMetricKey)}
-                    className={`rounded-3xl border p-5 transition-all ${isSelected
-                        ? "border-blue-400/50 bg-blue-500/15"
-                        : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
-                      }`}
+                    type="button"
+                    aria-pressed={isSelected}
+                    className="fl-metric-choice"
                   >
-                    <p className="text-left text-xs uppercase tracking-[0.18em] text-slate-400">{card.label}</p>
-                    <p className="mt-3 text-left text-2xl font-semibold text-white">{card.value}</p>
-                    <p className="mt-2 text-left text-sm leading-6 text-slate-400">{card.note}</p>
+                    <span className="fl-metric-label">{card.label}{isSelected ? <Check size={16} aria-hidden="true" /> : null}</span>
+                    <p className="fl-metric-value">{card.value}</p>
+                    <p className="fl-supporting mt-2">{card.note}</p>
                   </button>
                 );
               })}
             </div>
 
-            <article className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/50 p-5 sm:p-6">
+            <section className="fl-chart-section" aria-labelledby="statistics-chart-title">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Gráfica</p>
-                  <h3 className="mt-2 text-xl font-semibold text-white">
+
+                  <h3 id="statistics-chart-title" className="fl-section-title">
                     {selectedMetric === "consumption"
                       ? "Consumo medio acumulado"
                       : selectedMetric === "costPer100Km"
@@ -370,43 +367,55 @@ export default function Statistics() {
                 </div>
               </div>
 
-              <div className="mt-5 h-[340px] rounded-[1.5rem] border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-3 sm:h-[480px] sm:p-4 xl:h-[520px]">
-                {chartFuelings.length > 0 ? (
-                  <Line data={chartData} options={chartOptions} />
+              <div className="fl-chart-canvas">
+                {chartData.labels.length > 0 ? (
+                  <Line data={chartData} options={chartOptions} role="img" aria-labelledby="statistics-chart-title" aria-describedby="statistics-chart-description" />
                 ) : (
-                  <div className="flex h-full items-center justify-center rounded-[1rem] border border-dashed border-white/10 text-sm text-slate-400">
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground text-center">
                     Todavía no hay datos suficientes para dibujar la gráfica.
                   </div>
                 )}
               </div>
-            </article>
+              <p id="statistics-chart-description" className="fl-supporting mt-3">Media acumulada de los ciclos verificados. Selecciona una métrica para comparar su evolución.</p>
+              {chartData.labels.length > 0 ? (
+                <details className="fl-chart-data">
+                  <summary>Ver datos de la gráfica</summary>
+                  <table>
+                    <caption className="sr-only">{chartData.datasets[0].label}</caption>
+                    <thead><tr><th scope="col">Fecha</th><th scope="col">{chartData.datasets[0].label}</th></tr></thead>
+                    <tbody>{chartData.labels.map((label, index) => (
+                      <tr key={`${label}-${index}`}><td>{label}</td><td>{Number(chartData.datasets[0].data[index]).toFixed(selectedMetric === "fuelPrice" ? 3 : 2)}</td></tr>
+                    ))}</tbody>
+                  </table>
+                </details>
+              ) : null}
+            </section>
           </>
         )}
-      </article>
+      </Surface>
 
-      <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
+      <Surface as="article" className="fl-workspace">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Últimos repostajes</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">Historial reciente</h3>
+            <h3 className="fl-section-title">Últimos repostajes</h3>
           </div>
-          <p className="text-sm text-slate-400">{fuelings.length} registros</p>
+          <p className="fl-ledger-count">{fuelings.length} registros</p>
         </div>
 
         {recentFuelings.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-slate-400">
+          <div className="fl-expense-state">
             Todavía no hay repostajes para mostrar.
           </div>
         ) : (
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-3">
+          <div className="mt-5">
+            <table className="fl-statistics-history"><caption className="sr-only">Los cinco repostajes más recientes</caption>
               <thead>
-                <tr className="text-left text-xs uppercase tracking-[0.16em] text-slate-500">
-                  <th className="px-4 py-2">Fecha</th>
-                  <th className="px-4 py-2">Cantidad</th>
-                  <th className="px-4 py-2">Importe</th>
-                  <th className="px-4 py-2">Distancia</th>
-                  <th className="px-4 py-2">Consumo</th>
+                <tr>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Cantidad</th>
+                  <th scope="col">Importe</th>
+                  <th scope="col">Distancia</th>
+                  <th scope="col">Consumo</th>
                 </tr>
               </thead>
               <tbody>
@@ -420,12 +429,12 @@ export default function Statistics() {
                     : null;
 
                   return (
-                    <tr key={fueling.id} className="rounded-2xl bg-white/5 text-sm text-slate-200">
-                      <td className="rounded-l-2xl px-4 py-4">{formatFullDate(fueling.date)}</td>
-                      <td className="px-4 py-4">{liters.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {quantityUnit}</td>
-                      <td className="px-4 py-4">{priceTotal.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</td>
-                      <td className="px-4 py-4">{distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} {distanceUnit}</td>
-                      <td className="rounded-r-2xl px-4 py-4">{consumption !== null ? `${consumption} ${consumptionUnit}` : "—"}</td>
+                    <tr key={fueling.id} >
+                      <td data-label="Fecha">{formatFullDate(fueling.date)}</td>
+                      <td data-label="Cantidad">{liters.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {quantityUnit}</td>
+                      <td data-label="Importe">{priceTotal.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</td>
+                      <td data-label="Distancia">{distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} {distanceUnit}</td>
+                      <td data-label="Consumo">{consumption !== null ? `${consumption} ${consumptionUnit}` : "—"}</td>
                     </tr>
                   );
                 })}
@@ -433,10 +442,11 @@ export default function Statistics() {
             </table>
           </div>
         )}
-      </article>
+      </Surface>
 
       {exportTarget ? (
         <ExportReportModal
+          appearance="atlantic"
           open={Boolean(exportTarget)}
           reportType={exportTarget.reportType}
           vehicle={exportTarget.vehicle}

@@ -2,15 +2,16 @@ import { X } from "lucide-react";
 import ViewportPortal from "../ViewportPortal";
 import { Button } from "./button";
 import { Surface } from "./surface";
+import { cn } from "@/lib/utils";
 
 // Presentation only: the caller retains its dialog lifecycle and focus hook.
-export function DialogFrame({ dialogRef, titleId, title, description, onClose, children }) {
+export function DialogFrame({ dialogRef, titleId, title, description, onClose, children, className }) {
   return (
     <ViewportPortal>
       <div className="fl-dialog-backdrop" onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}>
-        <Surface variant="floating" className="fl-dialog" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? `${titleId}-description` : undefined} tabIndex={-1}>
+        <Surface variant="floating" className={cn("fl-dialog", className)} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? `${titleId}-description` : undefined} tabIndex={-1}>
           <header className="fl-dialog-header">
             <div className="min-w-0">
               <h3 id={titleId} className="fl-dialog-title">{title}</h3>

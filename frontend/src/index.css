@@ -720,3 +720,97 @@ body::before {
     .fl-tire-history-row { align-items:start; flex-direction:column; }
   }
 }
+@layer components {
+  .fl-fueling-tools { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); }
+  .fl-fuelings>.fl-workspace-heading { flex-wrap:wrap; }
+  .fl-fueling-records { border-top:1px solid var(--border-subtle); }
+  .fl-fueling-record { padding-block:var(--space-5); border-bottom:1px solid var(--border-subtle); }
+  .fl-fueling-record-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-3); margin-bottom:var(--space-4); }
+  .fl-fueling-data { display:grid; grid-template-columns:1fr .8fr 1fr 1.2fr 1.5fr; gap:var(--space-4); }
+  .fl-fueling-data>div { min-width:0; }
+  @media (min-width:1200px) {
+    .fl-fueling-record { display:grid; grid-template-columns:7rem minmax(0,1fr) auto; column-gap:var(--space-5); padding-block:var(--space-4); align-items:start; }
+    .fl-fueling-record-header { display:contents; }
+    .fl-fueling-record-header>div:first-child { grid-column:1; grid-row:1; }
+    .fl-fueling-record-header>div:last-child { grid-column:3; grid-row:1; }
+    .fl-fueling-data { grid-column:2; grid-row:1; }
+    .fl-calculation-note { grid-column:2/-1; margin-top:0; }
+    .fl-fueling-note { grid-column:2/-1; }
+  }
+  .fl-data-label { font-size:.75rem; line-height:1.5; color:var(--muted-foreground); }
+  .fl-data-value { margin-top:4px; font-size:.875rem; font-weight:500; color:var(--foreground); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .fl-fueling-note { margin-top:var(--space-3); padding:var(--space-3) var(--space-4); border-radius:var(--radius-control); background:var(--surface-inset); color:var(--text-secondary); font-size:.875rem; line-height:1.6; overflow-wrap:anywhere; }
+  .fl-calculation-note { margin-top:var(--space-2); }
+  .fl-calculation-note summary,.fl-chart-data summary { min-height:44px; align-content:center; cursor:pointer; color:var(--muted-foreground); font-size:.8125rem; padding-block:var(--space-2); }
+  .fl-calculation-note summary:focus-visible,.fl-chart-data summary:focus-visible { outline:2px solid var(--ring); outline-offset:2px; border-radius:4px; }
+  .fl-fueling-pagination { margin-top:var(--space-5); }
+  .fl-fueling-pagination ul { flex-wrap:wrap; gap:4px; }
+  .fl-fueling-dialog { max-width:52rem; }
+  .fl-fueling-dialog .fl-vehicle-fieldset { display:grid; gap:var(--space-4); }
+  .fl-fueling-dialog .fl-vehicle-fieldset legend { padding-bottom:var(--space-4); }
+  .fl-fueling-quantities { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-4); }
+  .fl-driving-conditions { border:0; padding:0; min-width:0; }
+  .fl-condition-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-3); }
+  .fl-condition-option { display:flex; align-items:start; gap:var(--space-3); padding:var(--space-3); border:1px solid var(--input); border-radius:var(--radius-control); background:var(--surface-inset); color:var(--text-secondary); cursor:pointer; overflow-wrap:anywhere; }
+  .fl-condition-option input { width:16px; height:16px; flex-shrink:0; margin-top:3px; accent-color:var(--primary); }
+  .fl-condition-option:has(:checked) { border-color:var(--primary); background:var(--accent); color:var(--accent-foreground); }
+  .fl-condition-option:has(:focus-visible) { outline:2px solid var(--ring); outline-offset:2px; }
+  .fl-condition-option .fl-supporting { font-size:.75rem; line-height:1.5; }
+  .fl-help-item { padding-block:var(--space-4); border-bottom:1px solid var(--border-subtle); }
+  .fl-metric-selector { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-3); }
+  .fl-metric-choice { position:relative; display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; min-width:0; padding:var(--space-5); text-align:left; color:var(--foreground); background:var(--surface-inset); border:1px solid var(--input); border-radius:var(--radius-card); cursor:pointer; }
+  .fl-metric-choice[aria-pressed="true"] { border-color:var(--primary); background:var(--accent); }
+  .fl-metric-choice:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }
+  .fl-metric-label { display:flex; justify-content:space-between; align-items:center; gap:var(--space-2); font-size:.8125rem; color:var(--text-secondary); line-height:1.5; }
+  .fl-metric-label svg { flex-shrink:0; color:var(--primary); }
+  .fl-metric-value { margin-top:var(--space-3); font-size:clamp(1.125rem,2vw,1.5rem); line-height:1.35; font-weight:600; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .fl-chart-section { margin-top:var(--space-6); padding-top:var(--space-5); border-top:1px solid var(--border-subtle); }
+  .fl-chart-canvas { position:relative; height:320px; margin-top:var(--space-5); }
+  .fl-chart-data { margin-top:var(--space-2); }
+  .fl-chart-data table { width:100%; border-collapse:collapse; text-align:left; font-size:.8125rem; font-variant-numeric:tabular-nums; }
+  .fl-chart-data th,.fl-chart-data td { padding:8px 4px; border-bottom:1px solid var(--border-subtle); }
+  .fl-chart-data th:last-child,.fl-chart-data td:last-child { text-align:right; }
+  .fl-statistics-history { width:100%; border-collapse:collapse; text-align:left; font-size:.875rem; font-variant-numeric:tabular-nums; }
+  .fl-statistics-history th { color:var(--muted-foreground); font-size:.75rem; font-weight:500; }
+  .fl-statistics-history th,.fl-statistics-history td { padding:var(--space-4) var(--space-3); border-bottom:1px solid var(--border-subtle); }
+  .fl-statistics-history th:first-child,.fl-statistics-history td:first-child { padding-left:0; }
+  .fl-statistics-history th:not(:first-child),.fl-statistics-history td:not(:first-child) { text-align:right; }
+  .fl-statistics-history th:last-child,.fl-statistics-history td:last-child { padding-right:0; }
+  @media (hover:hover) and (pointer:fine) {
+    .fl-metric-choice:hover { border-color:var(--primary); }
+    .fl-condition-option:hover { border-color:var(--ring); }
+    .fl-calculation-note summary:hover,.fl-chart-data summary:hover { color:var(--foreground); }
+  }
+  @media (max-width:1023px) {
+    .fl-fueling-data { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .fl-fueling-data>div:last-child { grid-column:span 2; }
+    .fl-metric-choice { padding:var(--space-4); }
+    .fl-metric-label { min-height:3em; }
+  }
+  @media (max-width:639px) {
+    .fl-fueling-tools { width:100%; }
+    .fl-fueling-tools>:first-child { flex:1; }
+    .fl-fueling-data { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); }
+    .fl-fueling-data>div:last-child { grid-column:1/-1; }
+    .fl-fueling-record-header { align-items:flex-start; }
+    .fl-fueling-record-header>div:last-child { gap:4px; }
+    .fl-fueling-record-header .fl-button { padding-inline:10px; }
+    .fl-fueling-quantities { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .fl-fueling-quantities>:first-child { grid-column:1/-1; }
+    .fl-condition-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-2); }
+    .fl-condition-option { padding:var(--space-2); gap:var(--space-2); }
+    .fl-condition-option svg { display:none; }
+    .fl-metric-selector { grid-template-columns:1fr; gap:var(--space-2); }
+    .fl-metric-choice { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px var(--space-3); padding:var(--space-3); border-radius:var(--radius-control); }
+    .fl-metric-label { align-self:center; min-height:0; }
+    .fl-metric-value { margin:0; font-size:1.125rem; text-align:right; }
+    .fl-metric-choice>.fl-supporting { grid-column:1/-1; margin:0; font-size:.75rem; }
+    .fl-chart-canvas { height:240px; margin-top:var(--space-4); }
+    .fl-statistics-history,.fl-statistics-history tbody { display:block; }
+    .fl-statistics-history thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    .fl-statistics-history tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); padding-block:var(--space-4); border-bottom:1px solid var(--border-subtle); }
+    .fl-statistics-history td,.fl-statistics-history td:first-child,.fl-statistics-history td:last-child { border:0; padding:0; text-align:left; overflow-wrap:anywhere; }
+    .fl-statistics-history td::before { content:attr(data-label); display:block; margin-bottom:4px; color:var(--muted-foreground); font-size:.75rem; }
+    .fl-statistics-history td:first-child { grid-column:1/-1; font-weight:500; }
+  }
+}

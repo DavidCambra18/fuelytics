@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Building2, CircleAlert, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck, Download } from "lucide-react";
+import { Building2, CircleAlert, CircleHelp, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck, Download, Plus, Pencil, Trash2 } from "lucide-react";
 import { apiFetch } from "../services/api";
 import CustomSelect from "../components/CustomSelect";
 import ExportReportModal from "../components/ExportReportModal";
-import ViewportPortal from "../components/ViewportPortal";
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/field";
+import { DialogFrame } from "../components/ui/dialog-frame";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import usePagination from "../hooks/usePagination";
 import FormErrorSummary from "../components/FormErrorSummary";
@@ -107,7 +110,7 @@ function toNumber(value) {
 export default function Fuelings() {
   const { selectedVehicle } = useOutletContext();
   const [fuelings, setFuelings] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -330,42 +333,36 @@ export default function Fuelings() {
       key: "highway",
       label: "Autopista",
       hint: "Tramos rápidos y continuos.",
-      accent: "from-cyan-400/25 to-teal-400/20",
       Icon: Route,
     },
     {
       key: "city",
       label: "Ciudad",
       hint: "Paradas frecuentes y tráfico denso.",
-      accent: "from-amber-400/20 to-orange-400/15",
       Icon: Building2,
     },
     {
       key: "road",
       label: "Carretera",
       hint: "Trayectos mixtos fuera de ciudad.",
-      accent: "from-sky-400/20 to-indigo-400/15",
       Icon: Gauge,
     },
     {
       key: "ac",
       label: "A/C activado",
       hint: "Aire acondicionado durante el trayecto.",
-      accent: "from-sky-300/20 to-cyan-300/15",
       Icon: Snowflake,
     },
     {
       key: "trailer",
       label: "Con remolque",
       hint: "Carga o arrastre adicional.",
-      accent: "from-rose-400/20 to-red-400/15",
       Icon: Truck,
     },
     {
       key: "heating",
       label: "Calefacción activada",
       hint: "Uso de calefacción en marcha.",
-      accent: "from-violet-400/20 to-fuchsia-400/15",
       Icon: Flame,
     },
   ];
@@ -376,57 +373,33 @@ export default function Fuelings() {
 
   return (
     <section className="w-full space-y-6">
-      <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
-        <div className="space-y-2 mb-8">
-          <p className="text-xs uppercase tracking-[0.3em] text-teal-400 font-semibold">Repostajes</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Consumos de {selectedVehicle.brand} {selectedVehicle.model}
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-slate-300 max-w-2xl">
-            Historial detallado de repostajes con cálculo por ciclo lleno a lleno.
-          </p>
-        </div>
-
-        <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setExportTarget({ reportType: "fuelings", vehicle: selectedVehicle })}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-teal-300/40 hover:bg-white/10 hover:text-white"
-            aria-label="Exportar repostajes"
-            title="Exportar repostajes"
-          >
-            <Download className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowHelp(true)}
-            className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2 text-sm font-semibold text-teal-100 transition hover:border-teal-300/35 hover:bg-teal-300/15 hover:text-white"
-          >
-            Ayuda de repostaje
-          </button>
-        </div>
-
-        <button
-          onClick={openCreateForm}
-          className="mb-6 inline-flex rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700"
-        >
-          + Nuevo repostaje
-        </button>
-
+      <Surface as="article" className="fl-workspace fl-fuelings">
+        <header className="fl-workspace-heading">
+          <div className="min-w-0 flex-1 basis-80">
+            <h2 className="fl-page-title">Repostajes</h2>
+            <p className="fl-supporting mt-3">Historial detallado de repostajes con cálculo por ciclo lleno a lleno.</p>
+          </div>
+          <div className="fl-fueling-tools">
+            <Button type="button" onClick={openCreateForm}><Plus aria-hidden="true" />Nuevo repostaje</Button>
+            <Button type="button" variant="outline" size="icon" onClick={() => setExportTarget({ reportType: "fuelings", vehicle: selectedVehicle })} aria-label="Exportar repostajes" title="Exportar repostajes"><Download aria-hidden="true" /></Button>
+            <Button type="button" variant="ghost" onClick={() => setShowHelp(true)} aria-label="Ayuda de repostaje" title="Ayuda de repostaje" className="w-11 px-0 sm:w-auto sm:px-4"><CircleHelp aria-hidden="true" /><span className="hidden sm:inline">Ayuda de repostaje</span></Button>
+          </div>
+        </header>
+        <div className="fl-ledger-heading"><h3 className="fl-section-title">Historial</h3><p className="fl-ledger-count">{fuelings.length} registros</p></div>
         {error ? (
-          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/20 p-4 text-sm text-red-300">
+          <div role="alert" className="fl-feedback-error">
             {error}
           </div>
         ) : null}
 
         {loading ? (
-          <div className="py-8 text-center text-slate-400">Cargando...</div>
+          <div role="status" className="fl-expense-state">Cargando repostajes...</div>
         ) : fuelings.length === 0 ? (
-          <div className="py-8 text-center text-slate-400">
+          <div className="fl-expense-state">
             No hay repostajes registrados. ¡Crea uno para empezar!
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="fl-fueling-records">
             {currentFuelings.map((fueling) => {
               const liters = Number(fueling.liters) || 0;
               const distance = Number(fueling.distance) || 0;
@@ -460,55 +433,55 @@ export default function Fuelings() {
               return (
                 <div
                   key={fueling.id}
-                  className="rounded-xl border border-slate-700/50 bg-slate-950/30 p-4 transition hover:border-slate-600/50"
+                  className="fl-fueling-record"
                 >
-                  <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="fl-fueling-record-header">
                     <div>
-                      <p className="text-sm font-semibold text-white">{formatDateEs(fueling.date)}</p>
-                      <p className="mt-1 text-xs text-slate-400">{pricePerLiter} €/{rowQuantityUnit}</p>
+                      <p className="text-sm font-semibold text-foreground tabular-nums">{formatDateEs(fueling.date)}</p>
+                      <p className="fl-supporting">{pricePerLiter} €/{rowQuantityUnit}</p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         type="button"
                         onClick={() => openEditForm(fueling)}
-                        className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-teal-300/40 hover:text-white"
+                        variant="outline" className="focus-visible:transition-none"
                       >
-                        Editar
-                      </button>
-                      <button
+                        <Pencil aria-hidden="true" />Editar
+                      </Button>
+                      <Button
                         type="button"
                         onClick={() => handleDelete(fueling)}
                         disabled={deletingId === fueling.id}
-                        className="rounded-full border border-rose-400/20 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:border-rose-300/40 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        variant="ghost" className="text-destructive hover:text-destructive focus-visible:transition-none"
                       >
-                        {deletingId === fueling.id ? "Borrando..." : "Borrar"}
-                      </button>
+                        <Trash2 aria-hidden="true" />{deletingId === fueling.id ? "Borrando..." : "Borrar"}
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1.4fr_1fr_1fr] lg:items-start">
+                  <div className="fl-fueling-data">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Combustible</p>
-                      <p className="mt-1 text-white font-medium">{formatFuelType(fueling.fuelType)}</p>
+                      <p className="fl-data-label">Combustible</p>
+                      <p className="fl-data-value">{formatFuelType(fueling.fuelType)}</p>
                     </div>
 
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">{getOdometerUnit(selectedVehicle?.vehicleType)}</p>
-                      <p className="mt-1 text-white font-medium">
+                      <p className="fl-data-label">Distancia</p>
+                      <p className="fl-data-value">
                         {distance.toLocaleString("es-ES", { maximumFractionDigits: 1 })} {getOdometerUnit(selectedVehicle?.vehicleType)}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">{rowQuantityUnit} / Total</p>
-                      <p className="mt-1 text-white font-medium">
+                      <p className="fl-data-label">Cantidad e importe</p>
+                      <p className="fl-data-value">
                         {liters.toLocaleString("es-ES", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })} {rowQuantityUnit}
                       </p>
-                      <p className="mt-1 text-sm text-slate-300">
+                      <p className="fl-data-value text-primary">
                         {priceTotal.toLocaleString("es-ES", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -517,12 +490,12 @@ export default function Fuelings() {
                     </div>
 
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Repostaje</p>
-                      <p className="mt-1 text-white font-medium">{formatRefuelingType(fueling.refueling)}</p>
+                      <p className="fl-data-label">Repostaje</p>
+                      <p className="fl-data-value">{formatRefuelingType(fueling.refueling)}</p>
                     </div>
 
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Estado del cálculo</p>
+                      <p className="fl-data-label">Estado del cálculo</p>
                       <div className={`mt-1 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${displayTone}`}>
                         <DisplayIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
                         {displayLabel}
@@ -534,6 +507,14 @@ export default function Fuelings() {
                             : "Pendiente"}
                         </p>
                       ) : fueling.displayState === "partial" ? (
+                        <p className="fl-supporting mt-2">Pendiente de cerrar ciclo</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <details className="fl-calculation-note">
+                    <summary>Sobre este cálculo</summary>
+                    {fueling.displayState === "partial" ? (
                         <div className="mt-3 rounded-2xl border border-dashed border-slate-500/30 bg-slate-950/40 p-3 text-sm text-slate-300">
                           <div className="flex items-center gap-2 text-slate-100">
                             <Sparkles className="h-4 w-4 text-amber-300" strokeWidth={2.2} />
@@ -543,20 +524,18 @@ export default function Fuelings() {
                             Este repostaje se guarda como tramo intermedio. El consumo real aparecerá cuando un repostaje completo cierre el ciclo.
                           </p>
                         </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <p className="mt-3 text-xs leading-6 text-slate-400">
+                    ) : null}
+                  <p className="fl-supporting mt-2">
                     {fueling.displayState === "verified"
                       ? "Este valor cierra el ciclo anterior con la regla lleno a lleno."
                       : fueling.displayState === "partial"
                         ? "Este registro no muestra consumo. El cálculo real aparecerá cuando se cierre el ciclo con un lleno."
                         : "Este registro sirve como inicio de seguimiento y no genera consumo exacto."}
                   </p>
+                  </details>
 
                   {fueling.notes ? (
-                    <div className="mt-3 rounded bg-slate-900/50 p-3 text-sm text-slate-300">
+                    <div className="fl-fueling-note">
                       {fueling.notes}
                     </div>
                   ) : null}
@@ -566,20 +545,23 @@ export default function Fuelings() {
           </div>
         )}
         {totalPages > 1 && (
-          <div className="mt-8 mb-2">
-            <Pagination>
+          <div className="fl-fueling-pagination">
+            <Pagination aria-label="Páginas de repostajes">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
                     href="#"
+                    aria-label="Página anterior"
+                    aria-disabled={currentPage === 1}
+                    tabIndex={currentPage === 1 ? -1 : undefined}
                     onClick={(e) => {
                       e.preventDefault();
                       if (currentPage > 1) setCurrentPage(prev => prev - 1);
                     }}
                     className={
                       currentPage === 1
-                        ? "pointer-events-none opacity-50 text-slate-500"
-                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
+                        ? "pointer-events-none opacity-50 text-muted-foreground"
+                        : "cursor-pointer text-secondary-foreground hover:bg-secondary hover:text-foreground"
                     }
                   />
                 </PaginationItem>
@@ -588,6 +570,7 @@ export default function Fuelings() {
                   <PaginationItem key={i}>
                     <PaginationLink
                       href="#"
+                      aria-label={`Página ${i + 1}`}
                       onClick={(e) => {
                         e.preventDefault();
                         setCurrentPage(i + 1);
@@ -595,8 +578,8 @@ export default function Fuelings() {
                       isActive={currentPage === i + 1}
                       className={
                         currentPage === i + 1
-                          ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white border-transparent"
-                          : "text-slate-400 hover:bg-white/10 hover:text-white"
+                          ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground border-transparent"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                       }
                     >
                       {i + 1}
@@ -607,14 +590,17 @@ export default function Fuelings() {
                 <PaginationItem>
                   <PaginationNext
                     href="#"
+                    aria-label="Página siguiente"
+                    aria-disabled={currentPage === totalPages}
+                    tabIndex={currentPage === totalPages ? -1 : undefined}
                     onClick={(e) => {
                       e.preventDefault();
                       if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
                     }}
                     className={
                       currentPage === totalPages
-                        ? "pointer-events-none opacity-50 text-slate-500"
-                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
+                        ? "pointer-events-none opacity-50 text-muted-foreground"
+                        : "cursor-pointer text-secondary-foreground hover:bg-secondary hover:text-foreground"
                     }
                   />
                 </PaginationItem>
@@ -622,73 +608,44 @@ export default function Fuelings() {
             </Pagination>
           </div>
         )}
-      </article>
+      </Surface>
 
       {showForm ? (
-        <ViewportPortal>
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeForm();
-          }}
-        >
-          <div
-            ref={formDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={formDialogTitleId}
-            tabIndex={-1}
-            className="max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/40 sm:p-8"
-          >
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-teal-400 font-semibold">Repostajes</p>
-                <h3 id={formDialogTitleId} className="mt-2 text-2xl font-bold text-white">
-                  {editingFueling ? "Editar repostaje" : "Nuevo repostaje"}
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeForm}
-                className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
-              >
-                Cerrar
-              </button>
-            </div>
-
+        <DialogFrame dialogRef={formDialogRef} titleId={formDialogTitleId} title={editingFueling ? "Editar repostaje" : "Nuevo repostaje"} description={`${selectedVehicle.brand} ${selectedVehicle.model}`} onClose={closeForm} className="fl-fueling-dialog">
             <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-6">
               <FormErrorSummary message={formError?.message} fields={formError?.fields || {}} prefix="fueling" />
-              <div className="grid gap-4 sm:grid-cols-2">
+              <fieldset className="fl-vehicle-fieldset"><legend>Datos del repostaje</legend>
+              <div className="fl-form-grid">
                 <div>
-                  <label htmlFor="fueling-date" className="mb-2 block text-sm font-medium text-slate-300">Fecha</label>
-                  <input
+                  <label htmlFor="fueling-date" className="fl-label mb-2 block">Fecha</label>
+                  <Input
                     type="date"
                     {...fieldProps("date")}
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
                     required
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                    className="fl-field"
                   />
                 </div>
                 <div>
-                  <label htmlFor="fueling-odometer" className="mb-2 block text-sm font-medium text-slate-300">Odómetro ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
-                  <input
+                  <label htmlFor="fueling-odometer" className="fl-label mb-2 block">Odómetro ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
+                  <Input
                     type="number"
                     {...fieldProps("odometer")}
                     name="odometer"
                     value={formData.odometer}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                    className="fl-field"
                   />
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="fl-form-grid">
                 <div>
-                  <label htmlFor="fueling-refueling" className="mb-2 block text-sm font-medium text-slate-300">Tipo de repostaje</label>
+                  <label htmlFor="fueling-refueling" className="fl-label mb-2 block">Tipo de repostaje</label>
                   <CustomSelect
+                    appearance="atlantic"
                     options={REFUELING_TYPE_OPTIONS}
                     {...fieldProps("refueling")}
                     name="refueling"
@@ -698,8 +655,9 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="fueling-fuelType" className="mb-2 block text-sm font-medium text-slate-300">Tipo de combustible</label>
+                  <label htmlFor="fueling-fuelType" className="fl-label mb-2 block">Tipo de combustible</label>
                   <CustomSelect
+                    appearance="atlantic"
                     options={fuelOptions.length > 0 ? fuelOptions : FUEL_TYPE_OPTIONS}
                     {...fieldProps("fuelType")}
                     name="fuelType"
@@ -710,10 +668,10 @@ export default function Fuelings() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="fl-fueling-quantities">
                 <div>
-                  <label htmlFor="fueling-distance" className="mb-2 block text-sm font-medium text-slate-300">Distancia ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
-                  <input
+                  <label htmlFor="fueling-distance" className="fl-label mb-2 block">Distancia ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
+                  <Input
                     type="number"
                     step="0.1"
                     {...fieldProps("distance")}
@@ -721,12 +679,12 @@ export default function Fuelings() {
                     value={formData.distance}
                     onChange={handleInputChange}
                     required
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                    className="fl-field"
                   />
                 </div>
                 <div>
-                  <label htmlFor="fueling-liters" className="mb-2 block text-sm font-medium text-slate-300">Cantidad ({formQuantityUnit})</label>
-                  <input
+                  <label htmlFor="fueling-liters" className="fl-label mb-2 block">Cantidad ({formQuantityUnit})</label>
+                  <Input
                     type="number"
                     step="0.01"
                     {...fieldProps("liters")}
@@ -734,12 +692,12 @@ export default function Fuelings() {
                     value={formData.liters}
                     onChange={handleInputChange}
                     required
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                    className="fl-field"
                   />
                 </div>
                 <div>
-                  <label htmlFor="fueling-priceTotal" className="mb-2 block text-sm font-medium text-slate-300">Precio total (€)</label>
-                  <input
+                  <label htmlFor="fueling-priceTotal" className="fl-label mb-2 block">Precio total (€)</label>
+                  <Input
                     type="number"
                     step="0.01"
                     {...fieldProps("priceTotal")}
@@ -747,15 +705,18 @@ export default function Fuelings() {
                     value={formData.priceTotal}
                     onChange={handleInputChange}
                     required
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                    className="fl-field"
                   />
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              </fieldset>
+              <fieldset className="fl-vehicle-fieldset"><legend>Conducción y condiciones</legend>
+              <div className="fl-form-grid">
                 <div>
-                  <label htmlFor="fueling-drivingType" className="mb-2 block text-sm font-medium text-slate-300">Tipo de conducción</label>
+                  <label htmlFor="fueling-drivingType" className="fl-label mb-2 block">Tipo de conducción</label>
                   <CustomSelect
+                    appearance="atlantic"
                     options={DRIVING_TYPE_OPTIONS}
                     {...fieldProps("drivingType")}
                     name="drivingType"
@@ -765,8 +726,9 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="fueling-tireType" className="mb-2 block text-sm font-medium text-slate-300">Tipo de neumáticos</label>
+                  <label htmlFor="fueling-tireType" className="fl-label mb-2 block">Tipo de neumáticos</label>
                   <CustomSelect
+                    appearance="atlantic"
                     options={TIRE_TYPE_OPTIONS}
                     {...fieldProps("tireType")}
                     name="tireType"
@@ -777,140 +739,77 @@ export default function Fuelings() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="fl-form-grid">
                 <div>
-                  <label htmlFor="fueling-boardConsumption" className="mb-2 block text-sm font-medium text-slate-300">Consumo display (opcional) <span className="text-slate-500">({getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)})</span></label>
-                  <input
+                  <label htmlFor="fueling-boardConsumption" className="fl-label mb-2 block">Consumo display (opcional) <span className="text-muted-foreground">({getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)})</span></label>
+                  <Input
                     type="number"
                     step="0.01"
                     {...fieldProps("boardConsumption")}
                     name="boardConsumption"
                     value={formData.boardConsumption}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                    className="fl-field"
                     placeholder={getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)}
                   />
                 </div>
                 <div>
-                  <label htmlFor="fueling-averageSpeed" className="mb-2 block text-sm font-medium text-slate-300">Velocidad promedio (opcional)</label>
-                  <input
+                  <label htmlFor="fueling-averageSpeed" className="fl-label mb-2 block">Velocidad promedio (opcional)</label>
+                  <Input
                     type="number"
                     {...fieldProps("averageSpeed")}
                     name="averageSpeed"
                     value={formData.averageSpeed}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                    className="fl-field"
                     placeholder="km/h"
                   />
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                {drivingConditionOptions.map(({ key, label, hint, accent, Icon }) => (
-                  <label
-                    key={key}
-                    className={`group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-[1.35rem] border px-4 py-4 transition duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal-300/60 ${formData[key]
-                      ? "border-teal-300/35 bg-gradient-to-br from-teal-300/15 via-slate-950/80 to-slate-950/70 shadow-[0_10px_30px_rgba(8,145,178,0.12)]"
-                      : "border-white/10 bg-slate-950/45 hover:border-white/20 hover:bg-white/[0.04]"
-                      }`}
-                  >
-                    <input
-                      type="checkbox"
-                      name={key}
-                      checked={formData[key]}
-                      onChange={handleInputChange}
-                      className="sr-only"
-                    />
-
-                    <span
-                      className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r opacity-70 ${accent}`}
-                      aria-hidden="true"
-                    />
-
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition ${formData[key]
-                            ? "border-teal-300/30 bg-teal-300/15 text-teal-100"
-                            : "border-white/10 bg-white/[0.03] text-slate-300 group-hover:border-white/20"
-                            }`}>
-                            <Icon className="h-4.5 w-4.5" />
-                          </span>
-                          <span className="text-sm font-semibold text-white">{label}</span>
-                        </div>
-                        <p className="text-xs leading-5 text-slate-400">{hint}</p>
-                      </div>
-
-
-                    </div>
+              <fieldset className="fl-driving-conditions"><legend className="fl-label mb-3">Condiciones del trayecto</legend><div className="fl-condition-grid">
+                {drivingConditionOptions.map(({ key, label, hint, Icon }) => (
+                  <label key={key} className="fl-condition-option">
+                    <input type="checkbox" name={key} checked={formData[key]} onChange={handleInputChange} />
+                    <span className="min-w-0"><span className="flex items-center gap-2 text-sm font-medium"><Icon size={16} aria-hidden="true" />{label}</span><span className="fl-supporting block mt-1">{hint}</span></span>
                   </label>
                 ))}
-              </div>
+              </div></fieldset>
+              </fieldset>
 
               <div>
-                <label htmlFor="fueling-notes" className="mb-2 block text-sm font-medium text-slate-300">Notas (opcional)</label>
+                <label htmlFor="fueling-notes" className="fl-label mb-2 block">Notas (opcional)</label>
                 <textarea
                   {...fieldProps("notes")}
                   name="notes"
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-teal-500"
+                  className="fl-field"
                   placeholder="Añade notas adicionales..."
                 />
               </div>
 
-              <button
+              <div className="fl-dialog-footer"><Button type="button" variant="outline" onClick={closeForm}>Cancelar</Button>
+              <Button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-lg bg-teal-600 px-6 py-3 font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
               >
                 {submitting ? "Guardando..." : editingFueling ? "Guardar cambios" : "Guardar repostaje"}
-              </button>
+              </Button></div>
             </form>
-          </div>
-        </div>
-        </ViewportPortal>
+        </DialogFrame>
       ) : null}
 
       {showHelp ? (
-        <ViewportPortal>
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/75 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeHelp();
-          }}
-        >
-          <div
-            ref={helpDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={helpDialogTitleId}
-            tabIndex={-1}
-            className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-6"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-teal-300">Ayuda rápida</p>
-                <h3 id={helpDialogTitleId} className="mt-2 text-xl font-semibold text-white">Cómo registrar el repostaje</h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeHelp}
-                className="rounded-full border border-white/10 px-3 py-1.5 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
-              >
-                Cerrar
-              </button>
-            </div>
-
+        <DialogFrame dialogRef={helpDialogRef} titleId={helpDialogTitleId} title="Cómo registrar el repostaje" onClose={closeHelp}>
             <p className="mt-4 text-sm leading-6 text-slate-300">
               La app calcula el consumo real con el método lleno a lleno. Los repostajes parciales sirven como tramos intermedios y se muestran como estimación hasta que llegue otro repostaje completo.
             </p>
 
             <div className="mt-5 space-y-3">
               {fuelingHelpItems.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div key={item.title} className="fl-help-item">
                   <p className="text-sm font-semibold text-white">{item.title}</p>
                   <p className="mt-1 text-sm leading-6 text-slate-300">{item.text}</p>
                 </div>
@@ -924,16 +823,15 @@ export default function Fuelings() {
               </p>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
+            <div className="fl-help-item mt-4 text-sm leading-6 text-secondary-foreground">
               Guarda siempre el odómetro total del vehículo cuando puedas. El parcial es útil para el tramo, pero el total es el que mejor evita errores de cálculo.
             </div>
-          </div>
-        </div>
-        </ViewportPortal>
+        </DialogFrame>
       ) : null}
 
       {exportTarget ? (
         <ExportReportModal
+          appearance="atlantic"
           open={Boolean(exportTarget)}
           reportType={exportTarget.reportType}
           vehicle={exportTarget.vehicle}

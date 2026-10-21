@@ -1,6 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { exportReportFile } from "../services/exportReports";
+import { DialogFrame } from "./ui/dialog-frame";
+import { Input } from "./ui/field";
+import { Button } from "./ui/button";
 import ViewportPortal from "./ViewportPortal";
 
 const REPORT_TITLES = {
@@ -18,6 +21,7 @@ export default function ExportReportModal(props) {
 
 function ExportReportDialog({
   reportType,
+  appearance = "default",
   vehicle,
   defaultStartDate = "",
   defaultEndDate = "",
@@ -32,6 +36,8 @@ function ExportReportDialog({
 
   useEffect(() => {
     const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    if (appearance === "atlantic") document.body.style.overflow = "hidden";
     const dialog = dialogRef.current;
     const focusableSelector = "button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex='-1'])";
     dialog?.querySelector(focusableSelector)?.focus();
@@ -61,9 +67,10 @@ function ExportReportDialog({
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+      if (appearance === "atlantic") document.body.style.overflow = previousOverflow;
       previousFocus?.focus?.();
     };
-  }, [onClose]);
+  }, [onClose, appearance]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -95,6 +102,67 @@ function ExportReportDialog({
     }
   };
 
+  const ExportInput = appearance === "atlantic" ? Input : "input";
+  const ExportButton = appearance === "atlantic" ? Button : "button";
+  const content = (<>
+        {error ? (
+          <div role="alert" className="mt-5 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+            {error}
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-2 text-sm text-slate-300">
+              <span className="block font-medium">Fecha inicio</span>
+              <ExportInput
+                type="date"
+                required
+                value={startDate}
+                onChange={(event) => setStartDate(event.target.value)}
+                className={appearance === "atlantic" ? undefined : "w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-teal-400"}
+              />
+            </label>
+
+            <label className="space-y-2 text-sm text-slate-300">
+              <span className="block font-medium">Fecha fin</span>
+              <ExportInput
+                type="date"
+                required
+                value={endDate}
+                onChange={(event) => setEndDate(event.target.value)}
+                className={appearance === "atlantic" ? undefined : "w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-teal-400"}
+              />
+            </label>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <ExportButton
+              type="button"
+              onClick={onClose}
+              variant={appearance === "atlantic" ? "outline" : undefined}
+              className={appearance === "atlantic" ? "flex-1" : "flex-1 rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"}
+            >
+              Cancelar
+            </ExportButton>
+            <ExportButton
+              type="submit"
+              disabled={loading}
+              className={appearance === "atlantic" ? "flex-1" : "flex-1 rounded-full bg-teal-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"}
+            >
+              {loading ? "Generando..." : "Descargar"}
+            </ExportButton>
+          </div>
+        </form>
+  </>);
+  return appearance === "atlantic" ? (
+    <DialogFrame dialogRef={dialogRef} titleId={titleId} title={REPORT_TITLES[reportType] || "Exportar informe"} description={`${vehicle.brand} ${vehicle.model} · El archivo se descargará con el rango de fechas seleccionado.`} onClose={onClose}>
+      {content}
+    </DialogFrame>
+  ) : <LegacyExportFrame dialogRef={dialogRef} titleId={titleId} reportType={reportType} onClose={onClose}>{content}</LegacyExportFrame>;
+}
+
+function LegacyExportFrame({ dialogRef, titleId, reportType, onClose, children }) {
   return (
     <ViewportPortal>
     <div
@@ -131,54 +199,7 @@ function ExportReportDialog({
           </button>
         </div>
 
-        {error ? (
-          <div role="alert" className="mt-5 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-            {error}
-          </div>
-        ) : null}
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm text-slate-300">
-              <span className="block font-medium">Fecha inicio</span>
-              <input
-                type="date"
-                required
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-teal-400"
-              />
-            </label>
-
-            <label className="space-y-2 text-sm text-slate-300">
-              <span className="block font-medium">Fecha fin</span>
-              <input
-                type="date"
-                required
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-teal-400"
-              />
-            </label>
-          </div>
-
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 rounded-full bg-teal-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? "Generando..." : "Descargar"}
-            </button>
-          </div>
-        </form>
+        {children}
       </div>
     </div>
     </ViewportPortal>
