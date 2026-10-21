@@ -1,6 +1,6 @@
 import { useId } from "react";
 
-export default function CustomSelect({ options, value, onChange, placeholder = "Selecciona una opción", error = false, disabled = false, id, ...props }) {
+export default function CustomSelect({ options, value, onChange, placeholder = "Selecciona una opción", error = false, disabled = false, id, appearance = "default", ...props }) {
   const generatedId = useId();
   const hasEmptyOption = options.some((option) => String(option.value) === "");
 
@@ -18,10 +18,14 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
           onChange(option ? option.value : event.target.value);
         }}
         className={[
-          "min-h-11 w-full min-w-0 appearance-none rounded-2xl border bg-slate-950/60 py-2.5 pl-4 pr-10 text-sm font-medium text-white outline-none transition-colors",
-          "focus-visible:border-teal-300 focus-visible:ring-2 focus-visible:ring-teal-300/20 [&_option]:bg-slate-900 [&_option]:text-white",
-          disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-teal-300/40",
-          error ? "border-rose-400 ring-1 ring-rose-400/25" : "border-white/10",
+          ...(appearance === "atlantic"
+            ? ["fl-field appearance-none pr-10"]
+            : [
+              "min-h-11 w-full min-w-0 appearance-none rounded-2xl border bg-slate-950/60 py-2.5 pl-4 pr-10 text-sm font-medium text-white outline-none transition-colors",
+              "focus-visible:border-teal-300 focus-visible:ring-2 focus-visible:ring-teal-300/20 [&_option]:bg-slate-900 [&_option]:text-white",
+              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-teal-300/40",
+              error ? "border-rose-400 ring-1 ring-rose-400/25" : "border-white/10",
+            ]),
         ].join(" ")}
       >
         {!hasEmptyOption ? <option value="" disabled>{placeholder}</option> : null}

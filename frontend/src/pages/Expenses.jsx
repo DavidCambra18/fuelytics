@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Download } from "lucide-react";
+import { Download, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
 import { apiFetch } from "../services/api";
 import ExportReportModal from "../components/ExportReportModal";
-import ViewportPortal from "../components/ViewportPortal";
+import { Button } from "../components/ui/button";
+import { Surface } from "../components/ui/surface";
+import { Field, Input } from "../components/ui/field";
+import { DialogFrame } from "../components/ui/dialog-frame";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import usePagination from "../hooks/usePagination";
 import FormErrorSummary from "../components/FormErrorSummary";
@@ -297,351 +300,159 @@ export default function Expenses() {
   const currentExpenses = expenses.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <section className="w-full space-y-6">
-      <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
-        <div className="space-y-2 mb-8">
-          <p className="text-xs uppercase tracking-[0.3em] text-amber-400 font-semibold">Gastos</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Costes de {selectedVehicle.brand} {selectedVehicle.model}
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-slate-300 max-w-2xl">
-            Historial de mantenimiento, seguros y otros gastos asociados a tu vehículo.
-          </p>
-        </div>
-
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <button
-            onClick={openCreateForm}
-            className="inline-flex rounded-full bg-amber-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-amber-700"
-          >
-            + Nuevo gasto
-          </button>
-          <button
-            type="button"
-            onClick={() => setExportTarget({ reportType: "expenses", vehicle: selectedVehicle })}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-amber-300/40 hover:bg-white/10 hover:text-white"
-            aria-label="Exportar gastos"
-            title="Exportar gastos"
-          >
-            <Download className="h-5 w-5" />
-          </button>
-        </div>
-
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/20 p-4 text-sm text-red-300">
-            {error}
+    <section className="w-full min-w-0">
+      <Surface as="article" className="fl-expenses">
+        <header className="fl-expense-header">
+          <div className="min-w-0">
+            <h2 className="fl-page-title">Gastos</h2>
+            <p className="fl-expense-context mt-2">{selectedVehicle.brand} {selectedVehicle.model}</p>
+            <p className="fl-expense-intro">Historial de mantenimiento, seguros y otros gastos asociados a tu vehículo.</p>
           </div>
-        )}
+          <div className="fl-expense-actions">
+            <Button type="button" onClick={openCreateForm}><Plus aria-hidden="true" />Nuevo gasto</Button>
+            <Button type="button" variant="outline" size="icon" onClick={() => setExportTarget({ reportType: "expenses", vehicle: selectedVehicle })} aria-label="Exportar gastos" title="Exportar gastos">
+              <Download aria-hidden="true" />
+            </Button>
+          </div>
+        </header>
 
+        {error && <div role="alert" className="fl-expense-error">{error}</div>}
         {loading ? (
-          <div className="py-8 text-center text-slate-400">Cargando...</div>
-        ) : expenses.length === 0 ? (
-          <div className="py-8 text-center text-slate-400">
-            No hay gastos registrados. ¡Crea uno para empezar!
-          </div>
-        ) : (
+          <div role="status" className="fl-expense-state">Cargando gastos...</div>
+        ) : expenses.length === 0 ? (error ? null : (
+          <Surface variant="inset" className="fl-expense-state">
+            <ReceiptText aria-hidden="true" />
+            <h3>No hay gastos registrados</h3>
+            <p className="text-sm leading-6">¡Crea uno para empezar!</p>
+          </Surface>
+        )) : (
           <>
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-                <p className="text-xs uppercase tracking-[0.15em] text-amber-400 font-semibold">Gasto total</p>
-                <p className="mt-2 text-2xl font-bold text-white">{formatMoney(totalCost)} €</p>
-              </div>
-              <div className="rounded-xl border border-slate-700/50 bg-slate-950/30 p-4">
-                <p className="text-xs uppercase tracking-[0.15em] text-slate-400 font-semibold">Gasto mensual promedio</p>
-                <p className="mt-2 text-2xl font-bold text-white">{formatMoney(monthlyAverageCost)} €</p>
-              </div>
-              <div className="rounded-xl border border-slate-700/50 bg-slate-950/30 p-4">
-                <p className="text-xs uppercase tracking-[0.15em] text-slate-400 font-semibold">Gasto anual</p>
-                <p className="mt-2 text-2xl font-bold text-white">{formatMoney(yearlyCost)} €</p>
-              </div>
+            <dl className="fl-expense-summary" aria-label="Resumen de gastos">
+              <div><dt>Gasto total</dt><dd>{formatMoney(totalCost)} <span>€</span></dd></div>
+              <div><dt>Gasto mensual promedio</dt><dd>{formatMoney(monthlyAverageCost)} <span>€</span></dd></div>
+              <div><dt>Gasto anual</dt><dd>{formatMoney(yearlyCost)} <span>€</span></dd></div>
+            </dl>
+            <div className="fl-ledger-heading">
+              <h3 className="fl-section-title">Historial</h3>
+              <p className="fl-ledger-count">{expenses.length} {expenses.length === 1 ? "registro" : "registros"}</p>
             </div>
-
-            <div className="space-y-3">
-              {currentExpenses.map((expense) => {
-                const cost = Number(expense.cost) || 0;
-                return (
-                  <div
-                    key={expense.id}
-                    className="rounded-xl border border-slate-700/50 bg-slate-950/30 p-4 transition hover:border-slate-600/50"
-                  >
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{formatDateEs(expense.date)}</p>
-                        <p className="mt-1 text-xs text-slate-400">{formatExpenseType(expense.type)}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditForm(expense)}
-                          className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-amber-300/40 hover:text-white"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(expense)}
-                          disabled={deletingId === expense.id}
-                          className="rounded-full border border-rose-400/20 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:border-rose-300/40 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {deletingId === expense.id ? "Borrando..." : "Borrar"}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1.4fr]">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Coste</p>
-                        <p className="mt-1 text-xl font-bold text-amber-400">
-                          {cost.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Categoría</p>
-                        <p className="mt-1 text-white font-medium">{formatExpenseType(expense.type)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.15em] text-slate-500 font-semibold">Descripción</p>
-                        <p className="mt-1 text-white font-medium">{expense.description || "Sin descripción"}</p>
-
-                        {expense.type === "tire_change" && expense.tireSetId && (
-                          (() => {
-                            const tire = availableTires.find(t => t.id === expense.tireSetId);
-                            if (!tire) return null;
-
-                            return (
-                              <div className="mt-2">
-                                <span className="inline-block rounded-md border border-teal-500/20 bg-teal-500/10 px-2 py-1 text-xs font-medium text-teal-300">
-                                  {tire.brand} {tire.model} - {tire.size} ({tire.axle === 'FRONT' ? 'Delantero' : 'Trasero'})
-                                </span>
-                              </div>
-                            );
-                          })()
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <table className="fl-ledger">
+              <caption className="sr-only">Historial de gastos de {selectedVehicle.brand} {selectedVehicle.model}</caption>
+              <thead><tr><th scope="col">Fecha</th><th scope="col">Categoría</th><th scope="col">Descripción</th><th scope="col">Importe</th><th scope="col"><span className="sr-only">Acciones</span></th></tr></thead>
+              <tbody>
+                {currentExpenses.map((expense) => {
+                  const cost = Number(expense.cost) || 0;
+                  return (
+                    <tr key={expense.id}>
+                      <td className="fl-ledger-date"><time dateTime={expense.date}>{formatDateEs(expense.date)}</time></td>
+                      <td className="fl-ledger-category">{formatExpenseType(expense.type)}</td>
+                      <td className="fl-ledger-description">
+                        {expense.description || "Sin descripción"}
+                        {expense.type === "tire_change" && expense.tireSetId && (() => {
+                          const tire = availableTires.find(t => t.id === expense.tireSetId);
+                          if (!tire) return null;
+                          return <span className="fl-tire-note">{tire.brand} {tire.model} - {tire.size} ({tire.axle === 'FRONT' ? 'Delantero' : 'Trasero'})</span>;
+                        })()}
+                      </td>
+                      <td className="fl-ledger-amount">{formatMoney(cost)} €</td>
+                      <td>
+                        <div className="fl-ledger-actions">
+                          <Button type="button" variant="outline" className="border-[var(--border-subtle)] bg-white/[0.025] px-3 hover:bg-white/[0.06] focus-visible:transition-none" onClick={() => openEditForm(expense)} aria-label={`Editar gasto del ${formatDateEs(expense.date)}`}>
+                            <Pencil aria-hidden="true" />Editar
+                          </Button>
+                          <Button type="button" variant="ghost" className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:transition-none" onClick={() => handleDelete(expense)} disabled={deletingId === expense.id} aria-busy={deletingId === expense.id} aria-label={`Borrar gasto del ${formatDateEs(expense.date)}`}>
+                            <Trash2 aria-hidden="true" />
+                            {deletingId === expense.id ? "Borrando..." : "Borrar"}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </>
         )}
         {totalPages > 1 && (
-          <div className="mt-8 mb-2">
-            <Pagination>
+          <div className="fl-expense-pagination">
+            <p>{startIndex + 1}–{Math.min(startIndex + itemsPerPage, expenses.length)} de {expenses.length}</p>
+            <Pagination aria-label="Páginas del historial de gastos">
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) setCurrentPage(prev => prev - 1);
-                    }}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50 text-slate-500"
-                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
-                    }
-                  />
+                  <PaginationPrevious href="#" aria-label="Página anterior" aria-disabled={currentPage === 1} onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+                  }} className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
                 </PaginationItem>
                 {[...Array(totalPages)].map((_, i) => (
                   <PaginationItem key={i}>
-                    <PaginationLink
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage(i + 1);
-                      }}
-                      isActive={currentPage === i + 1}
-                      className={
-                        currentPage === i + 1
-                          ? "bg-amber-600 text-white hover:bg-amber-700 hover:text-white border-transparent"
-                          : "text-slate-400 hover:bg-white/10 hover:text-white"
-                      }
-                    >
+                    <PaginationLink href="#" aria-label={`Página ${i + 1}`} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }} isActive={currentPage === i + 1}>
                       {i + 1}
                     </PaginationLink>
                   </PaginationItem>
                 ))}
                 <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-                    }}
-                    className={
-                      currentPage === totalPages
-                        ? "pointer-events-none opacity-50 text-slate-500"
-                        : "cursor-pointer text-slate-300 hover:bg-white/10 hover:text-white"
-                    }
-                  />
+                  <PaginationNext href="#" aria-label="Página siguiente" aria-disabled={currentPage === totalPages} onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+                  }} className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
           </div>
         )}
-      </article>
+      </Surface>
 
       {showForm && (
-        <ViewportPortal>
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeForm();
-          }}
-        >
-          <div
-            ref={formDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={formDialogTitleId}
-            tabIndex={-1}
-            className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/40 sm:p-8"
-          >
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-amber-400 font-semibold">Gastos</p>
-                <h3 id={formDialogTitleId} className="mt-2 text-2xl font-bold text-white">
-                  {editingExpense ? "Editar gasto" : "Nuevo gasto"}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={closeForm}
-                className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
-              >
-                Cerrar
-              </button>
+        <DialogFrame dialogRef={formDialogRef} titleId={formDialogTitleId} title={editingExpense ? "Editar gasto" : "Nuevo gasto"} description={`${selectedVehicle.brand} ${selectedVehicle.model}`} onClose={closeForm}>
+          <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-5">
+            <FormErrorSummary message={formError?.message} fields={formError?.fields || {}} prefix="expense" />
+            <div className="fl-form-grid">
+              <Field id="expense-date" label="Fecha">
+                <Input type="date" {...fieldProps("date")} name="date" value={formData.date} onChange={handleInputChange} required />
+              </Field>
+              <Field id="expense-type" label="Categoría">
+                <CustomSelect appearance="atlantic" options={EXPENSE_TYPE_OPTIONS} {...fieldProps("type")} name="type" value={formData.type} onChange={(value) => handleSelectChange("type", value)} placeholder="Selecciona categoría" />
+              </Field>
             </div>
-
-            <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-6">
-              <FormErrorSummary message={formError?.message} fields={formError?.fields || {}} prefix="expense" />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="expense-date" className="mb-2 block text-sm font-medium text-slate-300">Fecha</label>
-                  <input
-                    type="date"
-                    {...fieldProps("date")}
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
-                  />
+            {formData.type === "tire_change" && (
+              <Field id="expense-tireSetId" label="Neumático montado">
+                <CustomSelect appearance="atlantic" options={[
+                  { value: "", label: "Ninguno / Gasto general" },
+                  ...availableTires.map(t => ({ value: t.id, label: `${t.brand} ${t.model} - ${t.size} (${t.axle === 'FRONT' ? 'Delantero' : 'Trasero'}) | ${formatDateEs(t.installationDate)} - ${t.installationOdometer.toLocaleString()} km` }))
+                ]} {...fieldProps("tireSetId")} name="tireSetId" value={formData.tireSetId} onChange={(value) => handleSelectChange("tireSetId", value)} placeholder="Selecciona el juego de neumáticos" />
+              </Field>
+            )}
+            <Field id="expense-description" label="Descripción">
+              <Input type="text" {...fieldProps("description")} name="description" value={formData.description} onChange={handleInputChange} placeholder="Ej: Revisión anual, Pastillas de freno, etc." />
+            </Field>
+            <Field id="expense-cost" label="Coste (€)">
+              <Input type="number" step="0.01" {...fieldProps("cost")} name="cost" value={formData.cost} onChange={handleInputChange} required placeholder="0.00" className="fl-field-amount tabular-nums" />
+            </Field>
+            {formData.type === "maintenance" && (
+              <fieldset className="fl-maintenance">
+                <legend>Programar próxima revisión</legend>
+                <div className="fl-form-grid">
+                  <Field id="expense-nextMaintenanceKm" label="Kilometraje previsto">
+                    <Input type="number" {...fieldProps("nextMaintenanceKm")} name="nextMaintenanceKm" value={formData.nextMaintenanceKm} onChange={handleInputChange} placeholder="Ej: 330000" />
+                  </Field>
+                  <Field id="expense-nextMaintenanceDate" label="Fecha estimada">
+                    <Input type="date" {...fieldProps("nextMaintenanceDate")} name="nextMaintenanceDate" value={formData.nextMaintenanceDate} onChange={handleInputChange} />
+                  </Field>
                 </div>
-                <div>
-                  <label htmlFor="expense-type" className="mb-2 block text-sm font-medium text-slate-300">Categoría</label>
-                  <CustomSelect
-                    options={EXPENSE_TYPE_OPTIONS}
-                    {...fieldProps("type")}
-                    name="type"
-                    value={formData.type}
-                    onChange={(value) => handleSelectChange("type", value)}
-                    placeholder="Selecciona categoría"
-                  />
-                </div>
-              </div>
-
-              {formData.type === "tire_change" && (
-                <div>
-                  <label htmlFor="expense-tireSetId" className="mb-2 block text-sm font-medium text-slate-300">Neumático montado</label>
-                  <CustomSelect
-                    options={[
-                      { value: "", label: "Ninguno / Gasto general" },
-                      ...availableTires.map(t => ({
-                        value: t.id,
-                        label: `${t.brand} ${t.model} - ${t.size} (${t.axle === 'FRONT' ? 'Delantero' : 'Trasero'}) | ${formatDateEs(t.installationDate)} - ${t.installationOdometer.toLocaleString()} km`
-                      }))
-                    ]}
-                    {...fieldProps("tireSetId")}
-                    name="tireSetId"
-                    value={formData.tireSetId}
-                    onChange={(value) => handleSelectChange("tireSetId", value)}
-                    placeholder="Selecciona el juego de neumáticos"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="expense-description" className="mb-2 block text-sm font-medium text-slate-300">Descripción</label>
-                <input
-                  type="text"
-                  {...fieldProps("description")}
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Ej: Revisión anual, Pastillas de freno, etc."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="expense-cost" className="mb-2 block text-sm font-medium text-slate-300">Coste (€)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...fieldProps("cost")}
-                  name="cost"
-                  value={formData.cost}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="0.00"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
-                />
-              </div>
-
-              {formData.type === "maintenance" && (
-                <div className="mt-2 border-t border-white/5 pt-4">
-                  <h4 className="mb-4 text-sm font-medium text-slate-300">Programar próxima revisión</h4>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="expense-nextMaintenanceKm" className="mb-2 block text-sm font-medium text-slate-300">Kilometraje previsto</label>
-                      <input
-                        type="number"
-                        {...fieldProps("nextMaintenanceKm")}
-                        name="nextMaintenanceKm"
-                        value={formData.nextMaintenanceKm}
-                        onChange={handleInputChange}
-                        placeholder="Ej: 330000"
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="expense-nextMaintenanceDate" className="mb-2 block text-sm font-medium text-slate-300">Fecha estimada</label>
-                      <input
-                        type="date"
-                        {...fieldProps("nextMaintenanceDate")}
-                        name="nextMaintenanceDate"
-                        value={formData.nextMaintenanceDate}
-                        onChange={handleInputChange}
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-amber-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-lg bg-amber-600 px-6 py-3 font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50"
-              >
+              </fieldset>
+            )}
+            <div className="fl-dialog-footer">
+              <Button type="button" variant="outline" onClick={closeForm}>Cancelar</Button>
+              <Button type="submit" disabled={submitting} aria-busy={submitting}>
                 {submitting ? "Guardando..." : editingExpense ? "Guardar cambios" : "Guardar gasto"}
-              </button>
-            </form>
-          </div>
-        </div>
-        </ViewportPortal>
+              </Button>
+            </div>
+          </form>
+        </DialogFrame>
       )}
-
       {exportTarget && (
-        <ExportReportModal
-          open={Boolean(exportTarget)}
-          reportType={exportTarget.reportType}
-          vehicle={exportTarget.vehicle}
-          defaultStartDate={exportDateRange.startDate || ""}
-          defaultEndDate={exportDateRange.endDate || ""}
-          onClose={() => setExportTarget(null)}
-        />
+        <ExportReportModal open={Boolean(exportTarget)} reportType={exportTarget.reportType} vehicle={exportTarget.vehicle} defaultStartDate={exportDateRange.startDate || ""} defaultEndDate={exportDateRange.endDate || ""} onClose={() => setExportTarget(null)} />
       )}
     </section>
   );
