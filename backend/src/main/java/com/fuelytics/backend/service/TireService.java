@@ -1,6 +1,5 @@
 package com.fuelytics.backend.service;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -12,7 +11,6 @@ import com.fuelytics.backend.dto.TireSetDTO;
 import com.fuelytics.backend.dto.TireSetResponseDTO;
 import com.fuelytics.backend.entity.TireSet;
 import com.fuelytics.backend.entity.Vehicle;
-import com.fuelytics.backend.entity.enums.TireAxle;
 import com.fuelytics.backend.repository.FuelingRepository;
 import com.fuelytics.backend.repository.TireSetRepository;
 import com.fuelytics.backend.repository.VehicleRepository;
@@ -43,13 +41,17 @@ public class TireService {
     public TireSetResponseDTO createTireSet(Integer vehicleId, TireSetDTO dto, String principalName) {
         Vehicle vehicle = verifyOwnershipForUpdate(vehicleId, principalName);
 
-        tireSetRepository.findByVehicleIdAndActiveTrue(vehicleId).stream()
+        List<TireSet> previousTires = tireSetRepository.findByVehicleIdAndActiveTrue(vehicleId).stream()
                 .filter(t -> t.getAxle() == dto.getAxle())
-                .forEach(t -> {
+                .toList();
+        previousTires.forEach(t -> validateRemovalOdometer(t, dto.getInstallationOdometer()));
+        previousTires.forEach(t -> {
                     t.setActive(false);
                     t.setRemovalOdometer(dto.getInstallationOdometer());
                     tireSetRepository.save(t);
                 });
+        // Release the unique active-axle slot before the IDENTITY insert of its replacement.
+        if (!previousTires.isEmpty()) tireSetRepository.flush();
 
         TireSet tireSet = new TireSet();
         tireSet.setVehicle(vehicle);
@@ -63,7 +65,7 @@ public class TireService {
 
         TireSet saved = tireSetRepository.save(tireSet);
         
-        int currentOdometer = vehicle.getOdometer() != null ? vehicle.getOdometer() : dto.getInstallationOdometer();
+        int currentOdometer = getMaxOdometer(vehicleId, vehicle.getOdometer());
         return mapToResponseDTO(saved, currentOdometer);
     }
 
@@ -73,9 +75,17 @@ public class TireService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Neumático no encontrado"));
         verifyOwnershipForUpdate(tire.getVehicle().getId(), principalName);
 
+        validateRemovalOdometer(tire, removalOdometer);
         tire.setActive(false);
         tire.setRemovalOdometer(removalOdometer);
         tireSetRepository.save(tire);
+    }
+
+    private void validateRemovalOdometer(TireSet tire, Integer odometer) {
+        if (odometer == null || odometer < 0 || odometer < tire.getInstallationOdometer()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El odómetro de baja no puede ser inferior al de montaje");
+        }
     }
 
     private Vehicle verifyOwnership(Integer vehicleId, String principalName) {
