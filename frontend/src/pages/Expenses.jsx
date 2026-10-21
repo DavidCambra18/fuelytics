@@ -6,6 +6,8 @@ import { apiFetch } from "../services/api";
 import ExportReportModal from "../components/ExportReportModal";
 import ViewportPortal from "../components/ViewportPortal";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
+import usePagination from "../hooks/usePagination";
+import FormErrorSummary from "../components/FormErrorSummary";
 import {
   Pagination,
   PaginationContent,
@@ -116,14 +118,20 @@ export default function Expenses() {
   const [availableTires, setAvailableTires] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formError, setFormError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(createInitialFormData());
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
+  const { page: currentPage, totalPages, startIndex, setPage: setCurrentPage } = usePagination(expenses.length, itemsPerPage);
+  const fieldProps = (name) => ({
+    id: `expense-${name}`,
+    "aria-invalid": !!formError?.fields[name],
+    "aria-describedby": formError?.fields[name] ? `expense-${name}-error` : undefined,
+  });
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -181,18 +189,21 @@ export default function Expenses() {
   }, [selectedVehicle?.id]);
 
   const openCreateForm = () => {
+    setFormError(null);
     setEditingExpense(null);
     setFormData(createInitialFormData());
     setShowForm(true);
   };
 
   const openEditForm = (expense) => {
+    setFormError(null);
     setEditingExpense(expense);
     setFormData(toFormData(expense));
     setShowForm(true);
   };
 
   const closeForm = () => {
+    setFormError(null);
     setShowForm(false);
     setEditingExpense(null);
     setFormData(createInitialFormData());
@@ -211,8 +222,9 @@ export default function Expenses() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
-    setError("");
+    setFormError(null);
 
     try {
       const payload = {
@@ -236,7 +248,7 @@ export default function Expenses() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Error al guardar el gasto");
+        throw Object.assign(new Error(errorData.message || "Error al guardar el gasto"), { fields: errorData.fields || {} });
       }
 
       const savedExpense = await response.json();
@@ -247,7 +259,7 @@ export default function Expenses() {
       );
       closeForm();
     } catch (submitError) {
-      setError(submitError.message || "Error guardando gasto");
+      setFormError({ message: submitError.message || "Error guardando gasto", fields: submitError.fields || {} });
     } finally {
       setSubmitting(false);
     }
@@ -282,8 +294,6 @@ export default function Expenses() {
     return acc;
   }, 0);
 
-  const totalPages = Math.ceil(expenses.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
   const currentExpenses = expenses.slice(startIndex, startIndex + itemsPerPage);
 
   return (
@@ -503,12 +513,14 @@ export default function Expenses() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-6">
+              <FormErrorSummary message={formError?.message} fields={formError?.fields || {}} prefix="expense" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Fecha</label>
+                  <label htmlFor="expense-date" className="mb-2 block text-sm font-medium text-slate-300">Fecha</label>
                   <input
                     type="date"
+                    {...fieldProps("date")}
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
@@ -517,9 +529,11 @@ export default function Expenses() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Categoría</label>
+                  <label htmlFor="expense-type" className="mb-2 block text-sm font-medium text-slate-300">Categoría</label>
                   <CustomSelect
                     options={EXPENSE_TYPE_OPTIONS}
+                    {...fieldProps("type")}
+                    name="type"
                     value={formData.type}
                     onChange={(value) => handleSelectChange("type", value)}
                     placeholder="Selecciona categoría"
@@ -529,7 +543,7 @@ export default function Expenses() {
 
               {formData.type === "tire_change" && (
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Neumático montado</label>
+                  <label htmlFor="expense-tireSetId" className="mb-2 block text-sm font-medium text-slate-300">Neumático montado</label>
                   <CustomSelect
                     options={[
                       { value: "", label: "Ninguno / Gasto general" },
@@ -538,6 +552,8 @@ export default function Expenses() {
                         label: `${t.brand} ${t.model} - ${t.size} (${t.axle === 'FRONT' ? 'Delantero' : 'Trasero'}) | ${formatDateEs(t.installationDate)} - ${t.installationOdometer.toLocaleString()} km`
                       }))
                     ]}
+                    {...fieldProps("tireSetId")}
+                    name="tireSetId"
                     value={formData.tireSetId}
                     onChange={(value) => handleSelectChange("tireSetId", value)}
                     placeholder="Selecciona el juego de neumáticos"
@@ -546,9 +562,10 @@ export default function Expenses() {
               )}
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Descripción</label>
+                <label htmlFor="expense-description" className="mb-2 block text-sm font-medium text-slate-300">Descripción</label>
                 <input
                   type="text"
+                  {...fieldProps("description")}
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
@@ -558,10 +575,11 @@ export default function Expenses() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Coste (€)</label>
+                <label htmlFor="expense-cost" className="mb-2 block text-sm font-medium text-slate-300">Coste (€)</label>
                 <input
                   type="number"
                   step="0.01"
+                  {...fieldProps("cost")}
                   name="cost"
                   value={formData.cost}
                   onChange={handleInputChange}
@@ -576,9 +594,10 @@ export default function Expenses() {
                   <h4 className="mb-4 text-sm font-medium text-slate-300">Programar próxima revisión</h4>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-300">Kilometraje previsto</label>
+                      <label htmlFor="expense-nextMaintenanceKm" className="mb-2 block text-sm font-medium text-slate-300">Kilometraje previsto</label>
                       <input
                         type="number"
+                        {...fieldProps("nextMaintenanceKm")}
                         name="nextMaintenanceKm"
                         value={formData.nextMaintenanceKm}
                         onChange={handleInputChange}
@@ -587,9 +606,10 @@ export default function Expenses() {
                       />
                     </div>
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-300">Fecha estimada</label>
+                      <label htmlFor="expense-nextMaintenanceDate" className="mb-2 block text-sm font-medium text-slate-300">Fecha estimada</label>
                       <input
                         type="date"
+                        {...fieldProps("nextMaintenanceDate")}
                         name="nextMaintenanceDate"
                         value={formData.nextMaintenanceDate}
                         onChange={handleInputChange}

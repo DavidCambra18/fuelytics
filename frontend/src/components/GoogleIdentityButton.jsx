@@ -126,11 +126,11 @@ export default function GoogleIdentityButton({ purpose = "LOGIN", onVerified, se
   }, [purpose, attempt]);
 
   return (
-    <div className="my-5 space-y-3">
+    <div className="my-5 min-w-0 space-y-3">
       {separator ? <div className="flex items-center gap-3 text-xs text-slate-500"><span className="h-px flex-1 bg-white/10" />o continúa con Google<span className="h-px flex-1 bg-white/10" /></div> : null}
       {/* Google's light button needs a light color scheme for its iframe to stay transparent. */}
-      <div className="relative mx-auto min-h-11 w-full max-w-[400px]">
-        <div ref={containerRef} style={{ colorScheme: "light" }} aria-hidden={state.loading || state.busy || !!state.error || !state.enabled} className={`flex min-h-11 w-full items-center justify-center ${state.loading || state.busy || state.error || !state.enabled ? "invisible pointer-events-none" : ""}`} />
+      <div className="relative mx-auto min-h-11 min-w-0 w-full max-w-[400px]">
+        <div ref={containerRef} style={{ colorScheme: "light" }} aria-hidden={state.loading || state.busy || !!state.error || !state.enabled} className={`flex min-h-11 min-w-0 w-full items-center justify-center overflow-hidden ${state.loading || state.busy || state.error || !state.enabled ? "invisible pointer-events-none" : ""}`} />
         {state.loading || state.busy || state.error || !state.enabled ? (
           <div className="absolute inset-0 flex items-center">
             <button type="button" disabled={state.busy} onClick={() => setInteracted(true)} className="relative flex h-8 w-full items-center justify-center rounded-full border border-[#dadce0] bg-white px-10 text-[14px] font-medium text-[#3c4043] hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300 disabled:cursor-wait" style={{ fontFamily: 'Arial, sans-serif', colorScheme: 'light' }}>

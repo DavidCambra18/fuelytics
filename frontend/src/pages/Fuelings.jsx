@@ -6,6 +6,8 @@ import CustomSelect from "../components/CustomSelect";
 import ExportReportModal from "../components/ExportReportModal";
 import ViewportPortal from "../components/ViewportPortal";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
+import usePagination from "../hooks/usePagination";
+import FormErrorSummary from "../components/FormErrorSummary";
 import { buildFuelingRows } from "../utils/consumption";
 import {
   REFUELING_TYPE_OPTIONS,
@@ -107,6 +109,7 @@ export default function Fuelings() {
   const [fuelings, setFuelings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formError, setFormError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [editingFueling, setEditingFueling] = useState(null);
@@ -120,8 +123,13 @@ export default function Fuelings() {
   );
   const fuelOptions = getFuelOptionsForEnergy(selectedVehicle?.vehicleEnergyType);
   const formQuantityUnit = getQuantityUnitForFuel(formData.fuelType);
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
+  const { page: currentPage, totalPages, startIndex, setPage: setCurrentPage } = usePagination(fuelingRows.length, itemsPerPage);
+  const fieldProps = (name) => ({
+    id: `fueling-${name}`,
+    "aria-invalid": !!formError?.fields[name],
+    "aria-describedby": formError?.fields[name] ? `fueling-${name}-error` : undefined,
+  });
   const exportDateRange = useMemo(() => {
     if (fuelings.length === 0) {
       return {};
@@ -174,18 +182,21 @@ export default function Fuelings() {
   }, [selectedVehicle?.id]);
 
   const openCreateForm = () => {
+    setFormError(null);
     setEditingFueling(null);
     setFormData(createInitialFormData(selectedVehicle));
     setShowForm(true);
   };
 
   const openEditForm = (fueling) => {
+    setFormError(null);
     setEditingFueling(fueling);
     setFormData(toFormData(fueling));
     setShowForm(true);
   };
 
   const closeForm = () => {
+    setFormError(null);
     setShowForm(false);
     setEditingFueling(null);
     setFormData(createInitialFormData(selectedVehicle));
@@ -213,8 +224,9 @@ export default function Fuelings() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
-    setError("");
+    setFormError(null);
 
     try {
       const payload = {
@@ -251,7 +263,7 @@ export default function Fuelings() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Error al guardar el repostaje");
+        throw Object.assign(new Error(errorData.message || "Error al guardar el repostaje"), { fields: errorData.fields || {} });
       }
 
       const savedFueling = await response.json();
@@ -264,7 +276,7 @@ export default function Fuelings() {
 
       closeForm();
     } catch (submitError) {
-      setError(submitError.message || "Error guardando repostaje");
+      setFormError({ message: submitError.message || "Error guardando repostaje", fields: submitError.fields || {} });
     } finally {
       setSubmitting(false);
     }
@@ -360,8 +372,6 @@ export default function Fuelings() {
 
   const displayFuelings = [...fuelingRows].reverse();
 
-  const totalPages = Math.ceil(displayFuelings.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
   const currentFuelings = displayFuelings.slice(startIndex, startIndex + itemsPerPage);
 
   return (
@@ -647,12 +657,14 @@ export default function Fuelings() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-6">
+              <FormErrorSummary message={formError?.message} fields={formError?.fields || {}} prefix="fueling" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Fecha</label>
+                  <label htmlFor="fueling-date" className="mb-2 block text-sm font-medium text-slate-300">Fecha</label>
                   <input
                     type="date"
+                    {...fieldProps("date")}
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
@@ -661,9 +673,10 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Odómetro ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
+                  <label htmlFor="fueling-odometer" className="mb-2 block text-sm font-medium text-slate-300">Odómetro ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
                   <input
                     type="number"
+                    {...fieldProps("odometer")}
                     name="odometer"
                     value={formData.odometer}
                     onChange={handleInputChange}
@@ -674,18 +687,22 @@ export default function Fuelings() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Tipo de repostaje</label>
+                  <label htmlFor="fueling-refueling" className="mb-2 block text-sm font-medium text-slate-300">Tipo de repostaje</label>
                   <CustomSelect
                     options={REFUELING_TYPE_OPTIONS}
+                    {...fieldProps("refueling")}
+                    name="refueling"
                     value={formData.refueling}
                     onChange={(value) => handleSelectChange("refueling", value)}
                     placeholder="Selecciona tipo"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Tipo de combustible</label>
+                  <label htmlFor="fueling-fuelType" className="mb-2 block text-sm font-medium text-slate-300">Tipo de combustible</label>
                   <CustomSelect
                     options={fuelOptions.length > 0 ? fuelOptions : FUEL_TYPE_OPTIONS}
+                    {...fieldProps("fuelType")}
+                    name="fuelType"
                     value={formData.fuelType}
                     onChange={(value) => handleSelectChange("fuelType", value)}
                     placeholder="Selecciona combustible"
@@ -695,10 +712,11 @@ export default function Fuelings() {
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Distancia ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
+                  <label htmlFor="fueling-distance" className="mb-2 block text-sm font-medium text-slate-300">Distancia ({getOdometerUnit(selectedVehicle?.vehicleType)})</label>
                   <input
                     type="number"
                     step="0.1"
+                    {...fieldProps("distance")}
                     name="distance"
                     value={formData.distance}
                     onChange={handleInputChange}
@@ -707,10 +725,11 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Cantidad ({formQuantityUnit})</label>
+                  <label htmlFor="fueling-liters" className="mb-2 block text-sm font-medium text-slate-300">Cantidad ({formQuantityUnit})</label>
                   <input
                     type="number"
                     step="0.01"
+                    {...fieldProps("liters")}
                     name="liters"
                     value={formData.liters}
                     onChange={handleInputChange}
@@ -719,10 +738,11 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Precio total (€)</label>
+                  <label htmlFor="fueling-priceTotal" className="mb-2 block text-sm font-medium text-slate-300">Precio total (€)</label>
                   <input
                     type="number"
                     step="0.01"
+                    {...fieldProps("priceTotal")}
                     name="priceTotal"
                     value={formData.priceTotal}
                     onChange={handleInputChange}
@@ -734,18 +754,22 @@ export default function Fuelings() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Tipo de conducción</label>
+                  <label htmlFor="fueling-drivingType" className="mb-2 block text-sm font-medium text-slate-300">Tipo de conducción</label>
                   <CustomSelect
                     options={DRIVING_TYPE_OPTIONS}
+                    {...fieldProps("drivingType")}
+                    name="drivingType"
                     value={formData.drivingType}
                     onChange={(value) => handleSelectChange("drivingType", value)}
                     placeholder="Selecciona tipo"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Tipo de neumáticos</label>
+                  <label htmlFor="fueling-tireType" className="mb-2 block text-sm font-medium text-slate-300">Tipo de neumáticos</label>
                   <CustomSelect
                     options={TIRE_TYPE_OPTIONS}
+                    {...fieldProps("tireType")}
+                    name="tireType"
                     value={formData.tireType}
                     onChange={(value) => handleSelectChange("tireType", value)}
                     placeholder="Selecciona tipo"
@@ -755,10 +779,11 @@ export default function Fuelings() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Consumo display (opcional) <span className="text-slate-500">({getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)})</span></label>
+                  <label htmlFor="fueling-boardConsumption" className="mb-2 block text-sm font-medium text-slate-300">Consumo display (opcional) <span className="text-slate-500">({getConsumptionUnit(selectedVehicle?.vehicleType, selectedVehicle?.vehicleEnergyType)})</span></label>
                   <input
                     type="number"
                     step="0.01"
+                    {...fieldProps("boardConsumption")}
                     name="boardConsumption"
                     value={formData.boardConsumption}
                     onChange={handleInputChange}
@@ -767,9 +792,10 @@ export default function Fuelings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Velocidad promedio (opcional)</label>
+                  <label htmlFor="fueling-averageSpeed" className="mb-2 block text-sm font-medium text-slate-300">Velocidad promedio (opcional)</label>
                   <input
                     type="number"
+                    {...fieldProps("averageSpeed")}
                     name="averageSpeed"
                     value={formData.averageSpeed}
                     onChange={handleInputChange}
@@ -822,8 +848,9 @@ export default function Fuelings() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Notas (opcional)</label>
+                <label htmlFor="fueling-notes" className="mb-2 block text-sm font-medium text-slate-300">Notas (opcional)</label>
                 <textarea
+                  {...fieldProps("notes")}
                   name="notes"
                   value={formData.notes}
                   onChange={handleInputChange}

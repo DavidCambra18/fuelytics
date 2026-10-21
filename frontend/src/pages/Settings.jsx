@@ -33,7 +33,7 @@ function createToast(message, tone = "success") {
 
 function Toggle({ checked, disabled, onChange, label, hint }) {
   return (
-    <label className={`flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition ${disabled ? "opacity-60" : "hover:border-teal-300/20"}`}>
+    <label className={`flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-teal-300 ${disabled ? "opacity-60" : "hover:border-teal-300/20"}`}>
       <span className="space-y-1">
         <span className="block text-sm font-medium text-white">{label}</span>
         {hint ? <span className="block text-xs leading-5 text-slate-400">{hint}</span> : null}
@@ -566,6 +566,7 @@ export default function Settings() {
                           <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-3 text-slate-300 focus-within:border-teal-300/30">
                             <Search className="h-4 w-4 text-slate-500" aria-hidden="true" />
                             <input
+                              aria-label="Buscar vehículos por marca, modelo, año o matrícula"
                               value={vehicleSearch}
                               onChange={(event) => setVehicleSearch(event.target.value)}
                               placeholder="Buscar coche por marca, modelo, año o matrícula"
@@ -590,6 +591,8 @@ export default function Settings() {
                                 <button
                                   type="button"
                                   onClick={() => toggleVehiclePanel(vehicle.id)}
+                                  aria-expanded={isExpanded}
+                                  aria-controls={`vehicle-privacy-${vehicle.id}`}
                                   className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-white/[0.03] sm:px-5"
                                 >
                                   <div className="min-w-0">
@@ -609,7 +612,7 @@ export default function Settings() {
                                   />
                                 </button>
 
-                                <div className={`grid transition-all duration-300 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                                <div id={`vehicle-privacy-${vehicle.id}`} inert={!isExpanded} aria-hidden={!isExpanded} className={`grid transition-all duration-300 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                                   <div className="overflow-hidden">
                                     <div className="border-t border-white/10 px-4 py-4 sm:px-5">
                                       <div className="grid gap-3">
@@ -636,13 +639,13 @@ export default function Settings() {
                                           hint="Permite hacer públicos los gastos asociados al vehículo"
                                         />
 
-                                        {/* <Toggle
+                                        <Toggle
                                           checked={vehicle.showStatistics}
                                           disabled={secondaryDisabled}
                                           onChange={(checked) => handleVehicleChange(vehicle.id, "showStatistics", checked)}
                                           label="Mostrar estadísticas y rankings"
-                                          hint="Permite hacer públicas las estadísticas del vehículo."
-                                        /> */}
+                                          hint="Permite compartir estadísticas y participar en rankings. Para aparecer en ellos también debes compartir los repostajes."
+                                        />
                                       </div>
                                     </div>
                                   </div>

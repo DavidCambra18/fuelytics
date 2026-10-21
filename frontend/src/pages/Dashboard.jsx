@@ -47,7 +47,7 @@ export default function Dashboard() {
 
               <Link
                 to="/vehicles/new"
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white/10"
+                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
               >
                 Crear coche
               </Link>
@@ -73,7 +73,7 @@ export default function Dashboard() {
 
                   <Link
                     to="/vehicles/new"
-                    className="mt-6 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white/10"
+                    className="mt-6 inline-flex items-center justify-center rounded-full border border-white/10 bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
                   >
                     Registrar primer coche
                   </Link>

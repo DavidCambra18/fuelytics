@@ -48,8 +48,8 @@ export default function Login() {
 
   return (
     <div className="flex min-h-dvh flex-col text-slate-100">
-      <div className="section-shell grid flex-1 items-center gap-8 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:py-6">
-        <section className="space-y-8 pr-0 lg:pr-8">
+      <div className="section-shell grid min-w-0 flex-1 grid-cols-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:py-6">
+        <section className="min-w-0 space-y-8 pr-0 lg:pr-8">
           <p className="text-sm uppercase tracking-[0.28em] text-slate-400">Acceso</p>
 
           <div className="space-y-5">
@@ -76,7 +76,7 @@ export default function Login() {
         </section>
 
         <section
-          className="glass-panel w-full rounded-[2rem] p-6 shadow-2xl shadow-black/25 sm:p-8"
+          className="glass-panel min-w-0 w-full rounded-[2rem] p-6 shadow-2xl shadow-black/25 sm:p-8"
         >
           <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Bienvenido</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">Iniciar sesión</h2>

@@ -223,6 +223,7 @@ export default function TiresModule() {
                         <div className="flex gap-2 items-center">
                             <input
                                 className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none text-center"
+                                aria-label="Ancho del neumático (mm)"
                                 placeholder="225"
                                 value={formData.width}
                                 onChange={(e) => setFormData({ ...formData, width: e.target.value })}
@@ -231,6 +232,7 @@ export default function TiresModule() {
                             <span className="text-slate-600 font-bold">/</span>
                             <input
                                 className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none text-center"
+                                aria-label="Perfil del neumático (%)"
                                 placeholder="45"
                                 value={formData.profile}
                                 onChange={(e) => setFormData({ ...formData, profile: e.target.value })}
@@ -239,6 +241,7 @@ export default function TiresModule() {
                             <span className="text-slate-600 font-bold">R</span>
                             <input
                                 className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none text-center"
+                                aria-label="Diámetro de la llanta (pulgadas)"
                                 placeholder="17"
                                 value={formData.rim}
                                 onChange={(e) => setFormData({ ...formData, rim: e.target.value })}

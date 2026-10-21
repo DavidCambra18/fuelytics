@@ -212,8 +212,8 @@ export default function Register() {
 
   return (
     <div className="flex min-h-dvh flex-col text-slate-100">
-      <div className="section-shell grid flex-1 items-center gap-8 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:py-6">
-        <section className="order-2 space-y-8 lg:order-1">
+      <div className="section-shell grid min-w-0 flex-1 grid-cols-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:py-6">
+        <section className="order-2 min-w-0 space-y-8 lg:order-1">
           <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Nuevo usuario</p>
             <h1 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Crear cuenta</h1>
