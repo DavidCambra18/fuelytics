@@ -3,9 +3,12 @@ import { Link } from "react-router-dom";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { ArrowRight, CarFront, Fuel, LocateFixed, MapPin, MapPinned, Navigation, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, CarFront, Fuel, LocateFixed, MapPin, Navigation, Search, SlidersHorizontal } from "lucide-react";
 import "./GasStations.css";
 
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
+import CustomSelect from "../components/CustomSelect";
 import { apiJson } from "../services/api";
 
 const DEFAULT_CENTER = [40.4168, -3.7038];
@@ -172,50 +175,50 @@ function StationPopup({ station, tone }) {
       maxWidth={300}
       minWidth={230}
     >
-      <article className="w-[250px] overflow-hidden text-slate-100 sm:w-[280px]">
-        <header className="border-b border-white/10 bg-gradient-to-br from-teal-400/15 via-slate-900/80 to-slate-950 px-5 py-5 pr-12">
-          <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100">
+      <article className="fl-station-popup-content">
+        <header className="fl-station-popup-header">
+          <div className="inline-flex items-center gap-2 text-xs font-medium text-primary">
             <Fuel className="h-3 w-3" aria-hidden="true" />
             {station.fuelLabel}
           </div>
-          <h3 className="mt-3 break-words text-lg font-semibold leading-tight text-white">{station.name}</h3>
-          {showBrand ? <p className="mt-1 text-sm text-slate-400">{station.brand}</p> : null}
+          <h3 className="mt-3 break-words text-lg font-semibold leading-tight text-foreground">{station.name}</h3>
+          {showBrand ? <p className="mt-1 text-sm text-muted-foreground">{station.brand}</p> : null}
         </header>
 
-        <div className="space-y-4 p-5">
+        <div className="space-y-4 p-4">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-teal-200">
               <MapPin className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="min-w-0 text-sm leading-5">
-              <p className="break-words font-medium text-slate-200">{station.address}</p>
-              <p className="mt-1 text-slate-400">{station.municipality} · {station.province}</p>
+              <p className="break-words font-medium text-foreground">{station.address}</p>
+              <p className="mt-1 text-muted-foreground">{station.municipality} · {station.province}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div className={`rounded-2xl border p-3 ${priceTone}`}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">Precio</p>
-              <p className="mt-1 whitespace-nowrap text-lg font-bold text-current">{formatPrice(station.price)}</p>
+              <p className="text-xs font-medium">Precio</p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-current">{formatPrice(station.price)}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-slate-200">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            <div className="rounded-2xl border border-border bg-secondary/40 p-3 text-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 {station.distanceFromUser ? "Desde ti" : "Distancia"}
               </p>
-              <p className="mt-1 whitespace-nowrap text-lg font-bold text-white">{formatDistance(station.distanceKm)}</p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">{formatDistance(station.distanceKm)}</p>
             </div>
           </div>
 
-          <a
+          <Button asChild className="w-full"><a
             href={buildGoogleMapsUrl(station.latitude, station.longitude)}
             target="_blank"
             rel="noreferrer"
-            className="station-popup-route flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-300 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-teal-200"
+            className="station-popup-route"
           >
             <Navigation className="h-4 w-4" aria-hidden="true" />
             Cómo llegar
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </a>
+          </a></Button>
         </div>
       </article>
     </Popup>
@@ -402,11 +405,11 @@ function MapLocationControl({ location, loading, popupOpen, onRequestLocation })
   return (
     <div className={`leaflet-top leaflet-right ${popupOpen ? "hidden sm:block" : ""}`}>
       <div className="leaflet-control m-3">
-        <button
+        <Button
           type="button"
           onClick={handleClick}
           disabled={loading}
-          className="map-location-control flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-lg transition hover:bg-slate-50 hover:text-blue-600 disabled:cursor-wait disabled:opacity-60"
+          variant="outline" size="icon" className="map-location-control"
           aria-label={location ? "Ir a mi ubicación" : "Obtener mi ubicación"}
           title={location ? "Ir a mi ubicación" : "Obtener mi ubicación"}
         >
@@ -415,7 +418,7 @@ function MapLocationControl({ location, loading, popupOpen, onRequestLocation })
           ) : (
             <LocateFixed className="h-5 w-5" aria-hidden="true" />
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -428,14 +431,14 @@ function MapSearchControl({ loading, onSearch }) {
         className="leaflet-control !mb-10 flex w-full justify-center px-4 lg:!mb-5"
         style={{ marginLeft: 0, marginRight: 0 }}
       >
-        <button
+        <Button
           type="button"
           onClick={(event) => {
             event.stopPropagation();
             onSearch();
           }}
           disabled={loading}
-          className="map-search-control inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/90 px-5 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-xl transition hover:bg-slate-900 disabled:cursor-wait disabled:opacity-70"
+          variant="secondary" className="map-search-control"
         >
           {loading ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-300 border-t-transparent" aria-hidden="true" />
@@ -443,7 +446,7 @@ function MapSearchControl({ loading, onSearch }) {
             <Search className="h-4 w-4 text-teal-300" aria-hidden="true" />
           )}
           {loading ? "Buscando..." : "Buscar en esta zona"}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -689,58 +692,22 @@ export default function GasStations() {
   };
 
   return (
-    <div className="gas-stations-page min-h-screen text-slate-100">
-      <main className="gas-stations-main pb-6 pt-16 lg:h-screen lg:overflow-hidden lg:pb-3 lg:pt-14">
-        <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-6 lg:h-full lg:px-8">
-          <section className="glass-panel overflow-hidden rounded-[1.75rem] border border-white/10 lg:flex lg:h-full lg:flex-col">
-            <header className="shrink-0 border-b border-white/10 px-4 py-4 sm:px-6 lg:py-3">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-teal-200">
-                    <MapPinned className="h-4 w-4" aria-hidden="true" />
-                    Gasolineras
-                  </div>
-                  <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                    Encuentra dónde repostar al mejor precio
-                  </h1>
-                  <p className="mt-1 text-sm text-slate-400">
-                    Explora el mapa, compara precios y calcula la distancia desde tu ubicación.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    to="/dashboard"
-                    className="gas-stations-dashboard-link inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2.5 text-sm font-semibold text-teal-50 transition hover:bg-teal-300/20"
-                  >
-                    Dashboard
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </div>
+    <div className="gas-stations-page fl-gas-page text-foreground">
+      <main className="gas-stations-main fl-gas-main">
+        <div className="fl-gas-shell">
+          <Surface as="section" className="fl-gas-workspace">
+            <header className="fl-gas-header">
+              <div className="fl-gas-heading">
+                <div className="min-w-0"><h1>Gasolineras</h1><p>Explora el mapa, compara precios y calcula la distancia desde tu ubicación.</p></div>
+                <Button asChild variant="outline" className="gas-stations-dashboard-link"><Link to="/dashboard">Garaje<ArrowRight aria-hidden="true" /></Link></Button>
               </div>
-
-              <div className="gas-stations-controls mt-4 grid gap-3 lg:mt-3 lg:grid-cols-[minmax(210px,0.8fr)_minmax(260px,1.2fr)_auto] lg:items-end">
-                <label className="space-y-1.5 text-sm text-slate-200">
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Combustible</span>
-                  <div className="relative">
-                    <Fuel className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-300" aria-hidden="true" />
-                    <select
-                      value={fuelType}
-                      onChange={(event) => setFuelType(event.target.value)}
-                      className="h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950/60 px-10 text-sm font-medium text-white outline-none transition focus:border-teal-300/40"
-                    >
-                      {FUEL_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value} className="bg-slate-950">
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </label>
-
-                <div className="flex min-h-11 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2 text-sm text-slate-300" role="status" aria-live="polite">
+              <div className="gas-stations-controls fl-gas-controls">
+                <div className="fl-field-group"><label className="fl-label" htmlFor="station-fuel-type">Combustible</label>
+                  <CustomSelect appearance="atlantic" id="station-fuel-type" options={FUEL_OPTIONS} value={fuelType} onChange={(value) => setFuelType(value)} />
+                </div>
+                <div className="fl-location-status" role="status" aria-live="polite">
                   <CarFront className="h-4 w-4 shrink-0 text-teal-300" aria-hidden="true" />
-                  <span className="line-clamp-2">
+                  <span className="min-w-0">
                     {locationStatus === "ready"
                       ? "Distancias calculadas desde tu ubicación"
                       : locationStatus === "loading"
@@ -753,11 +720,11 @@ export default function GasStations() {
                   </span>
                 </div>
 
-                <button
+                <Button
                   type="button"
                   onClick={handleSearch}
                   disabled={loading}
-                  className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-teal-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-teal-200 disabled:cursor-wait disabled:opacity-70"
+                  className="fl-header-search"
                 >
                   {loading ? (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
@@ -765,7 +732,7 @@ export default function GasStations() {
                     <Search className="h-4 w-4" aria-hidden="true" />
                   )}
                   {loading ? "Buscando..." : "Buscar en esta zona"}
-                </button>
+                </Button>
               </div>
 
               {error || sourceState === "stale" || sourceState === "unavailable" ? (
@@ -785,18 +752,18 @@ export default function GasStations() {
               ) : null}
             </header>
 
-            <div className="gas-stations-results-layout grid min-h-0 min-w-0 lg:flex-1 lg:grid-cols-[370px_minmax(0,1fr)]">
-              <aside className="relative z-[600] order-2 flex min-h-0 min-w-0 flex-col border-t border-white/10 bg-slate-950/95 backdrop-blur-xl lg:static lg:z-auto lg:order-1 lg:h-auto lg:min-h-0 lg:border-r lg:border-t-0 lg:bg-slate-950/45 lg:backdrop-blur-none">
-                <div className="border-b border-white/10 px-4 py-4">
+            <div className="gas-stations-results-layout fl-gas-results-layout">
+              <aside className="fl-gas-results" aria-label="Resultados de gasolineras">
+                <div className="fl-gas-results-header">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Resultados</p>
-                      <p className="mt-1 text-sm text-slate-300">
+                      <h2 className="text-base font-semibold">Resultados</h2>
+                      <p className="fl-supporting mt-1">
                         {hasSearched ? `${sortedStations.length} gasolineras en esta zona` : "Prepara tu búsqueda en el mapa"}
                       </p>
                     </div>
                     {updatedAt ? (
-                      <span className="text-right text-[11px] leading-4 text-slate-500">
+                      <span className="text-right text-xs leading-4 text-muted-foreground">
                         Actualizado<br />
                         {new Intl.DateTimeFormat("es-ES", { dateStyle: "short", timeStyle: "short" }).format(new Date(updatedAt))}
                       </span>
@@ -805,30 +772,30 @@ export default function GasStations() {
 
                   <div className="mt-3 flex items-center gap-2">
                     <SlidersHorizontal className="h-4 w-4 text-slate-500" aria-hidden="true" />
-                    <div className="grid flex-1 grid-cols-2 rounded-xl border border-white/10 bg-slate-950/60 p-1">
-                      <button
+                    <div className="fl-gas-sort" role="group" aria-label="Ordenar gasolineras">
+                      <Button
                         type="button"
                         onClick={() => setSortMode("price")}
-                        className={`min-h-11 rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "price" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                        variant={sortMode === "price" ? "secondary" : "ghost"} aria-pressed={sortMode === "price"} className="fl-gas-sort-button"
                       >
                         Más baratas
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         onClick={() => setSortMode("distance")}
-                        className={`min-h-11 rounded-lg px-3 py-2 text-xs font-semibold transition ${sortMode === "distance" ? "bg-teal-300 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                        variant={sortMode === "distance" ? "secondary" : "ghost"} aria-pressed={sortMode === "distance"} className="fl-gas-sort-button"
                       >
                         Más cercanas
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
 
-                <div className="max-h-[520px] flex-1 space-y-2 overflow-y-auto p-3 lg:max-h-none">
+                <div className="fl-station-results">
                   {sortedStations.length === 0 ? (
-                    <div className="flex h-full min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center sm:min-h-52">
-                      <Search className="h-7 w-7 text-slate-600" aria-hidden="true" />
-                      <p className="mt-3 text-sm font-medium text-slate-300">
+                    <div className="fl-station-empty" role="status">
+                      <Search className="h-7 w-7 text-muted-foreground" aria-hidden="true" />
+                      <p className="mt-3 text-sm font-medium text-[var(--text-secondary)]">
                         {loading
                           ? "Buscando gasolineras..."
                           : hasSearched
@@ -850,38 +817,34 @@ export default function GasStations() {
                         <article
                           key={station.id}
                           ref={selected ? selectedCardRef : null}
-                          className={`rounded-2xl border p-3.5 transition ${
-                            selected
-                              ? "border-teal-300/50 bg-teal-300/10 shadow-lg shadow-teal-950/20"
-                              : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
-                          }`}
+                          className="fl-station-card" data-selected={selected}
                         >
-                          <button type="button" onClick={() => handleSelectStationFromList(station.id)} className="w-full text-left">
+                          <Button type="button" onClick={() => handleSelectStationFromList(station.id)} aria-pressed={selected} variant="ghost" className="fl-station-select">
                             <div className="flex items-start gap-3">
-                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xs font-bold text-slate-300">
+                              <span className="fl-station-rank">
                                 {index + 1}
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
-                                    <h2 className="truncate text-sm font-semibold text-white">{station.name}</h2>
-                                    <p className="mt-0.5 truncate text-xs text-slate-500">{station.municipality} · {station.province}</p>
+                                    <h3 className="fl-station-name">{station.name}</h3>
+                                    <p className="fl-station-town">{station.municipality} · {station.province}</p>
                                   </div>
                                   <div className="shrink-0 text-right">
-                                    <p className="text-base font-bold text-white">{formatPrice(station.price)}</p>
+                                    <p className="fl-station-price">{formatPrice(station.price)}</p>
                                     <span className={`mt-1 inline-block h-1.5 w-8 rounded-full ${toneClass}`} aria-hidden="true" />
                                   </div>
                                 </div>
                                 <div className="mt-3 flex items-center justify-between gap-3 text-xs">
-                                  <span className="inline-flex items-center gap-1.5 text-slate-400">
+                                  <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                                     <Navigation className="h-3.5 w-3.5 text-blue-300" aria-hidden="true" />
                                     {location ? "Desde ti: " : ""}{formatDistance(station.distanceKm)}
                                   </span>
-                                  <span className="font-medium text-teal-200">Ver en mapa</span>
+                                  <span className="font-medium text-primary">Ver en mapa</span>
                                 </div>
                               </div>
                             </div>
-                          </button>
+                          </Button>
                         </article>
                       );
                     })
@@ -889,8 +852,8 @@ export default function GasStations() {
                 </div>
               </aside>
 
-              <section ref={mapSectionRef} className="relative order-1 h-[62vh] min-h-[480px] min-w-0 overflow-hidden bg-slate-950 lg:order-2 lg:h-auto lg:min-h-0">
-                <div className="pointer-events-none absolute left-14 top-3 z-[500] hidden items-center gap-2 rounded-full border border-white/15 bg-slate-950/80 px-3 py-2 text-[10px] font-semibold text-slate-300 shadow-xl backdrop-blur-md sm:flex">
+              <section ref={mapSectionRef} className="fl-gas-map" aria-label="Mapa de gasolineras">
+                <div className="fl-map-legend">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" /> Barata
                   <span className="h-2 w-2 rounded-full bg-amber-400" /> Normal
                   <span className="h-2 w-2 rounded-full bg-rose-400" /> Cara
@@ -937,7 +900,7 @@ export default function GasStations() {
 
               </section>
             </div>
-          </section>
+          </Surface>
         </div>
       </main>
     </div>

@@ -1,56 +1,91 @@
-.fuelytics-station-popup .leaflet-popup-content-wrapper {
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 1.5rem;
-  background: rgba(7, 15, 25, 0.97);
-  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.5);
-  color: #e2e8f0;
-  backdrop-filter: blur(18px);
+/* Gasolineras: materiales compartidos, sin efectos sobre el lienzo del mapa. */
+.fl-gas-main { padding:24px; }
+.app-shell .fl-gas-main { padding-top:0; }
+.fl-gas-shell { max-width:1600px; height:100%; margin-inline:auto; }
+.fl-gas-workspace { display:flex; flex-direction:column; height:100%; overflow:hidden; }
+.fl-gas-header { flex-shrink:0; padding:24px; border-bottom:1px solid var(--border-subtle); }
+.fl-gas-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.fl-gas-heading h1 { font-size:1.75rem; line-height:1.25; font-weight:600; letter-spacing:-.025em; }
+.fl-gas-heading p { margin-top:8px; color:var(--muted-foreground); font-size:.875rem; line-height:1.5; }
+.fl-gas-controls { display:grid; grid-template-columns:minmax(180px,.8fr) minmax(0,1.2fr) auto; align-items:end; gap:16px; }
+.fl-gas-controls .fl-field-group { min-width:0; }
+.fl-location-status { display:flex; align-items:center; gap:8px; min-height:48px; padding:10px 12px; color:var(--text-secondary); font-size:.8125rem; line-height:1.5; }
+.fl-header-search { min-height:48px; }
+.fl-gas-results-layout { display:grid; grid-template-columns:minmax(300px,350px) minmax(0,1fr); flex:1; min-height:0; }
+.fl-gas-results { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--surface-inset); border-right:1px solid var(--border-subtle); }
+.fl-gas-results-header { padding:20px 16px 16px; border-bottom:1px solid var(--border-subtle); }
+.fl-gas-results-header .fl-supporting { font-size:.8125rem; }
+.fl-gas-sort { display:flex; flex:1; min-width:0; padding:4px; border:1px solid var(--border); border-radius:var(--radius-control); }
+.fl-gas-sort-button { flex:1; min-width:0; padding-inline:8px; font-size:.75rem; color:var(--muted-foreground); }
+.fl-gas-sort-button[aria-pressed="true"] { background:var(--accent); color:var(--accent-foreground); }
+.fl-station-results { overflow-y:auto; overscroll-behavior:contain; min-height:0; padding:12px; scrollbar-color:var(--border) transparent; }
+.fl-station-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; padding:24px; text-align:center; }
+.fl-station-card { margin-bottom:8px; border:1px solid var(--border-subtle); border-radius:16px; background:var(--card); }
+.fl-station-card[data-selected="true"] { border-color:var(--primary); background:var(--accent); }
+.fl-station-card .fl-station-select { display:block; width:100%; height:auto; padding:16px 12px; border-radius:15px; white-space:normal; text-align:left; background:transparent; }
+.fl-station-rank { display:flex; flex-shrink:0; width:26px; height:26px; align-items:center; justify-content:center; border-radius:8px; color:var(--muted-foreground); background:var(--surface-inset); font-size:.75rem; font-variant-numeric:tabular-nums; }
+.fl-station-name { font-size:.875rem; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+.fl-station-town { margin-top:4px; color:var(--muted-foreground); font-size:.75rem; line-height:1.5; overflow-wrap:anywhere; }
+.fl-station-price { font-size:1rem; font-weight:600; font-variant-numeric:tabular-nums; }
+.fl-gas-map { position:relative; min-width:0; min-height:0; isolation:isolate; }
+.fl-map-legend { position:absolute; z-index:600; top:12px; left:64px; display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:var(--radius-control); color:var(--foreground); background:var(--popover); font-size:.75rem; pointer-events:none; }
+.fl-gas-map .leaflet-container { font-family:inherit; }
+.fl-gas-map .map-location-control { color:var(--foreground); background:var(--popover); border-color:var(--border); box-shadow:var(--shadow-floating); }
+.fl-gas-map .map-search-control { color:var(--foreground); background:var(--popover); border-color:var(--border); box-shadow:var(--shadow-floating); }
+.fl-gas-map .map-search-control svg { color:var(--primary); }
+.fl-gas-map .leaflet-bar a { width:44px; height:44px; line-height:44px; }
+.fl-gas-map .leaflet-control a:focus-visible { outline:3px solid var(--ring); outline-offset:2px; }
+.fuelytics-station-popup .leaflet-popup-content-wrapper { overflow:hidden; border-radius:var(--radius-card); background:var(--popover); box-shadow:var(--shadow-floating); color:var(--foreground); }
+.fuelytics-station-popup .leaflet-popup-content { width:auto !important; margin:0; font-size:.875rem; line-height:1.5; }
+.fuelytics-station-popup .leaflet-popup-content p { margin:0; }
+.fl-station-popup-content { width:min(280px,calc(100vw - 64px)); }
+.fl-station-popup-header { padding:20px 56px 16px 16px; border-bottom:1px solid var(--border-subtle); background:var(--card); }
+.fuelytics-station-popup .leaflet-popup-tip { background:var(--popover); }
+.fuelytics-station-popup .leaflet-popup-close-button { top:8px !important; right:8px !important; display:flex; width:44px !important; height:44px !important; align-items:center; justify-content:center; border-radius:var(--radius-control); color:var(--text-secondary) !important; font-size:24px !important; }
+.fuelytics-station-popup .leaflet-popup-close-button:focus-visible { outline:2px solid var(--ring); outline-offset:-2px; }
+.fuelytics-station-popup .station-popup-route { color:var(--primary-foreground); }
+@media (hover:hover) and (pointer:fine) {
+  .fl-station-card .fl-station-select:hover { background:color-mix(in oklch,var(--foreground) 3%,transparent); }
+  .fl-gas-map .map-location-control:hover,.fl-gas-map .map-search-control:hover { background:var(--secondary); }
+  .fuelytics-station-popup .leaflet-popup-close-button:hover { background:var(--secondary); color:var(--foreground) !important; }
+  .fuelytics-station-popup .station-popup-route:hover { color:var(--primary-foreground); }
 }
-
-.fuelytics-station-popup .leaflet-popup-content {
-  width: auto !important;
-  margin: 0;
+@media (min-width:1024px) {
+  .fl-gas-main { height:100dvh; }
+  .app-shell .fl-gas-main { height:calc(100dvh - var(--app-content-top) - var(--app-content-bottom)); padding-bottom:0; }
 }
-
-.fuelytics-station-popup .leaflet-popup-content p {
-  margin: 0;
+@media (max-width:1023px) {
+  .fl-gas-main { padding:16px; }
+  .fl-gas-header { padding:20px; }
+  .fl-gas-controls { grid-template-columns:minmax(180px,1fr) minmax(0,1fr); gap:12px; }
+  .fl-header-search { display:none; }
+  .fl-gas-results-layout { display:flex; flex-direction:column; }
+  .fl-gas-map { order:-1; height:clamp(320px,52dvh,560px); flex-shrink:0; }
+  .fl-gas-results { border-right:0; border-top:1px solid var(--border-subtle); }
+  .fl-station-results { max-height:520px; }
 }
-
-.fuelytics-station-popup .leaflet-popup-tip {
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: #071019;
-  box-shadow: 4px 4px 12px rgba(2, 6, 23, 0.25);
+@media (min-width:640px) and (max-width:1023px) {
+  .fl-station-results { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .fl-station-card { margin:0; }
+  .fl-station-empty { grid-column:1/-1; }
 }
-
-.fuelytics-station-popup .leaflet-popup-close-button {
-  top: 0.75rem !important;
-  right: 0.75rem !important;
-  display: flex;
-  width: 2rem !important;
-  height: 2rem !important;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.75) !important;
-  color: #cbd5e1 !important;
-  font-size: 1.25rem !important;
-  line-height: 1 !important;
-  transition: background-color 150ms ease, color 150ms ease;
+@media (max-width:639px) {
+  .fl-gas-main { padding:12px; }
+  .fl-gas-map { height:clamp(440px,56dvh,560px); }
+  .fl-gas-workspace { border-radius:20px; }
+  .fl-gas-header { padding:16px; }
+  .fl-gas-heading { margin-bottom:12px; gap:8px; }
+  .fl-gas-heading h1 { font-size:1.375rem; }
+  .fl-gas-heading p { display:none; }
+  .fl-gas-controls { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .fl-gas-controls .fl-field-group { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:12px; }
+  .fl-location-status { min-height:0; padding:0; font-size:.75rem; }
+  .fl-gas-results-header { padding:16px 12px 12px; }
+  .fl-map-legend { display:none; }
+  .fl-station-popup-header { padding-left:60px; min-height:104px; }
 }
-
-.fuelytics-station-popup .leaflet-popup-close-button:hover {
-  background: rgba(30, 41, 59, 0.95) !important;
-  color: #ffffff !important;
-}
-
-.fuelytics-station-popup .station-popup-route {
-  color: #042f2e;
-}
-
-.fuelytics-station-popup .station-popup-route:hover {
-  color: #042f2e;
+@media (prefers-reduced-motion:reduce) {
+  .fl-gas-page .animate-spin { animation:none; }
 }
 
 .user-location-marker {
@@ -71,19 +106,4 @@
   border-radius: 9999px;
   background: #3b82f6;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.45);
-}
-
-.leaflet-container .map-location-control {
-  color: #334155;
-}
-
-.leaflet-container .map-location-control:hover {
-  color: #2563eb;
-}
-
-@media (max-width: 640px) {
-  .fuelytics-station-popup .leaflet-popup-close-button {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-  }
 }

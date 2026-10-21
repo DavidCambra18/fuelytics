@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Calculator, MapPin, Fuel, Users, Wallet, Droplets, Gauge } from "lucide-react";
+import { MapPin, Fuel, Users, Droplets, Gauge } from "lucide-react";
+
+import { Surface } from "./ui/surface";
+import { Input } from "./ui/field";
 
 export default function TripCalculator() {
   const [distance, setDistance] = useState("");
@@ -18,29 +21,21 @@ export default function TripCalculator() {
 
   return (
     <section className="section-shell space-y-6 pb-10">
-      <article className="glass-panel mx-auto max-w-5xl rounded-[2rem] p-6 sm:p-8">
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-teal-400 font-semibold">Herramientas</p>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-              <Calculator className="h-7 w-7 text-teal-500" />
-              Calculadora de Viaje
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300 max-w-2xl">
-              Estima el coste de tu próximo trayecto y divide los gastos fácilmente.
-            </p>
-          </div>
-        </div>
+      <Surface as="article" className="fl-workspace fl-calculator mx-auto max-w-5xl">
+        <header className="fl-workspace-heading"><div>
+          <h1 className="fl-page-title">Calculadora de viaje</h1>
+          <p className="fl-supporting mt-3">Estima el coste de tu próximo trayecto y divide los gastos fácilmente.</p>
+        </div></header>
 
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
-          <div className="space-y-5">
+        <div className="fl-calculator-layout">
+          <div className="fl-calculator-fields">
             <div className="grid gap-4">
               <div>
-                <label htmlFor="trip-consumption" className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
-                  <Gauge className="h-4 w-4 text-teal-500" />
+                <label htmlFor="trip-consumption" className="fl-label mb-2 flex items-center gap-2">
+                  <Gauge className="h-4 w-4 text-primary" aria-hidden="true" />
                   Consumo (L/100 km)
                 </label>
-                <input
+                <Input
                   id="trip-consumption"
                   type="number"
                   min="0"
@@ -48,18 +43,17 @@ export default function TripCalculator() {
                   value={consumption}
                   onChange={(e) => setConsumption(e.target.value)}
                   placeholder="Ej: 6.5"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-white placeholder-slate-600 outline-none transition focus:border-teal-500"
                 />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="trip-distance" className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
-                  <MapPin className="h-4 w-4 text-teal-500" />
+                <label htmlFor="trip-distance" className="fl-label mb-2 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
                   Distancia (km)
                 </label>
-                <input
+                <Input
                   id="trip-distance"
                   type="number"
                   min="0"
@@ -67,15 +61,14 @@ export default function TripCalculator() {
                   value={distance}
                   onChange={(e) => setDistance(e.target.value)}
                   placeholder="Ej: 450"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-white placeholder-slate-600 outline-none transition focus:border-teal-500"
                 />
               </div>
               <div>
-                <label htmlFor="trip-fuel-price" className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
-                  <Fuel className="h-4 w-4 text-teal-500" />
+                <label htmlFor="trip-fuel-price" className="fl-label mb-2 flex items-center gap-2">
+                  <Fuel className="h-4 w-4 text-primary" aria-hidden="true" />
                   Precio del combustible (€/L)
                 </label>
-                <input
+                <Input
                   id="trip-fuel-price"
                   type="number"
                   min="0"
@@ -83,70 +76,37 @@ export default function TripCalculator() {
                   value={fuelPrice}
                   onChange={(e) => setFuelPrice(e.target.value)}
                   placeholder="Ej: 1.659"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-white placeholder-slate-600 outline-none transition focus:border-teal-500"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="trip-people" className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
-                <Users className="h-4 w-4 text-teal-500" />
+              <label htmlFor="trip-people" className="fl-label mb-2 flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" aria-hidden="true" />
                 Número de personas
               </label>
-              <input
+              <Input
                 id="trip-people"
                 type="number"
                 min="1"
                 step="1"
                 value={people}
                 onChange={(e) => setPeople(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-white outline-none transition focus:border-teal-500"
               />
             </div>
           </div>
 
-          <div className="flex h-fit flex-col gap-4 rounded-2xl border border-white/5 bg-slate-900/30 p-4 sm:p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-2">Estimación</h3>
-            
-            <div className="flex flex-col gap-2 border-b border-white/5 pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3 text-slate-300">
-                <Droplets className="h-5 w-5 text-teal-500/70" />
-                <span className="text-sm">Cantidad necesaria</span>
-              </div>
-              <span className="font-mono text-lg font-medium text-white">
-                {estimatedLiters.toFixed(2)} L
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-2 border-b border-white/5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3 text-slate-300">
-                <Wallet className="h-5 w-5 text-teal-500/70" />
-                <span className="text-sm">Coste total</span>
-              </div>
-              <span className="font-mono text-xl font-bold text-teal-400">
-                {totalCost.toFixed(2)} €
-              </span>
-            </div>
-
-            <div className={`flex flex-col pt-4 transition-all duration-300 ${numPeople > 1 ? 'opacity-100' : 'opacity-30 grayscale'}`}>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3 text-slate-300">
-                  <Users className="h-5 w-5 text-teal-500/70" />
-                  <span className="text-sm font-medium">Por persona</span>
-                </div>
-                <span className="font-mono text-2xl font-bold text-white">
-                  {costPerPerson.toFixed(2)} €
-                </span>
-              </div>
-              {numPeople <= 1 && (
-                <p className="text-[10px] text-right mt-2 text-slate-500">
-                  Añade más pasajeros para dividir el coste
-                </p>
-              )}
-            </div>
-          </div>
+          <Surface variant="inset" as="section" className="fl-trip-result" aria-labelledby="trip-estimate-title">
+            <h2 id="trip-estimate-title" className="fl-section-title">Estimación</h2>
+            <dl>
+              <div className="fl-trip-result-row"><dt><Droplets size={18} aria-hidden="true" />Cantidad necesaria</dt><dd>{estimatedLiters.toFixed(2)} L</dd></div>
+              <div className="fl-trip-total"><dt>Coste total</dt><dd>{totalCost.toFixed(2)} €</dd></div>
+              <div className="fl-trip-result-row"><dt><Users size={18} aria-hidden="true" />Por persona</dt><dd>{costPerPerson.toFixed(2)} €</dd></div>
+            </dl>
+            {numPeople <= 1 && <p className="fl-supporting mt-3">Añade más pasajeros para dividir el coste</p>}
+          </Surface>
         </div>
-      </article>
+      </Surface>
     </section>
   );
 }
