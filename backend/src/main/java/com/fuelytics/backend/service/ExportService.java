@@ -1,6 +1,7 @@
 package com.fuelytics.backend.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -16,6 +17,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -515,8 +517,9 @@ public class ExportService {
         private final float footerHeight = 24f;
         private final float cardGap = 10f;
         private final PDFont titleFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-        private final PDFont textFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        private final PDFont textFont;
         private final PDFont textBoldFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        private PDFont currentFont;
 
         private PDPage page;
         private PDPageContentStream content;
@@ -525,6 +528,11 @@ public class ExportService {
 
         private PdfReportWriter(PDDocument document, boolean landscape) throws Exception {
             this.document = document;
+            // PDFBox bundles this Unicode font; exports work without fonts installed on the server.
+            try (InputStream font = PDDocument.class.getResourceAsStream("/org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf")) {
+                if (font == null) throw new IllegalStateException("No se encontró la fuente del informe");
+                this.textFont = PDType0Font.load(document, font);
+            }
             this.pageSize = landscape
                     ? new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth())
                     : PDRectangle.A4;
@@ -730,6 +738,7 @@ public class ExportService {
         }
 
         private void beginText(PDFont font, float size, float x, float y, Color color) throws Exception {
+            currentFont = font;
             content.beginText();
             content.setFont(font, size);
             content.setNonStrokingColor(color);
@@ -737,7 +746,7 @@ public class ExportService {
         }
 
         private void showText(String text) throws Exception {
-            content.showText(escapePdfText(text));
+            content.showText(supportedText(text, currentFont));
         }
 
         private void endText() throws Exception {
@@ -746,14 +755,14 @@ public class ExportService {
 
         private String fitText(String value, PDFont font, float fontSize, float maxWidth, boolean truncateLong)
                 throws Exception {
-            String text = safeText(value);
+            String text = supportedText(safeText(value), font);
 
             if (text.isEmpty()) {
                 return "";
             }
 
             while (font.getStringWidth(text) / 1000f * fontSize > maxWidth && text.length() > 1) {
-                text = text.substring(0, text.length() - 1);
+                text = text.substring(0, text.offsetByCodePoints(text.length(), -1));
             }
 
             if (truncateLong && !text.equals(value) && text.length() > 3) {
@@ -763,12 +772,23 @@ public class ExportService {
             return text;
         }
 
-        private String escapePdfText(String text) {
+        private String supportedText(String text, PDFont font) throws Exception {
             if (text == null) {
                 return "";
             }
 
-            return text.replace("\r", " ").replace("\n", " ");
+            StringBuilder result = new StringBuilder();
+            for (int codePoint : text.replace("\r", " ").replace("\n", " ").codePoints().toArray()) {
+                String character = new String(Character.toChars(codePoint));
+                try {
+                    font.encode(character);
+                    result.append(character);
+                } catch (IllegalArgumentException unsupported) {
+                    // A missing glyph must not prevent downloading the rest of the report.
+                    result.append('?');
+                }
+            }
+            return result.toString();
         }
 
         @Override
