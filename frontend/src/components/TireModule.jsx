@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Ban, Plus, Disc, AlertTriangle } from "lucide-react";
-import { apiFetch } from "../services/api";
+import { apiJson } from "../services/api";
 import { TIRE_AXLE_OPTIONS } from "../utils/vehicleLabels";
 import CustomSelect from "./CustomSelect";
 
@@ -28,32 +28,36 @@ export default function TiresModule() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showForm, setShowForm] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const [formData, setFormData] = useState(() => createInitialFormData(latestOdometer));
 
-    const loadTires = useCallback(async () => {
+    const loadTires = useCallback(async (signal) => {
         setLoading(true);
+        setError("");
         try {
-            const res = await apiFetch(`/api/vehicles/${vehicleId}/tires`);
-            if (res.ok) {
-                const data = await res.json();
-                setTires(data || []);
-            }
-        } catch {
-            setError("Error cargando neumáticos");
+            const data = await apiJson(`/api/vehicles/${vehicleId}/tires`, { signal });
+            if (!signal?.aborted) setTires(data || []);
+        } catch (loadError) {
+            if (!signal?.aborted) setError(loadError.message || "Error cargando neumáticos");
         } finally {
-            setLoading(false);
+            if (!signal?.aborted) setLoading(false);
         }
     }, [vehicleId]);
 
     useEffect(() => {
         if (!vehicleId) return undefined;
-        const timeoutId = window.setTimeout(loadTires, 0);
-        return () => window.clearTimeout(timeoutId);
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => loadTires(controller.signal), 0);
+        return () => {
+            window.clearTimeout(timeoutId);
+            controller.abort();
+        };
     }, [loadTires, vehicleId]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
+        if (saving) return;
         const fullSize = `${formData.width}/${formData.profile} R${formData.rim}`;
 
         const dataToSend = {
@@ -65,29 +69,43 @@ export default function TiresModule() {
             installationOdometer: parseInt(formData.installationOdometer)
         };
 
+        setSaving(true);
+        setError("");
         try {
-            const res = await apiFetch(`/api/vehicles/${vehicleId}/tires`, {
+            await apiJson(`/api/vehicles/${vehicleId}/tires`, {
                 method: "POST",
                 body: dataToSend,
             });
-            if (res.ok) {
-                setShowForm(false);
-                setFormData(createInitialFormData(latestOdometer));
-                loadTires();
-            }
-        } catch {
-            setError("No se pudo registrar el neumático");
+            setShowForm(false);
+            setFormData(createInitialFormData(latestOdometer));
+            await loadTires();
+        } catch (createError) {
+            setError(createError.message || "No se pudo registrar el neumático");
+        } finally {
+            setSaving(false);
         }
     };
 
     const handleDeactivate = async (id) => {
+        if (saving) return;
         const odo = window.prompt("Introduce el odómetro de baja:");
-        if (!odo) return;
+        if (odo === null) return;
+        const odometer = Number(odo);
+        const tire = tires.find((item) => item.id === id);
+        if (!odo.trim() || !Number.isInteger(odometer) || odometer < 0 || odometer > 2147483647
+            || odometer < (tire?.installationOdometer ?? 0)) {
+            setError("Introduce un odómetro válido, igual o superior al de montaje");
+            return;
+        }
+        setSaving(true);
+        setError("");
         try {
-            const res = await apiFetch(`/api/vehicles/${vehicleId}/tires/${id}/deactivate?odometer=${odo}`, { method: "PUT" });
-            if (res.ok) loadTires();
-        } catch {
-            setError("Error al dar de baja");
+            await apiJson(`/api/vehicles/${vehicleId}/tires/${id}/deactivate?odometer=${odometer}`, { method: "PUT" });
+            await loadTires();
+        } catch (deactivateError) {
+            setError(deactivateError.message || "Error al dar de baja");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -125,6 +143,7 @@ export default function TiresModule() {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => handleDeactivate(tire.id)}
+                            disabled={saving}
                             className="p-2.5 rounded-xl border border-rose-500/20 bg-rose-500/5 text-rose-400 hover:bg-rose-500/10 transition"
                             title="Dar de baja neumático"
                         >
@@ -153,7 +172,7 @@ export default function TiresModule() {
 
     return (
         <div className="space-y-6">
-            {error && <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div>}
+            {error && <div role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div>}
 
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/5 bg-slate-950/20 p-4">
                 <div className="flex items-center gap-2">
@@ -250,6 +269,8 @@ export default function TiresModule() {
                         <span className="text-xs text-slate-400 block mb-2">Odómetro de montaje (km)</span>
                         <input
                             type="number"
+                            min="0"
+                            step="1"
                             className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none"
                             value={formData.installationOdometer}
                             onChange={(e) => setFormData({ ...formData, installationOdometer: e.target.value })}
@@ -258,7 +279,7 @@ export default function TiresModule() {
                     </label>
 
                     <div className="grid gap-2 pt-2 sm:grid-cols-2 md:col-span-2 md:flex">
-                        <button type="submit" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200">Guardar</button>
+                        <button type="submit" disabled={saving} className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">{saving ? "Guardando..." : "Guardar"}</button>
                         <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-slate-400 transition hover:text-white">Cancelar</button>
                     </div>
                 </form>
