@@ -130,7 +130,16 @@ public class VehicleService {
                     "Este vehiculo es privado");
         }
 
-        return mapToDTO(v);
+        VehicleResponseDTO response = mapToDTO(v);
+        if (!isOwner) {
+            if (!Boolean.TRUE.equals(v.getShowStatistics())) {
+                response.setAvgConsumption(null);
+            }
+            if (!Boolean.TRUE.equals(v.getShowFuelData()) && !Boolean.TRUE.equals(v.getShowStatistics())) {
+                response.setFuelEntriesCount(null);
+            }
+        }
+        return response;
     }
 
     public VehicleResponseDTO updateVehicle(

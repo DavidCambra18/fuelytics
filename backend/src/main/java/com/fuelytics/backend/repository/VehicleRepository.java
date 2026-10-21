@@ -26,6 +26,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Integer> {
                    "JOIN users u ON v.user_id = u.id " +
                    "WHERE v.is_public = true " +
                    "AND v.show_fuel_data = true " +
+                   "AND v.show_statistics = true " +
                    "AND u.profile_public = true " +
                    "AND v.vehicle_type != 'agricultural' " +
                    "AND v.vehicle_energy_type IN ('gasoline', 'diesel', 'hybrid_gasoline', 'hybrid_diesel', " +
@@ -40,6 +41,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Integer> {
                    "JOIN users u ON v.user_id = u.id " +
                    "WHERE v.is_public = true " +
                    "AND v.show_fuel_data = true " +
+                   "AND v.show_statistics = true " +
                    "AND u.profile_public = true " +
                    "AND v.vehicle_type != 'agricultural' " +
                    "AND v.vehicle_energy_type IN ('gasoline', 'diesel', 'hybrid_gasoline', 'hybrid_diesel', " +
