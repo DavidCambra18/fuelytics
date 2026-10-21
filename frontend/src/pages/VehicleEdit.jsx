@@ -8,6 +8,9 @@ import {
   getConsumptionUnit,
   getOdometerLabel,
 } from "../utils/vehicleLabels";
+import { Button } from "../components/ui/button";
+import { Surface } from "../components/ui/surface";
+import { Input } from "../components/ui/field";
 import CustomSelect from "../components/CustomSelect";
 
 export default function VehicleEdit() {
@@ -92,109 +95,62 @@ export default function VehicleEdit() {
     }
   };
 
-  if (!selectedVehicle) {
-    return (
-      <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
-        <p className="text-lg font-semibold text-white">No hay vehículo seleccionado</p>
-        <Link to="/dashboard" className="mt-4 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-950">
-          Volver al selector
-        </Link>
-      </section>
-    );
-  }
-
+  if (!selectedVehicle) return <Surface className="fl-workspace"><h2 className="fl-section-title">No hay vehículo seleccionado</h2><Button asChild variant="outline" className="mt-4"><Link to="/dashboard">Volver al selector</Link></Button></Surface>;
   return (
-    <section className="grid gap-6 xl:grid-cols-[1fr]">
-      <article className="glass-panel rounded-[2rem] p-6 sm:p-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Editar</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white">Actualizar detalles del coche</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-          Modifica los datos del vehículo según sea necesario.
-        </p>
-
-        {errorMessage ? (
-          <div className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-            {errorMessage}
-          </div>
-        ) : null}
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block sm:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Tipo de vehículo *</span>
+    <Surface as="section" className="fl-workspace fl-vehicle-editor">
+      <header className="mb-7"><p className="fl-eyebrow">Editar vehículo</p><h2 className="fl-section-title mt-2">Cada detalle, en su sitio</h2><p className="fl-supporting mt-2">Actualiza los datos del vehículo. Los campos con * son obligatorios.</p></header>
+      {errorMessage && <div role="alert" className="fl-feedback-error">{errorMessage}</div>}
+      <form onSubmit={handleSubmit} className="space-y-7">
+        <fieldset className="fl-vehicle-fieldset">
+          <legend>Identificación</legend>
+          <p className="fl-supporting mb-5">Los datos que distinguen tu vehículo.</p>
+          <div className="fl-form-grid">
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-vehicleType" className="fl-label">Tipo de vehículo *</label>
               <CustomSelect
+                appearance="atlantic"
+                id="vehicle-vehicleType"
+                aria-describedby={fieldErrors.vehicleType ? "vehicle-vehicleType-error" : undefined}
                 options={VEHICLE_TYPE_OPTIONS}
                 value={form.vehicleType}
                 onChange={(val) => setForm((c) => ({ ...c, vehicleType: val }))}
                 placeholder="---"
                 error={!!fieldErrors.vehicleType}
               />
-              {fieldErrors.vehicleType ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Marca *</span>
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+              {fieldErrors.vehicleType ? <p id="vehicle-vehicleType-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-brand" className="fl-label">Marca *</label>
+              <Input
+                id="vehicle-brand"
+                aria-invalid={!!fieldErrors.brand}
+                aria-describedby={fieldErrors.brand ? "vehicle-brand-error" : undefined}
                 placeholder="Mercedes"
                 value={form.brand}
                 onChange={handleChange("brand")}
-                style={fieldErrors.brand ? { boxShadow: "0 0 0 3px rgba(245, 101, 101, 0.06)" } : {}}
                 required
               />
-              {fieldErrors.brand ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Modelo *</span>
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+              {fieldErrors.brand ? <p id="vehicle-brand-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-model" className="fl-label">Modelo *</label>
+              <Input
+                id="vehicle-model"
+                aria-invalid={!!fieldErrors.model}
+                aria-describedby={fieldErrors.model ? "vehicle-model-error" : undefined}
                 placeholder="C220 CDI"
                 value={form.model}
                 onChange={handleChange("model")}
-                style={fieldErrors.model ? { boxShadow: "0 0 0 3px rgba(245, 101, 101, 0.06)" } : {}}
                 required
               />
-              {fieldErrors.model ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Potencia (CV) *</span>
-              <input
-                className={
-                  "w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20" +
-                  (fieldErrors.power ? " ring-1 ring-rose-400/25" : "")
-                }
-                placeholder="150"
-                type="number"
-                min="0"
-                step="1"
-                value={form.power}
-                onChange={handleChange("power")}
-                required
-              />
-              {fieldErrors.power ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Cilindrada (cc) <span className="text-slate-500">(opcional)</span></span>
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
-                placeholder="2143"
-                type="number"
-                min="0"
-                step="1"
-                value={form.cc}
-                onChange={handleChange("cc")}
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Año *</span>
-              <input
-                className={
-                  "w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
-                }
+              {fieldErrors.model ? <p id="vehicle-model-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-year" className="fl-label">Año *</label>
+              <Input
+                id="vehicle-year"
+                aria-invalid={!!fieldErrors.year}
+                aria-describedby={fieldErrors.year ? "vehicle-year-error" : undefined}
                 placeholder="2011"
                 type="number"
                 min="1900"
@@ -204,13 +160,70 @@ export default function VehicleEdit() {
                 onChange={handleChange("year")}
                 required
               />
-              {fieldErrors.year ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">{getOdometerLabel(form.vehicleType)} actual</span>
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+              {fieldErrors.year ? <p id="vehicle-year-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+          </div>
+        </fieldset>
+        <fieldset className="fl-vehicle-fieldset">
+          <legend>Motor y transmisión</legend>
+          <p className="fl-supporting mb-5">Características técnicas.</p>
+          <div className="fl-form-grid">
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-power" className="fl-label">Potencia (CV) *</label>
+              <Input
+                id="vehicle-power"
+                aria-invalid={!!fieldErrors.power}
+                aria-describedby={fieldErrors.power ? "vehicle-power-error" : undefined}
+                placeholder="150"
+                type="number"
+                min="0"
+                step="1"
+                value={form.power}
+                onChange={handleChange("power")}
+                required
+              />
+              {fieldErrors.power ? <p id="vehicle-power-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-cc" className="fl-label">Cilindrada (cc) <span className="text-muted-foreground">(opcional)</span></label>
+              <Input
+                id="vehicle-cc"
+                aria-invalid={!!fieldErrors.cc}
+                aria-describedby={fieldErrors.cc ? "vehicle-cc-error" : undefined}
+                placeholder="2143"
+                type="number"
+                min="0"
+                step="1"
+                value={form.cc}
+                onChange={handleChange("cc")}
+              />
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-gearbox" className="fl-label">Cambio *</label>
+              <CustomSelect
+                appearance="atlantic"
+                id="vehicle-gearbox"
+                aria-describedby={fieldErrors.gearbox ? "vehicle-gearbox-error" : undefined}
+                options={GEARBOX_OPTIONS}
+                value={form.gearbox}
+                onChange={(val) => setForm((c) => ({ ...c, gearbox: val }))}
+                placeholder="---"
+                error={!!fieldErrors.gearbox}
+              />
+              {fieldErrors.gearbox ? <p id="vehicle-gearbox-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+          </div>
+        </fieldset>
+        <fieldset className="fl-vehicle-fieldset">
+          <legend>Uso y consumo</legend>
+          <p className="fl-supporting mb-5">La referencia para tus próximos registros.</p>
+          <div className="fl-form-grid">
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-odometer" className="fl-label">{getOdometerLabel(form.vehicleType)} actual</label>
+              <Input
+                id="vehicle-odometer"
+                aria-invalid={!!fieldErrors.odometer}
+                aria-describedby={fieldErrors.odometer ? "vehicle-odometer-error" : undefined}
                 placeholder={form.vehicleType === "agricultural" ? "1200" : "184000"}
                 type="number"
                 min="0"
@@ -218,27 +231,27 @@ export default function VehicleEdit() {
                 value={form.odometer}
                 onChange={handleChange("odometer")}
               />
-            </label>
-
-            <label className="block sm:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Tipo de combustible *</span>
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-vehicleEnergyType" className="fl-label">Tipo de combustible *</label>
               <CustomSelect
+                appearance="atlantic"
+                id="vehicle-vehicleEnergyType"
+                aria-describedby={fieldErrors.vehicleEnergyType ? "vehicle-vehicleEnergyType-error" : undefined}
                 options={VEHICLE_ENERGY_TYPE_OPTIONS}
                 value={form.vehicleEnergyType}
                 onChange={(val) => setForm((c) => ({ ...c, vehicleEnergyType: val }))}
                 placeholder="---"
                 error={!!fieldErrors.vehicleEnergyType}
               />
-              {fieldErrors.vehicleEnergyType ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Capacidad del depósito (L) *</span>
-              <input
-                className={
-                  "w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20" +
-                  (fieldErrors.tankCapacity ? " ring-1 ring-rose-400/25" : "")
-                }
+              {fieldErrors.vehicleEnergyType ? <p id="vehicle-vehicleEnergyType-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-tankCapacity" className="fl-label">Capacidad del depósito (L) *</label>
+              <Input
+                id="vehicle-tankCapacity"
+                aria-invalid={!!fieldErrors.tankCapacity}
+                aria-describedby={fieldErrors.tankCapacity ? "vehicle-tankCapacity-error" : undefined}
                 placeholder="66.0"
                 type="number"
                 min="0"
@@ -247,13 +260,14 @@ export default function VehicleEdit() {
                 onChange={handleChange("tankCapacity")}
                 required
               />
-              {fieldErrors.tankCapacity ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Consumo oficial <span className="text-slate-500">(opcional)</span></span>
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+              {fieldErrors.tankCapacity ? <p id="vehicle-tankCapacity-error" className="text-sm text-destructive">Campo obligatorio</p> : null}
+            </div>
+            <div className="fl-field-group">
+              <label htmlFor="vehicle-officialConsumption" className="fl-label">Consumo oficial <span className="text-muted-foreground">(opcional)</span></label>
+              <Input
+                id="vehicle-officialConsumption"
+                aria-invalid={!!fieldErrors.officialConsumption}
+                aria-describedby={fieldErrors.officialConsumption ? "vehicle-officialConsumption-error" : undefined}
                 placeholder={`5.6 ${getConsumptionUnit(form.vehicleType, form.vehicleEnergyType)}`}
                 type="number"
                 min="0"
@@ -261,37 +275,11 @@ export default function VehicleEdit() {
                 value={form.officialConsumption}
                 onChange={handleChange("officialConsumption")}
               />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-300">Cambio *</span>
-              <CustomSelect
-                options={GEARBOX_OPTIONS}
-                value={form.gearbox}
-                onChange={(val) => setForm((c) => ({ ...c, gearbox: val }))}
-                placeholder="---"
-                error={!!fieldErrors.gearbox}
-              />
-              {fieldErrors.gearbox ? <p className="mt-1 text-sm text-rose-200">Campo obligatorio</p> : null}
-            </label>
+            </div>
           </div>
-
-          <div className="flex gap-3">
-            <button
-              disabled={submitting}
-              className="flex-1 rounded-2xl bg-white px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              {submitting ? "Guardando..." : "Guardar cambios"}
-            </button>
-            <Link
-              to={`/vehicles/${selectedVehicle.id}`}
-              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-center font-semibold text-white transition hover:bg-white/10"
-            >
-              Cancelar
-            </Link>
-          </div>
-        </form>
-      </article>
-    </section>
+        </fieldset>
+        <div className="fl-form-actions"><Button type="submit" disabled={submitting}>{submitting ? "Guardando..." : "Guardar cambios"}</Button><Button asChild variant="outline"><Link to={`/vehicles/${selectedVehicle.id}`}>Cancelar</Link></Button></div>
+      </form>
+    </Surface>
   );
 }

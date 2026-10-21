@@ -4,6 +4,10 @@ import { apiFetch } from "../services/api";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import PageTransition from "../components/PageTransition";
 import VehicleLoadingSkeleton from "../components/VehicleLoadingSkeleton";
+import { ArrowLeft } from "lucide-react";
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
+import { formatVehicleEnergyType } from "../utils/vehicleLabels";
 
 export default function VehicleLayout() {
     const { vehicleId } = useParams();
@@ -64,9 +68,18 @@ export default function VehicleLayout() {
             <main className="pb-10 lg:pb-16">
                 <div className="section-shell space-y-6">
                     {loading || (!error && selectedVehicle) ? (
-                    <section className="glass-panel rounded-[1.5rem] p-3 sm:rounded-[2rem] sm:p-4">
+                    <Surface as="section" className="fl-vehicle-navigation">
+                        <header className="fl-vehicle-identity">
+                            <div className="min-w-0">
+                                <Button asChild variant="link" className="px-0 h-11 focus-visible:transition-none"><Link to="/dashboard"><ArrowLeft aria-hidden="true" />Garaje</Link></Button>
+                                {loading ? <div aria-hidden="true" className="h-8 w-48 rounded-lg bg-secondary" /> : <>
+                                    <h1 className="fl-page-title break-words">{selectedVehicle.brand} {selectedVehicle.model}</h1>
+                                    <p className="fl-supporting mt-2">{selectedVehicle.year} · {formatVehicleEnergyType(selectedVehicle.vehicleEnergyType)}</p>
+                                </>}
+                            </div>
+                        </header>
 
-                        <nav className="flex items-center gap-1 overflow-x-auto border-b border-white/10 sm:gap-2" aria-label="Secciones del vehículo">
+                        <nav className="fl-vehicle-tabs" aria-label="Secciones del vehículo">
                             {navigationItems.map((item) => loading ? (
                                 <span key={item.label} aria-disabled="true" className="shrink-0 whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 sm:px-4">
                                     {item.label}
@@ -78,10 +91,10 @@ export default function VehicleLayout() {
                                     end={item.to === ""}
                                     className={({ isActive }) =>
                                         [
-                                            "shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition sm:px-4",
+                                            "fl-vehicle-tab",
                                             isActive
-                                                ? "border-teal-300 text-white"
-                                                : "border-transparent text-slate-400 hover:text-white",
+                                                ? "fl-vehicle-tab-active"
+                                                : "",
                                         ].join(" ")
                                     }
                                 >
@@ -89,7 +102,7 @@ export default function VehicleLayout() {
                                 </NavLink>
                             ))}
                         </nav>
-                    </section>
+                    </Surface>
                     ) : null}
 
                     <AnimatePresence mode="wait" initial={false}>
@@ -101,15 +114,15 @@ export default function VehicleLayout() {
                             transition={{ duration: reducedMotion ? 0 : 0.2 }}
                         >
                             {loading ? <VehicleLoadingSkeleton /> : error ? (
-                                <div role="alert" className="glass-panel rounded-[2rem] p-8 text-sm text-red-300">{error}</div>
+                                <Surface role="alert" className="fl-workspace text-destructive">{error}</Surface>
                             ) : !selectedVehicle ? (
-                                <div className="glass-panel rounded-[2rem] p-8">
+                                <Surface className="fl-workspace">
                                     <p className="text-lg font-semibold text-white">Vehículo no encontrado</p>
                                     <p className="mt-3 text-sm text-slate-300">Vuelve al selector para elegir otro coche.</p>
-                                    <Link to="/dashboard" className="mt-6 inline-flex rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white">
+                                    <Button asChild variant="outline" className="mt-6"><Link to="/dashboard">
                                         Volver al selector
-                                    </Link>
-                                </div>
+                                    </Link></Button>
+                                </Surface>
                             ) : (
                                 <Suspense fallback={<VehicleLoadingSkeleton />}>
                                     <Outlet context={{ selectedVehicle, updateVehicle }} />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Wrench, Droplets, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Button } from "./ui/button";
 import { apiFetch } from "../services/api";
 
 export default function VehicleAlerts({ vehicleId }) {
@@ -88,7 +89,7 @@ export default function VehicleAlerts({ vehicleId }) {
   if (loading || alerts.length === 0) return null;
 
   return (
-    <div className="mt-1 space-y-2 border-t border-white/5 pt-3">
+    <div className="mt-5 space-y-3 border-t border-[var(--border-subtle)] pt-4">
       <div className="flex items-center gap-1.5 px-1">
         <Wrench className="h-3.5 w-3.5 text-teal-500" />
         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Alertas</h3>
@@ -104,17 +105,17 @@ export default function VehicleAlerts({ vehicleId }) {
           return (
             <div
               key={alert.expenseId || index}
-              className={`flex items-center justify-between rounded-xl border p-2.5 transition duration-200 ${styles.card}`}
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 ${styles.card}`}
             >
-              <div className="flex items-center gap-3 overflow-hidden">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.05] border border-white/10 ${styles.text}`}>
                   <CustomIcon className="h-4 w-4" />
                 </div>
                 <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-xs font-semibold text-white capitalize">
+                  <span className="break-words text-sm font-medium text-foreground capitalize">
                     {alert.description || "Mantenimiento"}
                   </span>
-                  <span className="truncate text-[10px] font-medium text-slate-400">
+                  <span className="text-xs leading-5 text-muted-foreground">
                     {alert.remainingKm != null && (isOverdue
                       ? `Vencido por ${Math.abs(alert.remainingKm).toLocaleString("es-ES")} km`
                       : `En ${alert.remainingKm.toLocaleString("es-ES")} km`)}
@@ -126,17 +127,18 @@ export default function VehicleAlerts({ vehicleId }) {
               </div>
 
               <div className="ml-2 flex shrink-0 items-center gap-2">
-                <span className={`rounded-md border px-2 py-0.5 text-[9px] font-bold tracking-wide ${styles.badge}`}>
+                <span className={`rounded-md border px-2 py-0.5 text-[11px] font-bold tracking-wide ${styles.badge}`}>
                   {styles.label}
                 </span>
-                <button
+                <Button variant="outline"
                   type="button"
                   onClick={() => completeAlert(alert.expenseId)}
                   disabled={completingId === alert.expenseId}
-                  className="rounded-md border border-white/10 px-2 py-1 text-[10px] font-semibold text-slate-300 hover:text-white disabled:opacity-50"
+                  aria-label={completingId === alert.expenseId ? `Guardando ${alert.description || "mantenimiento"}` : `Marcar como hecho: ${alert.description || "mantenimiento"}`}
+                  className="focus-visible:transition-none"
                 >
                   {completingId === alert.expenseId ? "Guardando" : "Hecho"}
-                </button>
+                </Button>
               </div>
             </div>
           );

@@ -3,6 +3,9 @@ import { useOutletContext } from "react-router-dom";
 import { Ban, Plus, Disc, AlertTriangle } from "lucide-react";
 import { apiJson } from "../services/api";
 import { TIRE_AXLE_OPTIONS } from "../utils/vehicleLabels";
+import { Surface } from "./ui/surface";
+import { Input } from "./ui/field";
+import { Button } from "./ui/button";
 import CustomSelect from "./CustomSelect";
 
 function createInitialFormData(odometer) {
@@ -123,8 +126,9 @@ export default function TiresModule() {
     const renderAxleRow = (title, tire) => {
         if (!tire) {
             return (
-                <div className="rounded-[1.75rem] border border-dashed border-white/10 bg-slate-950/20 p-6 text-center text-slate-400">
-                    No hay neumáticos activos en el eje {title.toLowerCase()}.
+                <div className="fl-surface fl-empty-vehicle fl-supporting">
+                    <h3 className="text-base font-medium text-foreground">{title}</h3>
+                    <p>No hay neumáticos activos en este eje.</p>
                 </div>
             );
         }
@@ -133,35 +137,35 @@ export default function TiresModule() {
         const replacePct = Math.min((km / 40000) * 100, 100);
 
         return (
-            <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-5 sm:p-6 space-y-4">
+            <div className="fl-surface fl-tire-card space-y-5">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <span className="text-xs font-bold uppercase tracking-wider text-teal-400">{title}</span>
-                        <h4 className="mt-0.5 break-words text-lg font-semibold text-white">{tire.brand} {tire.model}</h4>
-                        <p className="text-xs leading-5 text-slate-400">Medida: {tire.size} · Montados a {tire.installationOdometer.toLocaleString()} km</p>
+                        <h3 className="mt-0.5 break-words text-lg font-semibold text-foreground">{tire.brand} {tire.model}</h3>
+                        <p className="fl-supporting mt-2">Medida: {tire.size} · Montados a {tire.installationOdometer.toLocaleString()} km</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
+                        <Button
                             onClick={() => handleDeactivate(tire.id)}
                             disabled={saving}
-                            className="p-2.5 rounded-xl border border-rose-500/20 bg-rose-500/5 text-rose-400 hover:bg-rose-500/10 transition"
+                            variant="destructive" size="icon" aria-label={`Dar de baja neumático ${title.toLowerCase()}`}
                             title="Dar de baja neumático"
                         >
                             <Ban className="h-4 w-4" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
                 <div className="pt-2">
-                    <div className="mb-2 flex flex-col gap-1 text-xs sm:flex-row sm:justify-between">
+                    <div className="mb-3 flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                         <span className="text-slate-400 flex items-center gap-1">
                             Ciclo de Vida Útil {km >= 40000 && <AlertTriangle className="h-3.5 w-3.5 text-rose-500 inline" />}
                         </span>
                         <span className={`whitespace-nowrap ${km >= 40000 ? "text-rose-400 font-medium" : "text-slate-300"}`}>{km.toLocaleString()} / 40.000 km</span>
                     </div>
-                    <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden">
+                    <div role="progressbar" aria-label={`Ciclo de vida útil ${title.toLowerCase()}`} aria-valuemin={0} aria-valuemax={40000} aria-valuenow={Math.min(km, 40000)} aria-valuetext={`${km.toLocaleString()} de 40.000 km`} className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                         <div
-                            className={`h-full rounded-full transition-all duration-500 ${km >= 40000 ? "bg-rose-500" : "bg-indigo-500"}`}
+                            className={`h-full rounded-full ${km >= 40000 ? "bg-rose-500" : "bg-primary"}`}
                             style={{ width: `${replacePct}%` }}
                         />
                     </div>
@@ -174,33 +178,32 @@ export default function TiresModule() {
         <div className="space-y-6">
             {error && <div role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div>}
 
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/5 bg-slate-950/20 p-4">
+            <Surface as="header" className="fl-workspace-heading fl-workspace">
                 <div className="flex items-center gap-2">
                     <Disc className="h-5 w-5 text-teal-400" />
-                    <span className="text-sm font-medium text-slate-300">Gestión de Neumáticos</span>
+                    <h2 className="fl-section-title">Neumáticos</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button
+                    <Button
                         onClick={() => {
                             setFormData(createInitialFormData(latestOdometer));
                             setShowForm((current) => !current);
                         }}
-                        className="p-2.5 rounded-xl bg-teal-600 text-white hover:bg-teal-700 transition"
+                        aria-label="Montar neumáticos" aria-expanded={showForm} aria-controls={showForm ? "tire-installation-form" : undefined}
                         title="Montar nuevo neumático"
                     >
-                        <Plus className="h-4 w-4" />
-                    </button>
+                        <Plus className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">Montar neumáticos</span>
+                    </Button>
                 </div>
-            </div>
+            </Surface>
 
             {showForm && (
-                <form onSubmit={handleCreate} className="glass-panel rounded-[2rem] p-5 sm:p-6 grid gap-4 md:grid-cols-2">
+                <form onSubmit={handleCreate} id="tire-installation-form" className="fl-surface fl-workspace grid gap-5 md:grid-cols-2">
                     <div className="md:col-span-2"><h3 className="text-base font-semibold text-white">Montar nuevo neumático</h3></div>
 
                     <label className="block">
-                        <span className="text-xs text-slate-400 block mb-2">Marca</span>
-                        <input
-                            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none"
+                        <span className="fl-label block mb-2">Marca</span>
+                        <Input
                             placeholder="Ej. Michelin"
                             value={formData.brand}
                             onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
@@ -208,9 +211,8 @@ export default function TiresModule() {
                         />
                     </label>
                     <label className="block">
-                        <span className="text-xs text-slate-400 block mb-2">Modelo</span>
-                        <input
-                            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none"
+                        <span className="fl-label block mb-2">Modelo</span>
+                        <Input
                             placeholder="Ej. Pilot Sport 5"
                             value={formData.model}
                             onChange={(e) => setFormData({ ...formData, model: e.target.value })}
@@ -219,28 +221,25 @@ export default function TiresModule() {
                     </label>
 
                     <div className="md:col-span-2">
-                        <span className="text-xs text-slate-400 block mb-2">Medida (Ancho / Perfil / Pulgada)</span>
+                        <span className="fl-label block mb-2">Medida (Ancho / Perfil / Pulgada)</span>
                         <div className="flex gap-2 items-center">
-                            <input
-                                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none text-center"
+                            <Input
                                 aria-label="Ancho del neumático (mm)"
                                 placeholder="225"
                                 value={formData.width}
                                 onChange={(e) => setFormData({ ...formData, width: e.target.value })}
                                 required
                             />
-                            <span className="text-slate-600 font-bold">/</span>
-                            <input
-                                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none text-center"
+                            <span className="text-muted-foreground font-medium">/</span>
+                            <Input
                                 aria-label="Perfil del neumático (%)"
                                 placeholder="45"
                                 value={formData.profile}
                                 onChange={(e) => setFormData({ ...formData, profile: e.target.value })}
                                 required
                             />
-                            <span className="text-slate-600 font-bold">R</span>
-                            <input
-                                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none text-center"
+                            <span className="text-muted-foreground font-medium">R</span>
+                            <Input
                                 aria-label="Diámetro de la llanta (pulgadas)"
                                 placeholder="17"
                                 value={formData.rim}
@@ -251,30 +250,30 @@ export default function TiresModule() {
                     </div>
 
                     <label className="block">
-                        <span className="text-xs text-slate-400 block mb-2">Eje de colocación</span>
-                        <CustomSelect
+                        <span className="fl-label block mb-2">Eje de colocación</span>
+                        <CustomSelect appearance="atlantic"
                             options={TIRE_AXLE_OPTIONS}
                             value={formData.axle}
                             onChange={(val) => setFormData({ ...formData, axle: val })}
                         />
                     </label>
                     <label className="block">
-                        <span className="text-xs text-slate-400 block mb-2">Fecha montaje</span>
-                        <input
+                        <span className="fl-label block mb-2">Fecha montaje</span>
+                        <Input
                             type="date"
-                            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none"
+
                             value={formData.installationDate}
                             onChange={(e) => setFormData({ ...formData, installationDate: e.target.value })}
                             required
                         />
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="text-xs text-slate-400 block mb-2">Odómetro de montaje (km)</span>
-                        <input
+                        <span className="fl-label block mb-2">Odómetro de montaje (km)</span>
+                        <Input
                             type="number"
                             min="0"
                             step="1"
-                            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-white text-sm outline-none"
+
                             value={formData.installationOdometer}
                             onChange={(e) => setFormData({ ...formData, installationOdometer: e.target.value })}
                             required
@@ -282,8 +281,8 @@ export default function TiresModule() {
                     </label>
 
                     <div className="grid gap-2 pt-2 sm:grid-cols-2 md:col-span-2 md:flex">
-                        <button type="submit" disabled={saving} className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">{saving ? "Guardando..." : "Guardar"}</button>
-                        <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-slate-400 transition hover:text-white">Cancelar</button>
+                        <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>
+                        <Button type="button" onClick={() => setShowForm(false)} variant="outline">Cancelar</Button>
                     </div>
                 </form>
             )}
@@ -294,17 +293,17 @@ export default function TiresModule() {
             </div>
 
             {tires.filter((t) => !t.active).length > 0 && (
-                <div className="glass-panel rounded-[2rem] p-5 sm:p-6">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Historial de Desgaste</h4>
-                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 text-sm">
+                <div className="fl-surface fl-workspace">
+                    <h3 className="fl-section-title mb-5">Historial de desgaste</h3>
+                    <div className="fl-tire-history max-h-80 overflow-y-auto text-sm">
                         {tires.filter((t) => !t.active).map((tire) => (
-                            <div key={tire.id} className="flex flex-col gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+                            <div key={tire.id} className="fl-tire-history-row">
                                 <div className="min-w-0">
                                     <p className="font-semibold text-slate-200">{tire.brand} {tire.model} - {tire.size} ({tire.axle === "FRONT" ? "Delantero" : "Trasero"})</p>
-                                    <p className="text-slate-500 mt-0.5">Instalación: {tire.installationOdometer.toLocaleString()} km → Baja: {tire.removalOdometer?.toLocaleString()} km</p>
+                                    <p className="text-muted-foreground mt-1">Instalación: {tire.installationOdometer.toLocaleString()} km → Baja: {tire.removalOdometer?.toLocaleString()} km</p>
                                 </div>
                                 <div className="shrink-0 text-left sm:text-right">
-                                    <span className="block font-mono text-teal-400 bg-teal-400/5 px-2 py-1 rounded-md font-medium mb-1">
+                                    <span className="block tabular-nums text-primary font-medium mb-1">
                                         +{tire.currentKm.toLocaleString()} km
                                     </span>
                                     {tire.expenseCost > 0 && (

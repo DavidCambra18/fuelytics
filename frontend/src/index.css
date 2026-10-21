@@ -663,3 +663,60 @@ body::before {
     .fl-button:active:not(:focus-visible):not(:disabled):not([aria-disabled="true"]) { transform: none; }
   }
 }
+@layer components {
+  /* Vehicle workspaces: Atlántico materials and Instrumental data rhythm. */
+  .fl-workspace { padding: var(--space-6); border: 1px solid var(--border-subtle); }
+  .fl-workspace-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--space-5); margin-bottom:var(--space-6); }
+  .fl-eyebrow { font-size:.75rem; line-height:1.5; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); }
+  .fl-supporting { font-size:.875rem; line-height:1.65; color:var(--muted-foreground); }
+  .fl-feedback-error { margin-block:var(--space-4); padding:var(--space-4); border:1px solid color-mix(in srgb,var(--destructive),transparent 65%); border-radius:var(--radius-control); background:color-mix(in srgb,var(--destructive) 8%,var(--surface-inset)); color:var(--destructive); font-size:.875rem; }
+  .fl-garage-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-5); }
+  .fl-garage-card { padding:var(--space-5); border:1px solid var(--border-subtle); }
+  .fl-garage-link { display:flex; align-items:center; gap:var(--space-4); border-radius:var(--radius-control); }
+  .fl-garage-link:focus-visible,.fl-vehicle-tab:focus-visible { outline:2px solid var(--ring); outline-offset:5px; }
+  .fl-vehicle-symbol { display:grid; place-items:center; width:64px; height:72px; flex-shrink:0; border-radius:var(--radius-control); color:var(--primary); background:var(--accent); border:1px solid color-mix(in srgb,var(--primary) 20%,transparent); }
+  .fl-garage-model { margin-top:4px; font-size:1.5rem; font-weight:600; letter-spacing:-.02em; line-height:1.25; overflow-wrap:anywhere; }
+  .fl-vehicle-specs { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:12px; font-size:.8125rem; color:var(--muted-foreground); font-variant-numeric:tabular-nums; }
+  .fl-empty-vehicle { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:var(--space-4); padding:var(--space-6); text-align:center; min-height:200px; color:var(--muted-foreground); }
+  .fl-vehicle-navigation { border:1px solid var(--border-subtle); overflow:hidden; }
+  .fl-vehicle-identity { padding:12px var(--space-6) var(--space-5); }
+  .fl-vehicle-tabs { display:flex; gap:var(--space-2); overflow-x:auto; padding:6px var(--space-6); background:var(--surface-inset); border-top:1px solid var(--border-subtle); scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .fl-vehicle-tab { flex-shrink:0; display:inline-flex; align-items:center; min-height:44px; padding:10px 16px; border-radius:var(--radius-control); color:var(--muted-foreground); font-size:.875rem; font-weight:500; white-space:nowrap; }
+  .fl-vehicle-tab:focus-visible { outline-offset:-2px; }
+  .fl-vehicle-tab-active { background:var(--accent); color:var(--accent-foreground); }
+  .fl-vehicle-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-6); }
+  .fl-vehicle-facts>section { min-width:0; }
+  .fl-facts-heading { margin-bottom:var(--space-4); padding-bottom:var(--space-3); border-bottom:1px solid var(--border-subtle); font-size:.875rem; font-weight:600; color:var(--foreground); }
+  .fl-fact-row { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding-block:10px; font-size:.875rem; }
+  .fl-fact-row dt { color:var(--muted-foreground); }
+  .fl-fact-row dd { text-align:right; font-weight:500; color:var(--foreground); overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+  .fl-vehicle-fieldset { min-width:0; border:0; padding:0; margin:0; }
+  .fl-vehicle-fieldset+.fl-vehicle-fieldset { border-top:1px solid var(--border-subtle); padding-top:var(--space-5); }
+  .fl-vehicle-fieldset legend { padding:0 0 8px; font-size:1.125rem; font-weight:600; letter-spacing:-.015em; }
+  .fl-form-actions { display:flex; flex-wrap:wrap; gap:var(--space-3); padding-top:var(--space-5); border-top:1px solid var(--border-subtle); }
+  .fl-vehicle-form-note { margin-top:var(--space-6); padding:var(--space-5); border-radius:var(--radius-card); background:var(--surface-inset); border:1px solid var(--border-subtle); font-size:.875rem; }
+  .fl-tire-card { padding:var(--space-5); border:1px solid var(--border-subtle); }
+  .fl-tire-history-row { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); padding-block:var(--space-4); border-bottom:1px solid var(--border-subtle); overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+  .fl-tire-history-row:last-child { border-bottom:0; }
+  @media (hover:hover) and (pointer:fine) {
+    .fl-garage-link:hover .fl-garage-model { color:var(--primary); }
+    .fl-vehicle-tab:not(.fl-vehicle-tab-active):hover { background:var(--secondary); color:var(--foreground); }
+  }
+  @media (max-width:1023px) {
+    .fl-vehicle-facts { grid-template-columns:1fr; gap:var(--space-5); }
+    .fl-garage-grid { grid-template-columns:1fr; }
+  }
+  @media (max-width:639px) {
+    .fl-workspace { padding:var(--space-4); }
+    .fl-workspace-heading { flex-wrap:wrap; gap:var(--space-4); margin-bottom:var(--space-5); }
+    .fl-vehicle-identity { padding:4px var(--space-4) var(--space-4); }
+    .fl-vehicle-tabs { padding-inline:var(--space-3); gap:4px; }
+    .fl-vehicle-tab { padding-inline:12px; }
+    .fl-garage-card { padding:var(--space-4); }
+    .fl-garage-link { gap:var(--space-3); }
+    .fl-vehicle-symbol { width:44px; height:60px; }
+    .fl-garage-model { font-size:1.25rem; }
+    .fl-form-actions>* { flex:1; }
+    .fl-tire-history-row { align-items:start; flex-direction:column; }
+  }
+}
