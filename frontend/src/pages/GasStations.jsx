@@ -9,6 +9,8 @@ import "./GasStations.css";
 import { Surface } from "../components/ui/surface";
 import { Button } from "../components/ui/button";
 import CustomSelect from "../components/CustomSelect";
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
+import { mapFlightOptions, scrollBehavior } from "../utils/motion";
 import { apiJson } from "../services/api";
 
 const DEFAULT_CENTER = [40.4168, -3.7038];
@@ -310,7 +312,7 @@ function ClusteredStationMarkers({
               targetZoom += 1;
             }
 
-            map.flyTo(position, targetZoom, { animate: true, duration: 0.45 });
+            map.flyTo(position, targetZoom, mapFlightOptions(0.45));
           },
         }}
       />
@@ -327,9 +329,21 @@ function SelectedStationController({ station }) {
     map.flyTo(
       [station.latitude, station.longitude],
       Math.max(map.getZoom(), 16),
-      { animate: true, duration: 0.5 },
+      mapFlightOptions(0.5),
     );
   }, [map, station]);
+
+  return null;
+}
+
+function MapMotionPreference() {
+  const map = useMap();
+  const reducedMotion = usePrefersReducedMotion();
+
+  useEffect(() => {
+    // Stop an in-flight camera movement without starting another flight.
+    if (reducedMotion) map.stop();
+  }, [map, reducedMotion]);
 
   return null;
 }
@@ -369,7 +383,7 @@ function UserLocationMarker({ location }) {
     map.flyTo(
       [location.lat, location.lng],
       Math.max(map.getZoom(), 13),
-      { animate: true, duration: 0.5 },
+      mapFlightOptions(0.5),
     );
   }, [location, map]);
 
@@ -394,7 +408,7 @@ function MapLocationControl({ location, loading, popupOpen, onRequestLocation })
       map.flyTo(
         [location.lat, location.lng],
         Math.max(map.getZoom(), 15),
-        { animate: true, duration: 0.5 },
+        mapFlightOptions(0.5),
       );
       return;
     }
@@ -523,7 +537,7 @@ export default function GasStations() {
 
   useEffect(() => {
     if (selectedStationId && window.matchMedia("(min-width: 1024px)").matches) {
-      selectedCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      selectedCardRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "nearest" });
     }
   }, [selectedStationId]);
 
@@ -687,7 +701,7 @@ export default function GasStations() {
     setSelectedStationId(stationId);
 
     if (!window.matchMedia("(min-width: 1024px)").matches) {
-      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      mapSectionRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
     }
   };
 
@@ -869,6 +883,7 @@ export default function GasStations() {
                 ) : null}
 
                 <MapContainer center={mapCenter} zoom={location ? 13 : 6} className="absolute inset-0 h-full w-full" preferCanvas scrollWheelZoom={true}>
+                  <MapMotionPreference />
                   <MapSizeSync />
                   <MapCenterTracker onCenterChange={setMapCenter} />
                   <SelectedStationController station={selectedStation} />

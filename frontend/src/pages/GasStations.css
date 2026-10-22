@@ -84,9 +84,6 @@
   .fl-map-legend { display:none; }
   .fl-station-popup-header { padding-left:60px; min-height:104px; }
 }
-@media (prefers-reduced-motion:reduce) {
-  .fl-gas-page .animate-spin { animation:none; }
-}
 
 .user-location-marker {
   display: flex;

@@ -1,6 +1,8 @@
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
+import { MOTION, motionSeconds } from "../utils/motion";
 import { useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Loader2, Check, X, Info } from "lucide-react";
 import { Tooltip } from "radix-ui";
 import { apiJson } from "../services/api";
@@ -108,7 +110,7 @@ export default function Register() {
   const panelRef = useRef(null);
   const focusAfterTransition = useRef(false);
   const inFlight = useRef(false);
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = usePrefersReducedMotion();
   const navigate = useNavigate();
 
   const body = normalizeRegistration(values);
@@ -228,7 +230,7 @@ export default function Register() {
               <AnimatePresence initial={false} mode="wait" custom={direction}>
                 <motion.div key={step} ref={panelRef} custom={direction}
                   variants={{ enter: (sign) => ({ opacity: reducedMotion ? 1 : 0, x: reducedMotion ? 0 : sign * 16 }), visible: { opacity: 1, x: 0 }, exit: (sign) => ({ opacity: reducedMotion ? 1 : 0, x: reducedMotion ? 0 : sign * -12 }) }}
-                  initial="enter" animate="visible" exit="exit" transition={{ duration: reducedMotion ? 0 : 0.16, ease: "easeOut" }}
+                  initial="enter" animate="visible" exit="exit" transition={{ duration: motionSeconds(MOTION.duration.step, reducedMotion), ease: MOTION.easing.step }}
                   onAnimationComplete={(definition) => {
                     if (definition !== "visible") return;
                     setTransitioning(false);

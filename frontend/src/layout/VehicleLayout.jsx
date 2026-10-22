@@ -1,7 +1,9 @@
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
+import { MOTION, motionSeconds } from "../utils/motion";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import { apiFetch } from "../services/api";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import PageTransition from "../components/PageTransition";
 import VehicleLoadingSkeleton from "../components/VehicleLoadingSkeleton";
 import { ArrowLeft } from "lucide-react";
@@ -14,7 +16,7 @@ export default function VehicleLayout() {
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const reducedMotion = useReducedMotion();
+    const reducedMotion = usePrefersReducedMotion();
 
     useEffect(() => {
         const controller = new AbortController();
@@ -110,8 +112,8 @@ export default function VehicleLayout() {
                             key={view}
                             initial={{ opacity: reducedMotion ? 1 : 0 }}
                             animate={{ opacity: 1 }}
-                            exit={{ opacity: reducedMotion ? 1 : 0, transition: { duration: reducedMotion ? 0 : 0.1 } }}
-                            transition={{ duration: reducedMotion ? 0 : 0.2 }}
+                            exit={{ opacity: reducedMotion ? 1 : 0, transition: { duration: motionSeconds(MOTION.duration.feedback, reducedMotion) } }}
+                            transition={{ duration: motionSeconds(MOTION.duration.enter, reducedMotion) }}
                         >
                             {loading ? <VehicleLoadingSkeleton /> : error ? (
                                 <Surface role="alert" className="fl-workspace text-destructive">{error}</Surface>

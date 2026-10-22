@@ -68,6 +68,17 @@
   --space-6: 2rem;
   --space-7: 3rem;
   --motion-fast: 140ms;
+  --motion-navigation: 150ms;
+  --motion-feedback: 100ms;
+  --motion-enter: 200ms;
+  --motion-exit: 120ms;
+  --motion-page: 240ms;
+  --motion-step: 160ms;
+  --motion-sheet: 240ms;
+  --motion-sheet-exit: 160ms;
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-page: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-step: ease-out;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -155,7 +166,7 @@ body {
     color: #94a3b8;
     font-size: 0.875rem;
     font-weight: 500;
-    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+    transition: color var(--motion-navigation) ease, background-color var(--motion-navigation) ease, border-color var(--motion-navigation) ease;
   }
 
   .app-nav-link:hover {
@@ -256,7 +267,7 @@ body {
     padding: 0.75rem;
     color: #fda4af;
     font-size: 0.8rem;
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-navigation) ease;
   }
 
   .app-logout-button:hover {
@@ -648,10 +659,6 @@ body {
     .fl-dialog { --dialog-padding: var(--space-4); }
     .fl-dialog-footer > :last-child { flex: 1; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .fl-button, .fl-field { transition: none; }
-    .fl-button:active:not(:focus-visible):not(:disabled):not([aria-disabled="true"]) { transform: none; }
-  }
 }
 @layer components {
   /* Vehicle workspaces: Atlántico materials and Instrumental data rhythm. */
@@ -921,9 +928,6 @@ body {
     .fl-profile-avatar { width:44px; height:44px; border-radius:14px; font-size:1.25rem; }
     .fl-profile-avatar svg { width:24px; height:24px; }
   }
-  @media (prefers-reduced-motion:reduce) {
-    .fl-community-page .animate-spin,.fl-friends-panel .animate-spin { animation:none; }
-  }
 }
 
 @layer components {
@@ -1025,9 +1029,6 @@ body {
     .fl-settings-toggle { gap:12px; }
     .fl-settings-section form>div:has(>button[type="submit"]:only-child)>button { width:100%; }
   }
-  @media (prefers-reduced-motion:reduce) {
-    .fl-settings-page .animate-spin { animation:none; }
-  }
 }
 
 @layer components {
@@ -1050,4 +1051,15 @@ body {
   .fl-settings-heading h1 { grid-column:1; }
   .fl-settings-heading p { grid-column:1/-1; grid-row:2; margin-top:0; }
   .fl-settings-heading>button { grid-column:2; grid-row:1; }
+}
+
+/* One reduced-motion policy for CSS indicators and document scrolling.
+   Preserve static states and live text; do not shorten every animation globally. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .fl-button, .fl-field, .app-profile-trigger svg { transition: none; }
+  .fl-button:active:not(:focus-visible):not(:disabled):not([aria-disabled="true"]) { transform: none; }
+  .animate-spin, .animate-pulse { animation: none; }
+  .fl-gas-page .leaflet-zoom-animated,
+  .fl-gas-page .leaflet-fade-anim .leaflet-popup { transition: none; }
 }
