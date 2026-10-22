@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
 import { ArrowLeft, AlertCircle, User, Car, Calendar, Medal, Award, Fuel, Receipt, Leaf, Wrench } from "lucide-react";
 
 const BADGE_ICONS = {
@@ -29,15 +31,18 @@ export default function PublicProfile() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadProfileData = async () => {
       setLoading(true);
       setError("");
+      setProfile(null);
+      setRankingPositions([]);
 
       try {
         const [profileRes, rankingRes, badgesRes] = await Promise.all([
-          apiFetch(`/api/users/public/${encodeURIComponent(username)}`),
-          apiFetch("/api/ranking"),
-          apiFetch(`/api/badges/public/${encodeURIComponent(username)}`)
+          apiFetch(`/api/users/public/${encodeURIComponent(username)}`, { signal: controller.signal }),
+          apiFetch("/api/ranking", { signal: controller.signal }),
+          apiFetch(`/api/badges/public/${encodeURIComponent(username)}`, { signal: controller.signal })
         ]);
 
         if (!profileRes.ok) {
@@ -48,6 +53,7 @@ export default function PublicProfile() {
         const profileData = await profileRes.json();
         const badgesData = badgesRes.ok ? await badgesRes.json() : [];
 
+        if (controller.signal.aborted) return;
         setProfile({
           ...profileData,
           badges: badgesData
@@ -61,18 +67,20 @@ export default function PublicProfile() {
             .map((r, index) => (r.username === profileData.username ? index + 1 : null))
             .filter((pos) => pos !== null);
 
-          setRankingPositions(positions);
+          if (!controller.signal.aborted) setRankingPositions(positions);
         }
       } catch (fetchError) {
+        if (controller.signal.aborted) return;
         setError(fetchError.message || "No se pudo cargar el perfil");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     if (username) {
       loadProfileData();
     }
+    return () => controller.abort();
   }, [username]);
 
   const getInitial = () => {
@@ -84,56 +92,54 @@ export default function PublicProfile() {
   if (loading) {
     return (
       <div className="public-app-loading section-shell py-10 text-slate-100">
-        <section className="glass-panel mx-auto max-w-5xl rounded-[2rem] p-8 text-sm text-slate-300">
+        <Surface as="section" role="status" aria-live="polite" className="fl-workspace fl-community-state mx-auto max-w-5xl">
           Cargando perfil...
-        </section>
+        </Surface>
       </div>
     );
   }
 
   return (
-    <div className="public-app-page min-h-screen text-slate-100 pt-15">
+    <div className="public-app-page fl-public-page fl-profile-page min-h-screen text-foreground">
       <main className="pb-10 pt-6 lg:pb-16">
         <div className="section-shell">
           <div className="mx-auto max-w-5xl">
             <div className="mb-6">
-              <Link
+              <Button asChild variant="outline"><Link
                 to="/dashboard"
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/50 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-900 hover:text-white"
-              >
+                >
                 <ArrowLeft className="h-4 w-4" />
                 Volver al garaje
-              </Link>
+              </Link></Button>
             </div>
 
             {error ? (
-              <div className="flex items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              <div role="alert" className="fl-community-error">
                 <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
                 {error}
               </div>
             ) : profile ? (
               <div className="space-y-6">
 
-                <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
-                  <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-teal-900/20 to-transparent pointer-events-none"></div>
+                <Surface as="section" className="fl-profile-hero">
 
-                  <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
-                    <div className="flex flex-col items-center gap-6 sm:flex-row">
-                      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-teal-950 text-4xl font-bold text-teal-400 ring-2 ring-teal-500/20 sm:h-28 sm:w-28 sm:text-5xl">
+                  <div className="fl-profile-heading">
+                    <div className="fl-profile-identity">
+                      <div className="fl-profile-avatar" aria-hidden="true">
                         {getInitial()}
                       </div>
-                      <div className="text-center sm:text-left">
-                        <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-4xl">
+                      <div className="min-w-0 flex-1">
+                        <h1 className="fl-page-title break-words">
                           {profile.username}
                         </h1>
-                        <p className="mt-1.5 text-base text-slate-400">@{profile.username}</p>
+                        <p className="mt-1.5 text-base text-muted-foreground">@{profile.username}</p>
 
                         {rankingPositions.length > 0 && (
-                          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
                             {rankingPositions.map((pos) => (
                               <div key={pos} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium ${pos === 1 ? "border-yellow-400/30 bg-yellow-400/10 text-yellow-400" :
-                                  pos === 2 ? "border-slate-300/30 bg-slate-300/10 text-slate-300" :
-                                    "border-amber-600/30 bg-amber-600/10 text-amber-500"
+                                  pos === 2 ? "border-slate-300/30 bg-slate-300/10 text-[var(--text-secondary)]" :
+                                    "border-amber-600/30 bg-amber-600/10 text-amber-300"
                                 }`}>
                                 <Medal className="h-4 w-4" />
                                 TOP {pos} Global
@@ -144,22 +150,22 @@ export default function PublicProfile() {
                       </div>
                     </div>
                   </div>
-                </section>
+                </Surface>
 
                 <div className="grid gap-6 lg:grid-cols-3">
 
                   <section className="flex flex-col gap-4 lg:col-span-1">
-                    <div className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-                      <h2 className="mb-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Información</h2>
+                    <div className="fl-surface fl-workspace">
+                      <h2 className="fl-section-title mb-5">Información</h2>
 
                       <div className="flex flex-col gap-5">
                         <article className="flex items-center gap-4">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-slate-400">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-muted-foreground">
                             <User className="h-5 w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-slate-500">Usuario</p>
-                            <p className="truncate text-base font-semibold text-white">{profile.username}</p>
+                            <p className="text-xs font-medium text-muted-foreground">Usuario</p>
+                            <p className="break-words text-base font-semibold text-foreground">{profile.username}</p>
                           </div>
                         </article>
                       </div>
@@ -167,10 +173,10 @@ export default function PublicProfile() {
                   </section>
 
                   <section className="flex flex-col gap-4 lg:col-span-2">
-                    <div className="h-full rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                    <div className="fl-surface fl-workspace h-full">
                       <div className="mb-6 flex items-center justify-between">
-                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Garaje Visible</h2>
-                        <Car className="h-5 w-5 text-teal-500/50" />
+                        <h2 className="fl-section-title">Garaje visible</h2>
+                        <Car className="h-5 w-5 text-primary" />
                       </div>
 
                       {profile.vehicles && profile.vehicles.filter(v => v.isPublic).length > 0 ? (
@@ -179,16 +185,16 @@ export default function PublicProfile() {
                             <Link
                               to={`/public/vehicles/${vehicle.id}`}
                               key={vehicle.id}
-                              className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/5 bg-slate-900/50 p-4 transition hover:border-teal-500/30 hover:bg-slate-900/80 cursor-pointer"
+                              className="fl-profile-vehicle fl-community-link"
                             >
-                              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-400/10 text-teal-400">
+                              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
                                 <Car className="h-6 w-6" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h3 className="truncate text-base font-semibold text-white">
+                                <h3 className="break-words text-base font-semibold text-foreground">
                                   {vehicle.brand} {vehicle.model}
                                 </h3>
-                                <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                                   <Calendar className="h-3.5 w-3.5" />
                                   <span>{vehicle.year || "Año desconocido"}</span>
                                 </div>
@@ -197,9 +203,9 @@ export default function PublicProfile() {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] px-6 text-center">
-                          <Car className="mb-3 h-8 w-8 text-slate-500 opacity-50" />
-                          <p className="text-sm text-slate-400">
+                        <div className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] px-6 text-center">
+                          <Car className="mb-3 h-8 w-8 text-muted-foreground opacity-50" />
+                          <p className="text-sm text-muted-foreground">
                             Este usuario mantiene su garaje en privado o no tiene vehículos.
                           </p>
                         </div>
@@ -209,28 +215,28 @@ export default function PublicProfile() {
 
                 </div>
 
-                <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                <Surface as="section" className="fl-surface fl-workspace">
                   <div className="mb-6 flex items-center justify-between">
                     <div>
-                      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Logros e Insignias</h2>
-                      <p className="mt-1 text-sm text-slate-400">El historial de hitos de este conductor.</p>
+                      <h2 className="fl-section-title">Logros e insignias</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">El historial de hitos de este conductor.</p>
                     </div>
-                    <Award className="h-6 w-6 text-amber-500/50" />
+                    <Award className="h-6 w-6 text-amber-300" />
                   </div>
 
                   {profile.badges && profile.badges.length > 0 ? (
-                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="fl-profile-badges">
                       {profile.badges.map((badge, index) => {
                         const IconComponent = BADGE_ICONS[badge.iconName] || BADGE_ICONS.default;
 
                         return (
-                          <div key={index} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5 flex flex-col items-center text-center transition hover:border-amber-500/30">
-                            <div className="p-3.5 rounded-full bg-amber-500/10 text-amber-400 mb-3 border border-amber-500/10 shadow-inner">
+                          <div key={index} className="fl-profile-badge">
+                            <div className="fl-profile-badge-icon">
                               <IconComponent className="h-6 w-6" />
                             </div>
-                            <h4 className="text-sm font-bold text-white tracking-wide">{badge.name}</h4>
-                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed flex-grow">{badge.description}</p>
-                            <div className="mt-4 pt-3 w-full border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-500">
+                            <h3 className="text-sm font-semibold text-foreground">{badge.name}</h3>
+                            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed flex-grow">{badge.description}</p>
+                            <div className="fl-profile-badge-date">
                               <Calendar className="h-3 w-3" />
                               <span>Obtenido: {formatDateEs(badge.earnedDate)}</span>
                             </div>
@@ -240,13 +246,13 @@ export default function PublicProfile() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-8 text-center">
-                      <Award className="mb-3 h-8 w-8 text-slate-500 opacity-50" />
-                      <p className="text-sm text-slate-400">
+                      <Award className="mb-3 h-8 w-8 text-muted-foreground opacity-50" />
+                      <p className="text-sm text-muted-foreground">
                         Este usuario aún no ha desbloqueado ninguna insignia pública.
                       </p>
                     </div>
                   )}
-                </section>
+                </Surface>
 
               </div>
             ) : null}

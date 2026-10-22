@@ -831,3 +831,107 @@ body::before {
   @media (max-width:1023px) { .fl-calculator-layout { grid-template-columns:minmax(0,1fr); gap:var(--space-5); } }
   @media (max-width:639px) { .fl-trip-result { padding:var(--space-4); } }
 }
+
+@layer components {
+  /* Comunidad: identidad Atlántico y lectura de datos Instrumental. */
+  .fl-community-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--space-5); }
+  .fl-community-heading>div { flex:1; }
+  .fl-community-heading-action { max-width:100%; white-space:normal; height:auto; min-height:44px; padding-block:10px; }
+  .fl-community-state { display:flex; justify-content:center; align-items:center; gap:var(--space-3); min-height:160px; font-size:.875rem; color:var(--muted-foreground); }
+  .fl-community-error { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); padding:var(--space-4); border:1px solid var(--destructive); border-radius:var(--radius-control); color:var(--destructive); background:rgba(253,164,175,.06); font-size:.875rem; line-height:1.6; overflow-wrap:anywhere; }
+  .fl-community-error>span { flex:1; }
+  .fl-community-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; padding-block:var(--space-7); text-align:center; }
+  .fl-community-link { text-underline-offset:4px; overflow-wrap:anywhere; }
+  @media (pointer:coarse) { .fl-community-link { display:inline-flex; align-items:center; min-height:44px; } }
+  .fl-community-tag { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:8px; background:var(--accent); color:var(--accent-foreground); font-size:.75rem; font-weight:500; }
+  .fl-community-count { padding:4px 10px; border-radius:8px; background:var(--secondary); color:var(--text-secondary); font-size:.8125rem; font-variant-numeric:tabular-nums; }
+  .fl-community-icon { display:flex; align-items:center; justify-content:center; width:44px; height:44px; flex-shrink:0; color:var(--primary); }
+  .fl-user-identity { display:flex; align-items:center; gap:var(--space-3); min-width:0; flex:1; }
+  .fl-user-avatar { display:flex; width:44px; height:44px; align-items:center; justify-content:center; flex-shrink:0; border-radius:14px; background:var(--accent); color:var(--accent-foreground); font-size:.875rem; font-weight:600; }
+  .fl-user-name { display:flex; align-items:center; min-height:28px; font-size:.875rem; line-height:1.5; font-weight:600; }
+  .fl-user-description { color:var(--muted-foreground); font-size:.8125rem; line-height:1.5; overflow-wrap:anywhere; }
+  .fl-friend-search { position:relative; display:block; }
+  .fl-friend-search>svg { position:absolute; top:16px; left:16px; pointer-events:none; }
+  .fl-friend-search>svg:last-child { right:16px; left:auto; }
+  .fl-friend-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-4) 0; border-bottom:1px solid var(--border-subtle); }
+  .fl-friend-row:last-child { border-bottom:0; }
+  .fl-friend-row>.fl-user-identity { flex-basis:160px; }
+  .fl-friend-action { font-size:.8125rem; }
+  .fl-community-switch { display:flex; width:fit-content; max-width:100%; padding:4px; border:1px solid var(--border); border-radius:var(--radius-control); gap:4px; }
+  .fl-community-switch .fl-button { min-width:0; flex:1; color:var(--muted-foreground); }
+  .fl-community-switch [aria-pressed="true"] { background:var(--accent); color:var(--accent-foreground); }
+  .fl-ranking-achievement { display:flex; align-items:flex-start; gap:var(--space-4); padding:var(--space-5); }
+  .fl-ranking-table { width:100%; table-layout:fixed; border-collapse:collapse; text-align:left; font-size:.875rem; }
+  .fl-ranking-table th { padding:0 12px 16px; color:var(--muted-foreground); font-size:.75rem; font-weight:500; border-bottom:1px solid var(--border); }
+  .fl-ranking-table td { padding:16px 12px; border-bottom:1px solid var(--border-subtle); vertical-align:middle; overflow-wrap:anywhere; }
+  .fl-ranking-table th:first-child { width:100px; }
+  .fl-ranking-table th:last-child { width:170px; text-align:right; }
+  .fl-ranking-table [data-current-user="true"] { background:var(--accent); }
+  .fl-ranking-position>span { display:inline-flex; align-items:center; flex-wrap:wrap; gap:8px; font-variant-numeric:tabular-nums; font-weight:600; }
+  .fl-ranking-user { font-weight:600; }
+  .fl-ranking-you { display:inline-block; margin-left:8px; color:var(--accent-foreground); font-size:.75rem; font-weight:400; }
+  .fl-ranking-vehicle { color:var(--text-secondary); }
+  .fl-ranking-consumption { text-align:right; font-weight:600; color:var(--primary); font-variant-numeric:tabular-nums; }
+  .fl-ranking-consumption span { color:var(--text-secondary); font-size:.75rem; font-weight:400; }
+  .fl-ranking-table .fl-ranking-empty { padding:var(--space-7) var(--space-4); text-align:center; color:var(--muted-foreground); }
+  .fl-public-page { padding-top:var(--space-5); }
+  .fl-profile-hero { padding:var(--space-6); }
+  .fl-profile-heading { display:flex; justify-content:space-between; align-items:center; gap:var(--space-5); flex-wrap:wrap; }
+  .fl-profile-identity { display:flex; align-items:center; gap:var(--space-5); min-width:0; flex:1; }
+  .fl-profile-identity:has(.fl-community-tag) { align-items:flex-start; }
+  .fl-profile-avatar { display:flex; align-items:center; justify-content:center; width:88px; height:88px; flex-shrink:0; border-radius:24px; background:var(--accent); color:var(--accent-foreground); font-size:2.5rem; font-weight:500; }
+  .fl-profile-vehicle { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-4); border-radius:var(--radius-control); background:var(--surface-inset); min-width:0; }
+  .fl-profile-badges { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr)); gap:var(--space-4); }
+  .fl-profile-badge { display:flex; flex-direction:column; align-items:flex-start; padding:var(--space-5); border-radius:var(--radius-card); background:var(--surface-inset); min-width:0; overflow-wrap:anywhere; }
+  .fl-profile-badge-icon { display:flex; align-items:center; justify-content:center; width:44px; height:44px; margin-bottom:var(--space-3); color:#fcd34d; }
+  .fl-profile-badge-date { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-top:auto; padding-top:var(--space-4); color:var(--muted-foreground); font-size:.75rem; line-height:1.5; font-variant-numeric:tabular-nums; }
+  .fl-public-specification { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-4) 0; border-bottom:1px solid var(--border-subtle); }
+  .fl-public-history { display:flex; flex-direction:column; min-height:220px; }
+  .fl-public-history>div:last-child { min-height:0; max-height:320px; scrollbar-color:var(--border) transparent; }
+  .fl-public-record { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-4) 0; border-bottom:1px solid var(--border-subtle); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .fl-public-record>div:first-child { flex:1; min-width:140px; }
+  .fl-public-stat { padding:var(--space-4) 0; border-bottom:1px solid var(--border-subtle); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .fl-public-privacy { display:flex; flex-wrap:wrap; gap:var(--space-3); padding:var(--space-4); background:var(--surface-inset); border-radius:var(--radius-control); color:var(--muted-foreground); font-size:.8125rem; }
+  @media (hover:hover) and (pointer:fine) {
+    .fl-community-link:hover { color:var(--primary); text-decoration:underline; }
+    .fl-ranking-table tbody tr:hover { background:rgba(162,181,198,.035); }
+    .fl-ranking-table [data-current-user="true"]:hover { background:var(--accent); }
+  }
+  @media (max-width:767px) {
+    .fl-ranking-table,.fl-ranking-table tbody { display:block; }
+    .fl-ranking-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    .fl-ranking-table tr { display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:4px 12px; padding:var(--space-4) var(--space-2); border-bottom:1px solid var(--border-subtle); }
+    .fl-ranking-table td { padding:0; border:0; }
+    .fl-ranking-position { grid-row:1 / span 2; }
+    .fl-ranking-position>span { gap:4px; }
+    .fl-ranking-user { grid-column:2; align-self:center; }
+    .fl-ranking-vehicle { grid-column:2; font-size:.8125rem; }
+    .fl-ranking-consumption { grid-column:3; grid-row:1 / span 2; align-self:center; max-width:110px; }
+    .fl-ranking-consumption span { display:block; margin-top:4px; }
+    .fl-ranking-table td.fl-ranking-empty { grid-column:1/-1; padding:var(--space-5) 0; }
+  }
+  @media (max-width:639px) {
+    .fl-community-heading>div { flex-basis:100%; }
+    .fl-community-heading-action { width:100%; }
+    .fl-profile-hero { padding:var(--space-4); }
+    .fl-profile-heading>.fl-profile-identity { flex-basis:100%; }
+    .fl-profile-heading>div:not(.fl-profile-identity),.fl-profile-heading>div:not(.fl-profile-identity)>.fl-button { width:100%; }
+    .fl-profile-avatar { width:64px; height:64px; border-radius:18px; font-size:1.75rem; }
+    .fl-profile-avatar svg { width:32px; height:32px; }
+    .fl-profile-identity { gap:var(--space-3); }
+    .fl-profile-identity h1 { font-size:1.5rem; }
+    .fl-profile-badge { padding:var(--space-4); }
+    .fl-friend-row>.fl-user-identity { flex-basis:100%; }
+    .fl-friend-row>.fl-button:not([data-size="icon"]) { width:100%; }
+    .fl-friend-row:has(>.fl-button[data-size="icon"])>.fl-user-identity { flex-basis:0; }
+    .fl-friend-row>div:not(.fl-user-identity) { flex-wrap:wrap; }
+  }
+  @media (max-width:359px) {
+    .fl-profile-identity { flex-direction:column; align-items:flex-start; }
+    .fl-profile-avatar { width:44px; height:44px; border-radius:14px; font-size:1.25rem; }
+    .fl-profile-avatar svg { width:24px; height:24px; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    .fl-community-page .animate-spin,.fl-friends-panel .animate-spin { animation:none; }
+  }
+}

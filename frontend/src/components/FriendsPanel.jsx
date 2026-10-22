@@ -13,6 +13,9 @@ import {
   X,
 } from "lucide-react";
 import { apiFetch, apiJson } from "../services/api";
+import { Button } from "./ui/button";
+import { Input } from "./ui/field";
+import { Surface } from "./ui/surface";
 
 const EMPTY_OVERVIEW = {
   friends: [],
@@ -28,18 +31,18 @@ function UserIdentity({ user }) {
   const name = displayName(user);
 
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-400/10 text-sm font-bold text-teal-200 ring-1 ring-teal-300/15">
+    <div className="fl-user-identity">
+      <span className="fl-user-avatar" aria-hidden="true">
         {user.username.slice(0, 1).toUpperCase()}
       </span>
       <div className="min-w-0">
         <Link
           to={`/users/${user.username}`}
-          className="block truncate text-sm font-semibold text-white transition hover:text-teal-200"
+          className="fl-community-link fl-user-name"
         >
           @{user.username}
         </Link>
-        {name ? <p className="mt-0.5 truncate text-xs text-slate-400">{name}</p> : null}
+        {name ? <p className="fl-user-description">{name}</p> : null}
       </div>
     </div>
   );
@@ -200,18 +203,18 @@ export default function FriendsPanel({ onNotify }) {
 
   if (loading) {
     return (
-      <section className="flex min-h-56 items-center justify-center rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-6 text-sm text-slate-400">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin text-teal-300" />
+      <Surface as="section" role="status" aria-live="polite" className="fl-surface fl-workspace fl-community-state">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
         Cargando amistades...
-      </section>
+      </Surface>
     );
   }
 
   if (!overviewLoaded) {
     return (
-      <section role="alert" className="rounded-3xl border border-rose-400/20 bg-slate-950/45 p-6 text-sm text-rose-100">
+      <Surface as="section" role="alert" className="fl-surface fl-workspace fl-community-error">
         <p>{error || "No se pudieron cargar tus amistades"}</p>
-        <button type="button" className="mt-4 min-h-11 rounded-xl bg-white/10 px-4 font-semibold transition hover:bg-white/15" onClick={async () => {
+        <Button type="button" variant="outline" className="fl-friend-action mt-4" onClick={async () => {
           setLoading(true);
           setError("");
           try {
@@ -221,23 +224,23 @@ export default function FriendsPanel({ onNotify }) {
           } finally {
             setLoading(false);
           }
-        }}>Reintentar</button>
-      </section>
+        }}>Reintentar</Button>
+      </Surface>
     );
   }
 
   return (
-    <section aria-label="Gestionar amistades" className="min-w-0">
+    <section aria-label="Gestionar amistades" className="fl-friends-panel min-w-0">
       <div className="mb-4 flex justify-end">
-        <button
+        <Button
           type="button"
           onClick={refreshRelationships}
           disabled={Boolean(activeAction) || searching}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 text-sm text-slate-300 transition hover:bg-white/5 disabled:opacity-50"
+          variant="outline" className="fl-friend-action"
         >
           <RefreshCw aria-hidden="true" className={`h-4 w-4 ${activeAction === "refresh" ? "animate-spin" : ""}`} />
           {activeAction === "refresh" ? "Actualizando…" : "Actualizar amistades"}
-        </button>
+        </Button>
       </div>
 
       {error ? (
@@ -246,19 +249,19 @@ export default function FriendsPanel({ onNotify }) {
         </div>
       ) : null}
 
-      <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/45 p-4 sm:p-6">
+      <div className="fl-surface fl-workspace fl-friend-search-section">
         <div className="flex items-center gap-3">
-          <UserPlus className="h-5 w-5 text-teal-300" />
+          <UserPlus className="h-5 w-5 text-primary" />
           <div>
-            <h2 className="text-lg font-semibold text-white">Añadir amigos</h2>
+            <h2 className="fl-section-title">Añadir amigos</h2>
           </div>
         </div>
 
         <div role="search" aria-label="Buscar amigos" className="mt-4">
-          <label className="flex min-h-12 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 px-4 focus-within:border-teal-300/40">
-            <Search className="h-4 w-4 shrink-0 text-slate-500" />
+          <label className="fl-friend-search">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="sr-only">Nombre de usuario</span>
-            <input
+            <Input
               type="search"
               aria-describedby="friend-search-hint"
               value={query}
@@ -272,68 +275,68 @@ export default function FriendsPanel({ onNotify }) {
               }}
               maxLength={15}
               placeholder="Ejemplo: david"
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+              className="pl-11 pr-11"
             />
-            {searching ? <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin text-teal-300" /> : null}
+            {searching ? <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin text-primary" /> : null}
           </label>
-          <p role="status" className="mt-2 text-xs text-slate-400">
-            {searching ? "Buscando usuarios…" : searched ? `${results.length} ${results.length === 1 ? "usuario encontrado" : "usuarios encontrados"}` : ""}
+          <p id="friend-search-hint" role="status" className="mt-2 text-xs text-muted-foreground">
+            {searching ? "Buscando usuarios…" : searched ? `${results.length} ${results.length === 1 ? "usuario encontrado" : "usuarios encontrados"}` : "Escribe al menos 2 caracteres para buscar."}
           </p>
         </div>
 
         {searched ? (
           <div className="mt-4 space-y-2">
             {results.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-center text-sm text-slate-400">
+              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-center text-sm text-muted-foreground">
                 No se encontraron usuarios con ese nombre.
               </p>
             ) : results.map((user) => (
-              <article key={user.username} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/55 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <article key={user.username} className="fl-friend-row">
                 <UserIdentity user={user} />
                 {user.status === "ACCEPTED" ? (
-                  <span className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-teal-400/10 px-3 text-xs font-semibold text-teal-200">
+                  <span className="fl-community-tag">
                     <Check className="h-4 w-4" /> Amigos
                   </span>
                 ) : user.status === "PENDING" && user.direction === "OUTGOING" ? (
-                  <button
+                  <Button
                     type="button"
                     disabled={Boolean(activeAction)}
                     onClick={() => removeRelationship(user, `Solicitud a @${user.username} cancelada`)}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 px-3 text-xs font-semibold text-slate-300 transition hover:bg-white/5"
+                    variant="outline" className="fl-friend-action"
                   >
                     <Clock3 className="h-4 w-4" /> Cancelar solicitud
-                  </button>
+                  </Button>
                 ) : user.status === "PENDING" ? (
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="button"
                       aria-label={`Aceptar solicitud de ${user.username}`}
                       disabled={Boolean(activeAction)}
                       onClick={() => updateRequest(user, "accept")}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-300 text-slate-950 transition hover:bg-teal-200"
+                      variant="default" size="icon" className="fl-friend-action"
                     >
                       <Check className="h-4 w-4" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       aria-label={`Rechazar solicitud de ${user.username}`}
                       disabled={Boolean(activeAction)}
                       onClick={() => updateRequest(user, "reject")}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-400/20 bg-rose-400/10 text-rose-200 transition hover:bg-rose-400/20"
+                      variant="destructive" size="icon" className="fl-friend-action"
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button
+                  <Button
                     type="button"
                     disabled={Boolean(activeAction)}
                     onClick={() => sendRequest(user)}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-semibold text-slate-950 transition hover:bg-slate-200 disabled:opacity-60"
+                    variant="default" className="fl-friend-action"
                   >
                     {isBusy(`send-${user.username}`) ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
                     {user.status === "REJECTED" ? "Volver a enviar" : "Añadir"}
-                  </button>
+                  </Button>
                 )}
               </article>
             ))}
@@ -342,34 +345,34 @@ export default function FriendsPanel({ onNotify }) {
       </div>
 
       {overview.incomingRequests.length > 0 ? (
-        <div className="mt-5 rounded-[1.5rem] border border-teal-300/20 bg-teal-400/[0.04] p-4 sm:p-5">
+        <div className="fl-surface fl-workspace mt-5">
           <div className="flex items-center gap-3">
-            <Inbox className="h-5 w-5 text-teal-300" />
-            <h2 className="text-sm font-semibold text-white">
+            <Inbox className="h-5 w-5 text-primary" />
+            <h2 className="fl-section-title">
               Solicitudes recibidas ({overview.incomingRequests.length})
             </h2>
           </div>
           <div className="mt-4 space-y-2">
             {overview.incomingRequests.map((request) => (
-              <article key={request.friendshipId} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <article key={request.friendshipId} className="fl-friend-row">
                 <UserIdentity user={request} />
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     type="button"
                     disabled={Boolean(activeAction)}
                     onClick={() => updateRequest(request, "accept")}
-                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-teal-300 px-3 text-xs font-semibold text-slate-950 transition hover:bg-teal-200 disabled:opacity-60 sm:flex-none"
+                    variant="default" className="fl-friend-action flex-1 sm:flex-none"
                   >
                     <Check className="h-4 w-4" /> Aceptar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     disabled={Boolean(activeAction)}
                     onClick={() => updateRequest(request, "reject")}
-                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/20 disabled:opacity-60 sm:flex-none"
+                    variant="destructive" className="fl-friend-action flex-1 sm:flex-none"
                   >
                     <X className="h-4 w-4" /> Rechazar
-                  </button>
+                  </Button>
                 </div>
               </article>
             ))}
@@ -378,91 +381,91 @@ export default function FriendsPanel({ onNotify }) {
       ) : null}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+        <div className="fl-surface fl-workspace">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-teal-300" />
-              <h2 className="text-base font-semibold text-white">Tus amigos</h2>
+              <Users className="h-5 w-5 text-primary" />
+              <h2 className="fl-section-title">Tus amigos</h2>
             </div>
-            <span className="rounded-full bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-300">
+            <span className="fl-community-count">
               {overview.friends.length}
             </span>
           </div>
           <div className="mt-4 space-y-2">
             {overview.friends.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm leading-6 text-slate-400">
+              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm leading-6 text-muted-foreground">
                 Todavía no tienes amigos. Busca a otro conductor para empezar vuestro ranking.
               </p>
             ) : overview.friends.map((friend) => (
-              <article key={friend.friendshipId} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/55 p-3">
+              <article key={friend.friendshipId} className="fl-friend-row">
                 <UserIdentity user={friend} />
                 {confirmingRemovalId === friend.friendshipId ? (
                   <div className="flex shrink-0 gap-1">
-                    <button
+                    <Button
                       type="button"
                       disabled={Boolean(activeAction)}
                       onClick={() => {
                         removeRelationship(friend, `@${friend.username} ya no está en tu lista de amigos`);
                         setConfirmingRemovalId(null);
                       }}
-                      className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-rose-400/15 px-3 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/25 disabled:opacity-50"
+                      variant="destructive" className="fl-friend-action"
                     >
                       <Check className="h-4 w-4" /> Eliminar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       aria-label="Cancelar eliminación"
                       onClick={() => setConfirmingRemovalId(null)}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white"
+                      variant="outline" size="icon" className="fl-friend-action"
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button
+                  <Button
                     type="button"
                     aria-label={`Eliminar a ${friend.username} de tus amigos`}
                     title="Eliminar amistad"
                     disabled={Boolean(activeAction)}
                     onClick={() => setConfirmingRemovalId(friend.friendshipId)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-rose-400/10 hover:text-rose-300 disabled:opacity-50"
+                    variant="destructive" size="icon" className="fl-friend-action"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 )}
               </article>
             ))}
           </div>
         </div>
 
-        <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+        <div className="fl-surface fl-workspace">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <Clock3 className="h-5 w-5 text-slate-400" />
-              <h2 className="text-sm font-semibold text-white">Solicitudes enviadas</h2>
+              <Clock3 className="h-5 w-5 text-muted-foreground" />
+              <h2 className="fl-section-title">Solicitudes enviadas</h2>
             </div>
-            <span className="rounded-full bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-300">
+            <span className="fl-community-count">
               {overview.outgoingRequests.length}
             </span>
           </div>
           <div className="mt-4 space-y-2">
             {overview.outgoingRequests.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-slate-400">
+              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-muted-foreground">
                 No tienes solicitudes pendientes.
               </p>
             ) : overview.outgoingRequests.map((request) => (
-              <article key={request.friendshipId} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/55 p-3">
+              <article key={request.friendshipId} className="fl-friend-row">
                 <UserIdentity user={request} />
-                <button
+                <Button
                   type="button"
                   aria-label={`Cancelar solicitud a ${request.username}`}
                   disabled={Boolean(activeAction)}
                   onClick={() => removeRelationship(request, `Solicitud a @${request.username} cancelada`)}
-                  className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-white/10 px-3 text-xs font-semibold text-slate-300 transition hover:bg-white/5 disabled:opacity-50"
+                  variant="outline" className="fl-friend-action"
                 >
                   <X className="h-4 w-4" />
-                  <span className="hidden sm:inline">Cancelar</span>
-                </button>
+                  <span>Cancelar</span>
+                </Button>
               </article>
             ))}
           </div>

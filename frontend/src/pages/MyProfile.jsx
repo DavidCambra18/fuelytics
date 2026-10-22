@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
 import { ArrowLeft, AlertCircle, User, Info, Settings, Car, Calendar, Award, Fuel, Receipt, Leaf, Wrench } from "lucide-react";
 
 const BADGE_ICONS = {
@@ -71,94 +73,91 @@ export default function MyProfile() {
   if (loading) {
     return (
       <div className="section-shell pb-10 text-slate-100">
-        <section className="glass-panel mx-auto max-w-5xl rounded-[2rem] p-8 text-sm text-slate-300">
+        <Surface as="section" role="status" aria-live="polite" className="fl-workspace fl-community-state mx-auto max-w-5xl">
           Cargando perfil...
-        </section>
+        </Surface>
       </div>
     );
   }
 
   return (
-    <div className="text-slate-100">
+    <div className="fl-profile-page text-foreground">
       <main className="pb-10 lg:pb-16">
         <div className="section-shell">
 
           <div className="mx-auto max-w-5xl">
             <div className="mb-6">
-              <Link
+              <Button asChild variant="outline"><Link
                 to="/dashboard"
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/50 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-900 hover:text-white"
-              >
+                >
                 <ArrowLeft className="h-4 w-4" />
                 Volver al garaje
-              </Link>
+              </Link></Button>
             </div>
 
             {error ? (
-              <div className="flex items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              <div role="alert" className="fl-community-error">
                 <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
                 {error}
               </div>
             ) : profile ? (
               <div className="space-y-6">
 
-                <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
-                  <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-teal-900/20 to-transparent pointer-events-none"></div>
+                <Surface as="section" className="fl-profile-hero">
 
-                  <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
-                    <div className="flex flex-col items-center gap-6 sm:flex-row">
-                      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-teal-950 text-4xl font-bold text-teal-400 ring-2 ring-teal-500/20 sm:h-28 sm:w-28 sm:text-5xl">
+                  <div className="fl-profile-heading">
+                    <div className="fl-profile-identity">
+                      <div className="fl-profile-avatar" aria-hidden="true">
                         {getInitial()}
                       </div>
-                      <div className="text-center sm:text-left">
-                        <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-4xl">
+                      <div className="min-w-0 flex-1">
+                        <h1 className="fl-page-title break-words">
                           {(profile.firstName || profile.lastName)
                             ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim()
                             : profile.username}
                         </h1>
-                        <p className="mt-1.5 text-base text-slate-400">@{profile.username}</p>
+                        <p className="mt-1.5 text-base text-muted-foreground">@{profile.username}</p>
                       </div>
                     </div>
 
                     <div className="mt-2 sm:mt-0">
-                      <Link
+                      <Button asChild variant="outline"><Link
                         to="/settings"
-                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-800/50 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-slate-700/50"
-                      >
-                        <Settings className="h-4 w-4 text-slate-400" />
+                        >
+                        <Settings className="h-4 w-4 text-muted-foreground" />
                         Editar perfil
-                      </Link>
+                      </Link></Button>
                     </div>
                   </div>
-                </section>
+                </Surface>
 
                 <div className="grid gap-6 lg:grid-cols-3">
 
                   <section className="flex flex-col gap-4 lg:col-span-1">
-                    <div className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-                      <h2 className="mb-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Información Personal</h2>
+                    <div className="fl-surface fl-workspace">
+                      <h2 className="fl-section-title mb-5">Información personal</h2>
 
                       <div className="flex flex-col gap-5">
                         <article className="flex items-center gap-4">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-slate-400">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-muted-foreground">
                             <User className="h-5 w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-slate-500">Usuario</p>
-                            <p className="truncate text-base font-semibold text-white">{profile.username}</p>
+                            <p className="text-xs font-medium text-muted-foreground">Usuario</p>
+                            <p className="break-words text-base font-semibold text-foreground">{profile.username}</p>
                           </div>
                         </article>
 
                         <article className="flex items-center gap-4">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-slate-400">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/5 bg-slate-900/80 text-muted-foreground">
                             <Info className="h-5 w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-slate-500">Nombre real</p>
-                            <p className="truncate text-base font-semibold text-white">
+                            <p className="text-xs font-medium text-muted-foreground">Nombre real</p>
+                            <p className="break-words text-base font-semibold text-foreground">
                               {profile.firstName || profile.lastName
                                 ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim()
-                                : <span className="text-slate-500 italic">No definido</span>}
+                                : <span className="text-muted-foreground italic">No definido</span>}
                             </p>
                           </div>
                         </article>
@@ -167,24 +166,24 @@ export default function MyProfile() {
                   </section>
 
                   <section className="flex flex-col gap-4 lg:col-span-2">
-                    <div className="h-full rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                    <div className="fl-surface fl-workspace h-full">
                       <div className="mb-6 flex items-center justify-between">
-                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Tus Vehículos</h2>
-                        <Car className="h-5 w-5 text-teal-500/50" />
+                        <h2 className="fl-section-title">Tus vehículos</h2>
+                        <Car className="h-5 w-5 text-primary" />
                       </div>
 
                       {profile.vehicles && profile.vehicles.length > 0 ? (
                         <div className="grid gap-4 sm:grid-cols-2">
                           {profile.vehicles.map((vehicle) => (
-                            <article key={vehicle.id} className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/5 bg-slate-900/50 p-4 transition hover:bg-slate-900/80">
-                              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-400/10 text-teal-400">
+                            <article key={vehicle.id} className="fl-profile-vehicle">
+                              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
                                 <Car className="h-6 w-6" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h3 className="truncate text-base font-semibold text-white">
+                                <h3 className="break-words text-base font-semibold text-foreground">
                                   {vehicle.brand} {vehicle.model}
                                 </h3>
-                                <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                                   <Calendar className="h-3.5 w-3.5" />
                                   <span>{vehicle.year || "Año desconocido"}</span>
                                 </div>
@@ -193,9 +192,9 @@ export default function MyProfile() {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] px-6 text-center">
-                          <Car className="mb-3 h-8 w-8 text-slate-500 opacity-50" />
-                          <p className="text-sm text-slate-400">
+                        <div className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] px-6 text-center">
+                          <Car className="mb-3 h-8 w-8 text-muted-foreground opacity-50" />
+                          <p className="text-sm text-muted-foreground">
                             Aún no tienes vehículos registrados en tu garaje.
                           </p>
                         </div>
@@ -205,29 +204,28 @@ export default function MyProfile() {
 
                 </div>
 
-                {/* NUEVA SECCIÓN: LOGROS E INSIGNIAS */}
-                <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                <Surface as="section" className="fl-surface fl-workspace">
                   <div className="mb-6 flex items-center justify-between">
                     <div>
-                      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Logros e Insignias</h2>
-                      <p className="mt-1 text-sm text-slate-400">Tu historial de hitos y buenas prácticas.</p>
+                      <h2 className="fl-section-title">Logros e insignias</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">Tu historial de hitos y buenas prácticas.</p>
                     </div>
-                    <Award className="h-6 w-6 text-amber-500/50" />
+                    <Award className="h-6 w-6 text-amber-300" />
                   </div>
 
                   {profile.badges && profile.badges.length > 0 ? (
-                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="fl-profile-badges">
                       {profile.badges.map((badge, index) => {
                         const IconComponent = BADGE_ICONS[badge.iconName] || BADGE_ICONS.default;
 
                         return (
-                          <div key={index} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5 flex flex-col items-center text-center transition hover:border-amber-500/30">
-                            <div className="p-3.5 rounded-full bg-amber-500/10 text-amber-400 mb-3 border border-amber-500/10 shadow-inner">
+                          <div key={index} className="fl-profile-badge">
+                            <div className="fl-profile-badge-icon">
                               <IconComponent className="h-6 w-6" />
                             </div>
-                            <h4 className="text-sm font-bold text-white tracking-wide">{badge.name}</h4>
-                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed flex-grow">{badge.description}</p>
-                            <div className="mt-4 pt-3 w-full border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-500">
+                            <h3 className="text-sm font-semibold text-foreground">{badge.name}</h3>
+                            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed flex-grow">{badge.description}</p>
+                            <div className="fl-profile-badge-date">
                               <Calendar className="h-3 w-3" />
                               <span>Obtenido: {formatDateEs(badge.earnedDate)}</span>
                             </div>
@@ -237,13 +235,13 @@ export default function MyProfile() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-8 text-center">
-                      <Award className="mb-3 h-8 w-8 text-slate-500 opacity-50" />
-                      <p className="text-sm text-slate-400">
+                      <Award className="mb-3 h-8 w-8 text-muted-foreground opacity-50" />
+                      <p className="text-sm text-muted-foreground">
                         Aún no has desbloqueado ninguna insignia. ¡Sigue registrando datos para conseguir la primera!
                       </p>
                     </div>
                   )}
-                </section>
+                </Surface>
 
               </div>
             ) : null}

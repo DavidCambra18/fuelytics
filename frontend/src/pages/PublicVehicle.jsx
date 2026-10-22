@@ -1,7 +1,9 @@
-import { useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
-import { ArrowLeft, AlertCircle, Car, Calendar, Gauge, Fuel, Settings2, Activity, Receipt, BarChart3 } from "lucide-react";
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
+import { ArrowLeft, AlertCircle, LockKeyhole, Car, Calendar, Gauge, Fuel, Settings2, Activity, Receipt, BarChart3 } from "lucide-react";
 import {
   formatVehicleEnergyType,
   formatGearboxType,
@@ -19,6 +21,7 @@ export default function PublicVehicle() {
   const [fuelings, setFuelings] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [stats, setStats] = useState(null);
+  const [extraLoading, setExtraLoading] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,18 +30,24 @@ export default function PublicVehicle() {
     const controller = new AbortController();
     const loadVehicle = async () => {
       setLoading(true);
+      setError("");
+      setVehicle(null);
+      setFuelings([]);
+      setExpenses([]);
+      setStats(null);
+      setExtraLoading(true);
       try {
         const response = await apiFetch(`/api/vehicles/${id}`, { signal: controller.signal });
         if (!response.ok) {
           throw new Error("No se pudo cargar la información del vehículo o es privado");
         }
         const data = await response.json();
-        setVehicle(data);
+        if (!controller.signal.aborted) setVehicle(data);
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (controller.signal.aborted) return;
         setError(err.message);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     loadVehicle();
@@ -46,7 +55,7 @@ export default function PublicVehicle() {
   }, [id]);
 
   useEffect(() => {
-    if (!vehicle) return;
+    if (!vehicle || String(vehicle.id) !== id) return;
     const controller = new AbortController();
 
     const loadExtraData = async () => {
@@ -57,9 +66,10 @@ export default function PublicVehicle() {
           try {
             const response = await apiFetch(path, { signal: controller.signal });
             if (!response.ok) throw new Error("No se pudo cargar la información pública");
-            setter(await response.json());
-          } catch (resourceError) {
-            if (resourceError.name !== "AbortError") setter(emptyValue);
+            const resource = await response.json();
+            if (!controller.signal.aborted) setter(resource);
+          } catch {
+            if (!controller.signal.aborted) setter(emptyValue);
           }
         };
 
@@ -78,6 +88,8 @@ export default function PublicVehicle() {
         await Promise.allSettled(promises);
       } catch (err) {
         console.error(err);
+      } finally {
+        if (!controller.signal.aborted) setExtraLoading(false);
       }
     };
 
@@ -88,54 +100,51 @@ export default function PublicVehicle() {
   if (loading) {
     return (
       <div className="public-app-loading section-shell py-10 text-slate-100">
-        <section className="glass-panel mx-auto max-w-5xl rounded-[2rem] p-8 text-sm text-slate-300">
+        <Surface as="section" role="status" aria-live="polite" className="fl-workspace fl-community-state mx-auto max-w-5xl">
           Cargando vehículo...
-        </section>
+        </Surface>
       </div>
     );
   }
 
   return (
-    <div className="public-app-page min-h-screen text-slate-100">
+    <div className="public-app-page fl-public-page fl-profile-page min-h-screen text-foreground">
       <main className="pb-10 pt-6 lg:pb-16">
         <div className="section-shell">
           <div className="mx-auto max-w-5xl">
             <div className="mb-6">
-              <button
-                onClick={() => navigate(-1)}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/50 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-900 hover:text-white"
-              >
+              <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                 <ArrowLeft className="h-4 w-4" />
                 Volver al perfil
-              </button>
+              </Button>
             </div>
 
             {error ? (
-              <div className="flex items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              <div role="alert" className="fl-community-error">
                 <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
                 {error}
               </div>
             ) : vehicle ? (
               <div className="space-y-6">
 
-                <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
-                  <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-teal-900/20 to-transparent pointer-events-none"></div>
+                <Surface as="section" className="fl-profile-hero">
 
-                  <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
-                    <div className="flex flex-col items-center gap-6 sm:flex-row">
-                      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-teal-950 text-teal-400 ring-2 ring-teal-500/20 sm:h-28 sm:w-28">
+                  <div className="fl-profile-heading">
+                    <div className="fl-profile-identity">
+                      <div className="fl-profile-avatar" aria-hidden="true">
                         <Car className="h-12 w-12" />
                       </div>
-                      <div className="text-center sm:text-left">
-                        <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-teal-500">Vehículo Público</p>
-                        <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-4xl">
+                      <div className="min-w-0 flex-1">
+
+                        <h1 className="fl-page-title break-words">
                           {vehicle.brand} {vehicle.model}
                         </h1>
-                        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                          <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300">
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[var(--text-secondary)]">
                             <Calendar className="h-3.5 w-3.5" />
                             {vehicle.year}
                           </span>
+                          <span className="fl-community-tag">{vehicle.isPublic ? "Vehículo público" : "Vehículo privado"}</span>
                           {vehicle.vehicleEnergyType && (
                             <span className="flex items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1.5 text-xs font-medium text-teal-300">
                               <Fuel className="h-3.5 w-3.5" />
@@ -146,76 +155,85 @@ export default function PublicVehicle() {
                       </div>
                     </div>
                   </div>
-                </section>
+                </Surface>
 
-                <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-                  <h2 className="mb-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Especificaciones Técnicas</h2>
+                {(!vehicle.showFuelData || !vehicle.showExpenses || !vehicle.showStatistics) && (
+                  <div className="fl-public-privacy" role="note" aria-label="Privacidad del vehículo">
+                    <LockKeyhole className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {!vehicle.showFuelData && <span>Repostajes privados</span>}
+                    {!vehicle.showExpenses && <span>Gastos privados</span>}
+                    {!vehicle.showStatistics && <span>Estadísticas privadas</span>}
+                  </div>
+                )}
 
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <article className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-slate-900/50 p-5 transition hover:border-teal-500/30 hover:bg-slate-900/80">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-800 text-teal-400 transition group-hover:bg-teal-950">
+                <Surface as="section" className="fl-surface fl-workspace">
+                  <h2 className="fl-section-title mb-5">Especificaciones técnicas</h2>
+
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <article className="fl-public-specification">
+                      <div className="fl-community-icon">
                         <Activity className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-slate-500">Potencia / Motor</p>
-                        <p className="truncate text-base font-semibold text-white">
+                        <p className="text-xs font-medium text-muted-foreground">Potencia / Motor</p>
+                        <p className="break-words text-base font-semibold text-foreground">
                           {vehicle.power ? `${vehicle.power} CV` : 'N/D'} {vehicle.cc ? `- ${vehicle.cc} cc` : ''}
                         </p>
                       </div>
                     </article>
 
-                    <article className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-slate-900/50 p-5 transition hover:border-teal-500/30 hover:bg-slate-900/80">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-800 text-teal-400 transition group-hover:bg-teal-950">
+                    <article className="fl-public-specification">
+                      <div className="fl-community-icon">
                         <Settings2 className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-slate-500">Caja de cambios</p>
-                        <p className="truncate text-base font-semibold text-white">
+                        <p className="text-xs font-medium text-muted-foreground">Caja de cambios</p>
+                        <p className="break-words text-base font-semibold text-foreground">
                           {vehicle.gearbox ? formatGearboxType(vehicle.gearbox) : 'N/D'}
                         </p>
                       </div>
                     </article>
 
-                    <article className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-slate-900/50 p-5 transition hover:border-teal-500/30 hover:bg-slate-900/80">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-800 text-teal-400 transition group-hover:bg-teal-950">
+                    <article className="fl-public-specification">
+                      <div className="fl-community-icon">
                         <Gauge className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-slate-500">Kilometraje</p>
-                        <p className="truncate text-base font-semibold text-white">
+                        <p className="text-xs font-medium text-muted-foreground">Kilometraje</p>
+                        <p className="break-words text-base font-semibold text-foreground">
                           {vehicle.odometer ? `${vehicle.odometer.toLocaleString("es-ES")} ${getOdometerUnit(vehicle.vehicleType)}` : 'N/D'}
                         </p>
                       </div>
                     </article>
 
-                    <article className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-slate-900/50 p-5 transition hover:border-teal-500/30 hover:bg-slate-900/80">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-800 text-teal-400 transition group-hover:bg-teal-950">
+                    <article className="fl-public-specification">
+                      <div className="fl-community-icon">
                         <Fuel className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-slate-500">Capacidad depósito</p>
-                        <p className="truncate text-base font-semibold text-white">
+                        <p className="text-xs font-medium text-muted-foreground">Capacidad depósito</p>
+                        <p className="break-words text-base font-semibold text-foreground">
                           {vehicle.tankCapacity ? `${vehicle.tankCapacity} L` : 'N/D'}
                         </p>
                       </div>
                     </article>
                   </div>
-                </section>
+                </Surface>
 
                 <div className="grid gap-6 lg:grid-cols-2">
                   {vehicle.showFuelData && (
-                    <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8 h-[400px] flex flex-col">
+                    <Surface as="section" className="fl-workspace fl-public-history">
                       <div className="mb-6 flex items-center justify-between shrink-0">
-                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Últimos Repostajes</h2>
-                        <Fuel className="h-5 w-5 text-teal-500/50" />
+                        <h2 className="fl-section-title">Últimos repostajes</h2>
+                        <Fuel className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                      <div tabIndex={0} role="region" aria-label="Historial de repostajes" className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                         {fuelings.length > 0 ? (
                           fuelings.map((fuel) => (
-                            <article key={fuel.id} className="flex items-center justify-between rounded-xl bg-slate-900/50 p-4 border border-white/5">
+                            <article key={fuel.id} className="fl-public-record">
                               <div>
-                                <p className="text-sm font-semibold text-white">{fuel.liters} {getQuantityUnitForFuel(fuel.fuelType)} • {fuel.priceTotal} €</p>
-                                <p className="text-xs text-slate-400 mt-1">{fuel.date} • {fuel.distance} {getOdometerUnit(vehicle.vehicleType)} recorridos</p>
+                                <p className="text-sm font-semibold text-foreground">{fuel.liters} {getQuantityUnitForFuel(fuel.fuelType)} • {fuel.priceTotal} €</p>
+                                <p className="text-xs text-muted-foreground mt-1">{fuel.date} • {fuel.distance} {getOdometerUnit(vehicle.vehicleType)} recorridos</p>
                               </div>
                               <div className="text-right">
                                 <p className="text-sm font-bold text-teal-400">{fuel.boardConsumption ? `${fuel.boardConsumption} ${getConsumptionUnit(vehicle.vehicleType, vehicle.vehicleEnergyType)}` : '---'}</p>
@@ -224,69 +242,75 @@ export default function PublicVehicle() {
                           ))
                         ) : (
                           <div className="flex h-full flex-col items-center justify-center text-center">
-                            <p className="text-sm text-slate-500">No hay repostajes registrados aún.</p>
+                            <p role={extraLoading ? "status" : undefined} className="text-sm text-muted-foreground">{extraLoading ? "Cargando repostajes..." : "No hay repostajes disponibles para mostrar."}</p>
                           </div>
                         )}
                       </div>
-                    </section>
+                    </Surface>
                   )}
 
                   {vehicle.showExpenses && (
-                    <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8 h-[400px] flex flex-col">
+                    <Surface as="section" className="fl-workspace fl-public-history">
                       <div className="mb-6 flex items-center justify-between shrink-0">
-                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Últimos Gastos</h2>
-                        <Receipt className="h-5 w-5 text-teal-500/50" />
+                        <h2 className="fl-section-title">Últimos gastos</h2>
+                        <Receipt className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                      <div tabIndex={0} role="region" aria-label="Historial de gastos" className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                         {expenses.length > 0 ? (
                           expenses.map((expense) => (
-                            <article key={expense.id} className="flex items-center justify-between rounded-xl bg-slate-900/50 p-4 border border-white/5">
+                            <article key={expense.id} className="fl-public-record">
                               <div>
-                                <p className="text-sm font-semibold text-white">{formatExpenseType(expense.type)}</p>
-                                <p className="text-xs text-slate-400 mt-1">{expense.date}</p>
+                                <p className="text-sm font-semibold text-foreground">{formatExpenseType(expense.type)}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{expense.date}</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-sm font-bold text-rose-400">{expense.cost} €</p>
+                                <p className="text-sm font-semibold text-foreground">{expense.cost} €</p>
                               </div>
                             </article>
                           ))
                         ) : (
                           <div className="flex h-full flex-col items-center justify-center text-center">
-                            <p className="text-sm text-slate-500">No hay gastos registrados aún.</p>
+                            <p role={extraLoading ? "status" : undefined} className="text-sm text-muted-foreground">{extraLoading ? "Cargando gastos..." : "No hay gastos disponibles para mostrar."}</p>
                           </div>
                         )}
                       </div>
-                    </section>
+                    </Surface>
                   )}
                 </div>
 
                 {vehicle.showStatistics && stats && (
-                  <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                  <Surface as="section" className="fl-surface fl-workspace">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Estadísticas verificadas</h2>
-                      <BarChart3 className="h-5 w-5 text-teal-500/50" />
+                      <h2 className="fl-section-title">Estadísticas verificadas</h2>
+                      <BarChart3 className="h-5 w-5 text-primary" />
                     </div>
                     <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-5">
-                        <p className="text-xs text-slate-500">Consumo medio</p>
-                        <p className="mt-2 text-xl font-semibold text-white">
+                      <div className="fl-public-stat">
+                        <p className="text-xs text-muted-foreground">Consumo medio</p>
+                        <p className="mt-2 text-xl font-semibold text-foreground">
                           {stats.averageConsumption != null
                             ? `${Number(stats.averageConsumption).toFixed(2)} ${getConsumptionUnit(vehicle.vehicleType, vehicle.vehicleEnergyType)}`
                             : "Sin ciclos completos"}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-5">
-                        <p className="text-xs text-slate-500">Ciclos verificados</p>
-                        <p className="mt-2 text-xl font-semibold text-white">{stats.verifiedCycles || 0}</p>
+                      <div className="fl-public-stat">
+                        <p className="text-xs text-muted-foreground">Ciclos verificados</p>
+                        <p className="mt-2 text-xl font-semibold text-foreground">{stats.verifiedCycles || 0}</p>
                       </div>
-                      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-5">
-                        <p className="text-xs text-slate-500">Distancia verificada</p>
-                        <p className="mt-2 text-xl font-semibold text-white">
+                      <div className="fl-public-stat">
+                        <p className="text-xs text-muted-foreground">Distancia verificada</p>
+                        <p className="mt-2 text-xl font-semibold text-foreground">
                           {Number(stats.verifiedDistance || 0).toLocaleString("es-ES")} {getOdometerUnit(vehicle.vehicleType)}
                         </p>
                       </div>
                     </div>
-                  </section>
+                  </Surface>
+                )}
+                {vehicle.showStatistics && !stats && (
+                  <Surface as="section" className="fl-workspace" aria-label="Estadísticas verificadas">
+                    <h2 className="fl-section-title">Estadísticas verificadas</h2>
+                    <p role={extraLoading ? "status" : undefined} className="fl-supporting mt-3">{extraLoading ? "Cargando estadísticas..." : "No hay estadísticas disponibles para mostrar."}</p>
+                  </Surface>
                 )}
 
               </div>
