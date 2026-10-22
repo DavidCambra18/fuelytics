@@ -2,7 +2,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/field";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { useAuth } from "../context/auth";
 import { apiJson } from "../services/api";
 import GoogleIdentityButton from "./GoogleIdentityButton";
@@ -108,9 +108,9 @@ export default function DeleteAccountSection({ googleOnly = false, googleEnabled
           </label>
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button type="button" onClick={cancel} disabled={deleting} variant="outline" className="h-auto min-h-11 whitespace-normal py-2.5">Cancelar</Button>
-            {!googleOnly ? <Button type="submit" disabled={deleting || !acknowledged || !password.trim()} variant="destructive" className="h-auto min-h-11 whitespace-normal py-2.5">
-              {deleting ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Trash2 aria-hidden="true" className="h-4 w-4" />}
-              {deleting ? "Eliminando cuenta…" : "Eliminar cuenta definitivamente"}
+            {!googleOnly ? <Button type="submit" pending={deleting} pendingLabel="Eliminando cuenta…" disabled={deleting || !acknowledged || !password.trim()} variant="destructive" className="h-auto min-h-11 whitespace-normal py-2.5">
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+              Eliminar cuenta definitivamente
             </Button> : null}
           </div>
           {googleOnly && !googleEnabled ? <p role="alert" className="text-sm text-rose-300">Google no está disponible en este entorno. No se puede confirmar la eliminación.</p> : null}

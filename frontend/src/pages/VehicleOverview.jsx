@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { Link, useOutletContext, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -7,6 +8,7 @@ import { useState } from "react";
 import { formatGearboxType, formatVehicleEnergyType, getConsumptionUnit, getOdometerLabel, getOdometerUnit } from "../utils/vehicleLabels";
 
 export default function VehicleOverview() {
+  const { guard, isActive } = useActionGuard();
   const { selectedVehicle } = useOutletContext();
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
@@ -34,7 +36,7 @@ export default function VehicleOverview() {
             <Button asChild variant="outline" className="flex-1 sm:flex-none focus-visible:transition-none"><Link to={`/vehicles/${selectedVehicle.id}/edit`}><Pencil aria-hidden="true" />Editar</Link></Button>
             <Button
               type="button"
-              onClick={async () => {
+              onClick={guard(async () => {
                 const confirmed = window.confirm("¿Seguro que quieres eliminar este coche? Esta acción no se puede deshacer.");
 
                 if (!confirmed) return;
@@ -52,17 +54,19 @@ export default function VehicleOverview() {
                     throw new Error(err.message || "Error eliminando el vehículo");
                   }
 
+                  if (!isActive()) return;
                   navigate("/dashboard");
                 } catch (e) {
+                  if (!isActive()) return;
                   setError(e.message || "Error eliminando el vehículo");
                 } finally {
                   setDeleting(false);
                 }
-              }}
-              disabled={deleting}
+              })}
+              pending={deleting} pendingLabel="Eliminando..." disabled={deleting}
               variant="destructive" className="flex-1 sm:flex-none focus-visible:transition-none"
             >
-              <Trash2 aria-hidden="true" />{deleting ? "Eliminando..." : "Borrar"}
+              <Trash2 aria-hidden="true" />Borrar
             </Button>
           </div>
         </div>

@@ -45,6 +45,9 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  pending = false,
+  pendingLabel,
+  children,
   ...props
 }) {
   const Comp = asChild ? Slot.Root : "button"
@@ -55,7 +58,14 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props} />
+      {...props}
+      disabled={props.disabled || pending}
+      aria-busy={pending || props["aria-busy"] || undefined}>
+      {!asChild && pendingLabel ? <span className="fl-pending-label">
+        <span aria-hidden={pending} data-visible={!pending}>{children}</span>
+        <span aria-hidden={!pending} data-visible={pending}>{pendingLabel}</span>
+      </span> : children}
+    </Comp>
   );
 }
 

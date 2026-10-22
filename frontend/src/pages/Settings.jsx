@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
@@ -8,6 +9,8 @@ import { Input } from "../components/ui/field";
 import AccountAccessSection from "../components/AccountAccessSection";
 import { validateUsername } from "../utils/registrationValidation";
 import ViewportPortal from "../components/ViewportPortal";
+import { AnimatePresence } from "motion/react";
+import NoticeFrame from "../components/NoticeFrame";
 import { 
   ArrowLeft, 
   ChevronDown, 
@@ -60,6 +63,7 @@ function Toggle({ checked, disabled, onChange, label, hint }) {
 }
 
 export default function Settings() {
+  const { guard, isActive } = useActionGuard();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { token, username, setAuth } = useAuth();
@@ -234,7 +238,7 @@ export default function Settings() {
     }));
   };
 
-  const saveProfile = async (event) => {
+  const saveProfile = (event) => guard(async (event) => {
     event.preventDefault();
     const nextUsername = profileForm.username.trim();
     const validationError = nextUsername !== username ? validateUsername(nextUsername) : "";
@@ -272,6 +276,7 @@ export default function Settings() {
       }
 
       const savedProfile = await response.json();
+      if (!isActive()) return;
 
       setProfileForm({
         username: savedProfile.username || "",
@@ -281,12 +286,13 @@ export default function Settings() {
       setAuth({ token: token || "", username: savedProfile.username || "" });
       pushToast("Perfil actualizado correctamente");
     } catch (saveError) {
+      if (!isActive()) return;
       setError(saveError.message || "No se pudo guardar el perfil");
       pushToast(saveError.message || "No se pudo guardar el perfil", "error");
     } finally {
       setSavingProfile(false);
     }
-  };
+  })(event);
 
   const handleVehicleChange = (vehicleId, field, checked) => {
     setVehicles((current) =>
@@ -321,9 +327,10 @@ export default function Settings() {
     setExpandedVehicleId((current) => (current === vehicleId ? null : vehicleId));
   };
 
-  const savePrivacy = async () => {
+  const savePrivacy = () => guard(async () => {
     setSavingPrivacy(true);
     setError("");
+    let vehicleUpdates = [];
 
     try {
       const accountResponse = await apiFetch("/api/users/privacy", {
@@ -336,7 +343,7 @@ export default function Settings() {
         throw new Error(errorData.message || "No se pudo guardar la privacidad de la cuenta");
       }
 
-      const vehicleUpdates = vehicles.map((vehicle) => {
+      vehicleUpdates = vehicles.map((vehicle) => {
         const isPublic = Boolean(vehicle.isPublic);
         const payload = {
           isPublic,
@@ -358,6 +365,7 @@ export default function Settings() {
       });
 
       const updatedVehicles = await Promise.all(vehicleUpdates);
+      if (!isActive()) return;
 
       setVehicles(
         updatedVehicles.map((vehicle) => ({
@@ -374,12 +382,15 @@ export default function Settings() {
 
       pushToast("Privacidad actualizada correctamente");
     } catch (saveError) {
+      if (!isActive()) return;
       setError(saveError.message || "No se pudo guardar la privacidad");
       pushToast(saveError.message || "No se pudo guardar la privacidad", "error");
     } finally {
+      // Report the first error immediately, but keep the operation locked until every write settles.
+      await Promise.allSettled(vehicleUpdates);
       setSavingPrivacy(false);
     }
-  };
+  })();
 
   if (loading) {
     return (
@@ -453,7 +464,7 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <form onSubmit={saveProfile} className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <form aria-busy={savingProfile} onSubmit={saveProfile} className="mt-6 grid gap-4 sm:grid-cols-2">
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium text-slate-300">Nombre</span>
                         <Input
@@ -499,10 +510,10 @@ export default function Settings() {
 
                       <div className="sm:col-span-2 flex gap-3 pt-2">
                         <Button
-                          disabled={savingProfile || !!usernameError || usernameStatus === "checking"} type="submit"
+                          pending={savingProfile} pendingLabel="Guardando..." disabled={savingProfile || savingPrivacy || !!usernameError || usernameStatus === "checking"} type="submit"
                         >
                           <Save className="h-4 w-4" />
-                          {savingProfile ? "Guardando..." : "Guardar perfil"}
+                          Guardar perfil
                         </Button>
                       </div>
                     </form>
@@ -520,10 +531,10 @@ export default function Settings() {
                         <Button
                           type="button"
                           onClick={savePrivacy}
-                          disabled={savingPrivacy}
+                          pending={savingPrivacy} pendingLabel="Guardando..." disabled={savingPrivacy || savingProfile}
                         >
                           <Save className="h-4 w-4" />
-                          {savingPrivacy ? "Guardando..." : "Guardar privacidad"}
+                          Guardar privacidad
                         </Button>
                       </div>
                     </div>
@@ -662,8 +673,8 @@ export default function Settings() {
 
       <ViewportPortal>
       <div className="pointer-events-none fixed inset-x-4 top-4 z-50 space-y-3 sm:left-auto sm:right-6 sm:top-6">
-        {toasts.map((toast) => (
-          <div
+        <AnimatePresence initial={false} mode="popLayout">{toasts.map((toast) => (
+          <NoticeFrame tone={toast.tone}
             key={toast.id}
             role="status"
             className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-xl sm:min-w-[280px] sm:w-auto ${
@@ -678,8 +689,8 @@ export default function Settings() {
               <CheckCircle2 className="h-5 w-5 text-teal-400 shrink-0" />
             )}
             <p className="text-sm font-medium">{toast.message}</p>
-          </div>
-        ))}
+          </NoticeFrame>
+        ))}</AnimatePresence>
       </div>
       </ViewportPortal>
     </div>

@@ -235,11 +235,11 @@ export default function FriendsPanel({ onNotify }) {
         <Button
           type="button"
           onClick={refreshRelationships}
-          disabled={Boolean(activeAction) || searching}
+          pending={activeAction === "refresh"} pendingLabel="Actualizando…" disabled={Boolean(activeAction) || searching}
           variant="outline" className="fl-friend-action"
         >
-          <RefreshCw aria-hidden="true" className={`h-4 w-4 ${activeAction === "refresh" ? "animate-spin" : ""}`} />
-          {activeAction === "refresh" ? "Actualizando…" : "Actualizar amistades"}
+          <RefreshCw aria-hidden="true" className="h-4 w-4" />
+          Actualizar amistades
         </Button>
       </div>
 

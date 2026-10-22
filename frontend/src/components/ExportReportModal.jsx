@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { useState } from "react";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import { X } from "lucide-react";
@@ -28,13 +29,14 @@ function ExportReportDialog({
   defaultEndDate = "",
   onClose,
 }) {
+  const { guard, isActive } = useActionGuard();
   const [startDate, setStartDate] = useState(defaultStartDate);
   const [endDate, setEndDate] = useState(defaultEndDate);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { dialogRef, titleId, close: closeDialog } = useDialogAccessibility(true, onClose);
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = guard(async (event) => {
     event.preventDefault();
     setError("");
 
@@ -51,8 +53,10 @@ function ExportReportDialog({
     setLoading(true);
     try {
       await exportReportFile({ reportType, vehicle, startDate, endDate, format: "pdf" });
+      if (!isActive()) return;
       onClose();
     } catch (exportError) {
+      if (!isActive()) return;
       const errorMessage = exportError.message || "";
       setError(
         errorMessage.includes("404") || errorMessage.toLowerCase().includes("no data")
@@ -62,7 +66,7 @@ function ExportReportDialog({
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   const ExportInput = appearance === "atlantic" ? Input : "input";
   const ExportButton = appearance === "atlantic" ? Button : "button";
@@ -109,10 +113,10 @@ function ExportReportDialog({
             </ExportButton>
             <ExportButton
               type="submit"
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
               className={appearance === "atlantic" ? "flex-1" : "flex-1 rounded-full bg-teal-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"}
             >
-              {loading ? "Generando..." : "Descargar"}
+              <span className="fl-pending-label"><span aria-hidden={loading} data-visible={!loading}>Descargar</span><span aria-hidden={!loading} data-visible={loading}>Generando...</span></span>
             </ExportButton>
           </div>
         </form>

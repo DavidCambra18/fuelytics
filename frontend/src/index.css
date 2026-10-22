@@ -76,6 +76,9 @@
   --motion-step: 160ms;
   --motion-sheet: 240ms;
   --motion-sheet-exit: 160ms;
+  --motion-step-enter: 140ms;
+  --motion-step-exit: 80ms;
+  --motion-notice-enter: 180ms;
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-page: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-step: ease-out;
@@ -1073,3 +1076,10 @@ body {
 .app-profile-popover { transform-origin: bottom left; }
 .app-mobile-sheet { transform-origin: bottom center; }
 .fl-dialog { transform-origin: center; }
+
+.fl-pending-label { display: grid; align-items: center; justify-items: center; }
+.fl-pending-label > span { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: opacity var(--motion-feedback) var(--ease-out); }
+.fl-pending-label > [data-visible="false"] { opacity: 0; pointer-events: none; }
+.fl-button:focus-visible .fl-pending-label > span { transition: none; }
+.fl-dialog { scrollbar-gutter: stable; }
+@media (prefers-reduced-motion: reduce) { .fl-pending-label > span { transition: none; } }

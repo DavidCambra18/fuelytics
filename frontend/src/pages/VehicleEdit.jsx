@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { useState } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { apiFetch } from "../services/api";
@@ -14,6 +15,7 @@ import { Input } from "../components/ui/field";
 import CustomSelect from "../components/CustomSelect";
 
 export default function VehicleEdit() {
+  const { guard, isActive } = useActionGuard();
   const navigate = useNavigate();
   const { selectedVehicle, updateVehicle } = useOutletContext();
   const [form, setForm] = useState({
@@ -40,7 +42,7 @@ export default function VehicleEdit() {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = guard(async (event) => {
     event.preventDefault();
     setErrorMessage("");
 
@@ -86,21 +88,24 @@ export default function VehicleEdit() {
         throw new Error(payload.message || "No se pudo actualizar el coche");
       }
 
-      updateVehicle(await response.json());
+      const savedVehicle = await response.json();
+      if (!isActive()) return;
+      updateVehicle(savedVehicle);
       navigate(`/vehicles/${selectedVehicle.id}`);
     } catch (submitError) {
+      if (!isActive()) return;
       setErrorMessage(submitError.message || "No se pudo actualizar el coche");
     } finally {
       setSubmitting(false);
     }
-  };
+  });
 
   if (!selectedVehicle) return <Surface className="fl-workspace"><h2 className="fl-section-title">No hay vehículo seleccionado</h2><Button asChild variant="outline" className="mt-4"><Link to="/dashboard">Volver al selector</Link></Button></Surface>;
   return (
     <Surface as="section" className="fl-workspace fl-vehicle-editor">
       <header className="mb-7"><p className="fl-eyebrow">Editar vehículo</p><h2 className="fl-section-title mt-2">Cada detalle, en su sitio</h2><p className="fl-supporting mt-2">Actualiza los datos del vehículo. Los campos con * son obligatorios.</p></header>
       {errorMessage && <div role="alert" className="fl-feedback-error">{errorMessage}</div>}
-      <form onSubmit={handleSubmit} className="space-y-7">
+      <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-7">
         <fieldset className="fl-vehicle-fieldset">
           <legend>Identificación</legend>
           <p className="fl-supporting mb-5">Los datos que distinguen tu vehículo.</p>
@@ -278,7 +283,7 @@ export default function VehicleEdit() {
             </div>
           </div>
         </fieldset>
-        <div className="fl-form-actions"><Button type="submit" disabled={submitting}>{submitting ? "Guardando..." : "Guardar cambios"}</Button><Button asChild variant="outline"><Link to={`/vehicles/${selectedVehicle.id}`}>Cancelar</Link></Button></div>
+        <div className="fl-form-actions"><Button type="submit" pending={submitting} pendingLabel="Guardando...">Guardar cambios</Button><Button asChild variant="outline"><Link to={`/vehicles/${selectedVehicle.id}`}>Cancelar</Link></Button></div>
       </form>
     </Surface>
   );

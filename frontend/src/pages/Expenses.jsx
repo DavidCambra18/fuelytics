@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { loadRequest } from "../utils/loadRequest";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
@@ -117,6 +118,7 @@ function getMonthSpan(expensesList) {
 }
 
 export default function Expenses() {
+  const { guard, isActive } = useActionGuard();
   const { selectedVehicle } = useOutletContext();
   const [expenses, setExpenses] = useState([]);
   const [availableTires, setAvailableTires] = useState([]);
@@ -217,7 +219,7 @@ export default function Expenses() {
     setFormData((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = guard(async (e) => {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
@@ -249,6 +251,7 @@ export default function Expenses() {
       }
 
       const savedExpense = await response.json();
+      if (!isActive()) return;
       setExpenses((current) =>
         editingExpense
           ? current.map((item) => (item.id === savedExpense.id ? savedExpense : item))
@@ -256,13 +259,14 @@ export default function Expenses() {
       );
       closeForm();
     } catch (submitError) {
+      if (!isActive()) return;
       setFormError({ message: submitError.message || "Error guardando gasto", fields: submitError.fields || {} });
     } finally {
       setSubmitting(false);
     }
-  };
+  });
 
-  const handleDelete = async (expense) => {
+  const handleDelete = guard(async (expense) => {
     const confirmed = window.confirm("¿Seguro que quieres borrar este gasto?");
     if (!confirmed) return;
     setDeletingId(expense.id);
@@ -273,13 +277,15 @@ export default function Expenses() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Error al borrar el gasto");
       }
+      if (!isActive()) return;
       setExpenses((current) => current.filter((item) => item.id !== expense.id));
     } catch (deleteError) {
+      if (!isActive()) return;
       setError(deleteError.message || "Error borrando gasto");
     } finally {
       setDeletingId(null);
     }
-  };
+  });
 
   const totalCost = expenses.reduce((acc, expense) => acc + Number(expense.cost || 0), 0);
   const monthSpan = getMonthSpan(expenses);
@@ -303,7 +309,7 @@ export default function Expenses() {
             <p className="fl-expense-intro">Historial de mantenimiento, seguros y otros gastos asociados a tu vehículo.</p>
           </div>
           <div className="fl-expense-actions">
-            <Button type="button" onClick={openCreateForm}><Plus aria-hidden="true" />Nuevo gasto</Button>
+            <Button type="button" disabled={submitting || !!deletingId} onClick={openCreateForm}><Plus aria-hidden="true" />Nuevo gasto</Button>
             <Button type="button" variant="outline" size="icon" onClick={() => setExportTarget({ reportType: "expenses", vehicle: selectedVehicle })} aria-label="Exportar gastos" title="Exportar gastos">
               <Download aria-hidden="true" />
             </Button>
@@ -351,12 +357,12 @@ export default function Expenses() {
                       <td className="fl-ledger-amount">{formatMoney(cost)} €</td>
                       <td>
                         <div className="fl-ledger-actions">
-                          <Button type="button" variant="outline" className="border-[var(--border-subtle)] bg-white/[0.025] px-3 hover:bg-white/[0.06] focus-visible:transition-none" onClick={() => openEditForm(expense)} aria-label={`Editar gasto del ${formatDateEs(expense.date)}`}>
+                          <Button type="button" variant="outline" className="border-[var(--border-subtle)] bg-white/[0.025] px-3 hover:bg-white/[0.06] focus-visible:transition-none" disabled={submitting || !!deletingId} onClick={() => openEditForm(expense)} aria-label={`Editar gasto del ${formatDateEs(expense.date)}`}>
                             <Pencil aria-hidden="true" />Editar
                           </Button>
-                          <Button type="button" variant="ghost" className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:transition-none" onClick={() => handleDelete(expense)} disabled={deletingId === expense.id} aria-busy={deletingId === expense.id} aria-label={`Borrar gasto del ${formatDateEs(expense.date)}`}>
+                          <Button type="button" variant="ghost" className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:transition-none" onClick={() => handleDelete(expense)} pending={deletingId === expense.id} pendingLabel="Borrando..." disabled={!!deletingId || submitting} aria-busy={deletingId === expense.id} aria-label={`Borrar gasto del ${formatDateEs(expense.date)}`}>
                             <Trash2 aria-hidden="true" />
-                            {deletingId === expense.id ? "Borrando..." : "Borrar"}
+                            Borrar
                           </Button>
                         </div>
                       </td>
@@ -438,8 +444,8 @@ export default function Expenses() {
             )}
             <div className="fl-dialog-footer">
               <Button type="button" variant="outline" onClick={closeFormDialog}>Cancelar</Button>
-              <Button type="submit" disabled={submitting} aria-busy={submitting}>
-                {submitting ? "Guardando..." : editingExpense ? "Guardar cambios" : "Guardar gasto"}
+              <Button type="submit" pending={submitting} pendingLabel="Guardando..." disabled={submitting} aria-busy={submitting}>
+                {editingExpense ? "Guardar cambios" : "Guardar gasto"}
               </Button>
             </div>
           </form>

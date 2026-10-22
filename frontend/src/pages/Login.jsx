@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/auth";
@@ -8,6 +9,7 @@ import { Input } from "../components/ui/field";
 import { Button } from "../components/ui/button";
 
 export default function Login() {
+  const { guard, isActive } = useActionGuard();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -18,7 +20,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogin = async (e) => {
+  const handleLogin = guard(async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSubmitting(true);
@@ -29,6 +31,7 @@ export default function Login() {
         body: { email, password },
       });
 
+      if (!isActive()) return;
       if (!data.token) {
         throw new Error("El servidor no devolvió una sesión válida");
       }
@@ -42,11 +45,12 @@ export default function Login() {
       navigate("/dashboard");
 
     } catch (err) {
+      if (!isActive()) return;
       setErrorMessage(err.message);
     } finally {
       setSubmitting(false);
     }
-  };
+  });
 
   return (
     <AuthLayout title="Iniciar sesión" description="Elige cómo quieres acceder a tu cuenta de Fuelytics." introduction="Accede a tu cuenta y continúa con la gestión de tus vehículos." details="Todo el contenido importante queda organizado en una experiencia limpia y directa." benefits>
@@ -80,8 +84,8 @@ export default function Login() {
             </label>
           </div>
 
-          <Button disabled={submitting} className="mx-auto mt-6 flex w-full max-w-[400px]" type="submit">
-            {submitting ? "Entrando…" : "Entrar en el panel"}
+          <Button pending={submitting} pendingLabel="Entrando…" disabled={submitting} className="mx-auto mt-6 flex w-full max-w-[400px]" type="submit">
+            Entrar en el panel
           </Button>
 
           </form>

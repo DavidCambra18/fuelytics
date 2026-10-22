@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
@@ -28,6 +29,7 @@ const initialForm = {
 };
 
 export default function VehicleCreate() {
+  const { guard, isActive } = useActionGuard();
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -41,7 +43,7 @@ export default function VehicleCreate() {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = guard(async (event) => {
     event.preventDefault();
     setErrorMessage("");
 
@@ -88,20 +90,22 @@ export default function VehicleCreate() {
       }
 
       const createdVehicle = await response.json();
+      if (!isActive()) return;
       navigate(`/vehicles/${createdVehicle.id}`);
     } catch (submitError) {
+      if (!isActive()) return;
       setErrorMessage(submitError.message || "No se pudo crear el coche");
     } finally {
       setSubmitting(false);
     }
-  };
+  });
 
   return (
     <main className="section-shell pb-10">
       <Surface as="section" className="fl-workspace fl-vehicle-editor">
         <header className="fl-workspace-heading"><div><p className="fl-eyebrow">Alta de vehículo</p><h1 className="fl-page-title mt-2">Un nuevo espacio en tu garaje</h1><p className="fl-supporting mt-3">Completa los datos principales. Los campos con * son obligatorios.</p></div><Button asChild variant="outline"><Link to="/dashboard">Volver al selector</Link></Button></header>
         {errorMessage && <div role="alert" className="fl-feedback-error">{errorMessage}</div>}
-        <form onSubmit={handleSubmit} className="space-y-7">
+        <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-7">
         <fieldset className="fl-vehicle-fieldset">
           <legend>Identificación</legend>
           <p className="fl-supporting mb-5">Los datos que distinguen tu vehículo.</p>
@@ -286,7 +290,7 @@ export default function VehicleCreate() {
             </div>
           </div>
         </fieldset>
-          <div className="fl-form-actions"><Button type="submit" disabled={submitting}>{submitting ? "Creando coche..." : "Crear coche"}</Button><Button asChild variant="outline"><Link to="/dashboard">Cancelar</Link></Button></div>
+          <div className="fl-form-actions"><Button type="submit" pending={submitting} pendingLabel="Creando coche...">Crear coche</Button><Button asChild variant="outline"><Link to="/dashboard">Cancelar</Link></Button></div>
         </form>
         <aside className="fl-vehicle-form-note"><h2 className="font-medium">Tu vehículo, conectado con el resto</h2><ul className="fl-supporting mt-2 list-disc pl-5 space-y-1"><li>Registrar repostajes y ver evolución de consumo.</li><li>Centralizar gastos y mantenimiento.</li><li>Consultar estadísticas y tendencias del coche.</li></ul><p className="fl-supporting mt-3">Puedes volver al selector o cerrar sesión desde tu cuenta cuando quieras.</p></aside>
       </Surface>

@@ -1,6 +1,8 @@
+import useActionGuard from "../hooks/useActionGuard";
 import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
-import { MOTION, motionSeconds } from "../utils/motion";
-import { useRef, useState } from "react";
+import { registrationStepMotion } from "../utils/feedbackMotion";
+import { isKeyboardNavigation } from "../utils/navigation";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Loader2, Check, X, Info } from "lucide-react";
@@ -97,10 +99,14 @@ function FieldRequirements({ label, requirements, password }) {
 }
 
 export default function Register() {
+  const { isActive } = useActionGuard();
   const [values, setValues] = useState({ email: "", password: "", confirmPassword: "", firstName: "", lastName: "", username: "" });
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [transitioning, setTransitioning] = useState(false);
+  const [instantStep, setInstantStep] = useState(false);
+  const stepLock = useRef(false);
+  const activeStep = useRef(0);
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -112,6 +118,18 @@ export default function Register() {
   const inFlight = useRef(false);
   const reducedMotion = usePrefersReducedMotion();
   const navigate = useNavigate();
+
+  useLayoutEffect(() => {
+    let active = true;
+    if (reducedMotion && transitioning) {
+      // Finish a preference change in this commit, without a timer or minimum loading time.
+      queueMicrotask(() => { if (active) { stepLock.current = false; setTransitioning(false); } });
+    } else if (!transitioning && focusAfterTransition.current) {
+      focusAfterTransition.current = false;
+      panelRef.current?.querySelector("input")?.focus({ preventScroll: true });
+    }
+    return () => { active = false; };
+  }, [step, instantStep, reducedMotion, transitioning]);
 
   const body = normalizeRegistration(values);
   const validation = validateRegistration(body, values.confirmPassword);
@@ -126,9 +144,13 @@ export default function Register() {
   const disabled = submitting || transitioning || checking || currentErrors || (step === 0 && emailAvailability.status !== "success");
 
   const changeStep = (next) => {
-    if (inFlight.current || transitioning) return;
+    if (inFlight.current || stepLock.current) return;
+    const immediate = reducedMotion || isKeyboardNavigation();
+    activeStep.current = next;
+    stepLock.current = !immediate;
+    setInstantStep(immediate);
     setDirection(next > step ? 1 : -1);
-    setTransitioning(true);
+    setTransitioning(!immediate);
     focusAfterTransition.current = true;
     setAttempted(false);
     setErrorMessage("");
@@ -143,7 +165,7 @@ export default function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (inFlight.current || transitioning) return;
+    if (inFlight.current || stepLock.current) return;
     setAttempted(true);
     if (STEPS[step].fields.some((field) => validation[field] || serverErrors[field] || availability[field]?.error) || checking) return;
     if (step === 0 && emailAvailability.status !== "success") return;
@@ -163,8 +185,10 @@ export default function Register() {
     setErrorMessage("");
     try {
       await apiJson("/api/users/register", { method: "POST", body });
+      if (!isActive()) return;
       navigate("/login");
     } catch (error) {
+      if (!isActive()) return;
       const fields = { ...error.fields };
       // Registration is authoritative if a value was taken after its availability check.
       if (error.status === 409 && !Object.keys(fields).length) {
@@ -214,6 +238,15 @@ export default function Register() {
     );
   };
 
+  const panelContent = (<>
+    <h3 className="text-lg font-semibold text-white">{STEPS[step].title}</h3>
+    <p className="mb-6 mt-2 text-sm leading-6 text-slate-400">{STEPS[step].description}</p>
+    <fieldset disabled={submitting || transitioning} className="space-y-4">
+      <legend className="sr-only">{STEPS[step].label}</legend>
+      {STEPS[step].fields.map(renderField)}
+    </fieldset>
+  </>);
+
   return (
     <AuthLayout title="Crea tu cuenta" introduction="Crear cuenta" details="Tu garaje, repostajes y gastos, en un solo lugar. Crea tu cuenta en tres sencillos pasos.">
           <form onSubmit={handleSubmit} noValidate hidden={googleRegistration} aria-busy={submitting || transitioning} className="mt-6">
@@ -227,32 +260,23 @@ export default function Register() {
             </ol>
             {errorMessage ? <p role="alert" className="mb-5 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{errorMessage}</p> : null}
             <div className="fl-registration-viewport" inert={transitioning}>
-              <AnimatePresence initial={false} mode="wait" custom={direction}>
+              {instantStep || reducedMotion ? <div ref={panelRef} className="p-1">{panelContent}</div> : <AnimatePresence initial={false} mode="wait" custom={direction}>
                 <motion.div key={step} ref={panelRef} custom={direction}
-                  variants={{ enter: (sign) => ({ opacity: reducedMotion ? 1 : 0, x: reducedMotion ? 0 : sign * 16 }), visible: { opacity: 1, x: 0 }, exit: (sign) => ({ opacity: reducedMotion ? 1 : 0, x: reducedMotion ? 0 : sign * -12 }) }}
-                  initial="enter" animate="visible" exit="exit" transition={{ duration: motionSeconds(MOTION.duration.step, reducedMotion), ease: MOTION.easing.step }}
+                  variants={registrationStepMotion()}
+                  initial="enter" animate="visible" exit="exit"
                   onAnimationComplete={(definition) => {
-                    if (definition !== "visible") return;
+                    if (definition !== "visible" || activeStep.current !== step) return;
+                    stepLock.current = false;
                     setTransitioning(false);
-                    if (focusAfterTransition.current) {
-                      focusAfterTransition.current = false;
-                      window.requestAnimationFrame(() => panelRef.current?.querySelector("input")?.focus({ preventScroll: true }));
-                    }
                   }} className="p-1">
-                  <h3 className="text-lg font-semibold text-white">{STEPS[step].title}</h3>
-                  <p className="mb-6 mt-2 text-sm leading-6 text-slate-400">{STEPS[step].description}</p>
-                  <fieldset disabled={submitting || transitioning} className="space-y-4">
-                    <legend className="sr-only">{STEPS[step].label}</legend>
-                    {STEPS[step].fields.map(renderField)}
-                  </fieldset>
+                  {panelContent}
                 </motion.div>
-              </AnimatePresence>
+              </AnimatePresence>}
             </div>
             <div className="mt-6 flex flex-col-reverse items-center gap-3 sm:flex-row">
               {step > 0 ? <Button type="button" variant="ghost" disabled={submitting || transitioning} onClick={() => changeStep(step - 1)}><ArrowLeft className="h-4 w-4" aria-hidden="true" />Atrás</Button> : null}
-              <Button type="submit" disabled={disabled} className="mx-auto w-full max-w-[400px]">
-                {submitting || checking ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : null}
-                {submitting ? "Creando cuenta…" : checking ? "Comprobando…" : step === 2 ? "Crear cuenta" : "Continuar"}
+              <Button type="submit" pending={submitting || checking} pendingLabel={submitting ? "Creando cuenta…" : "Comprobando…"} disabled={disabled} className="mx-auto w-full max-w-[400px]">
+                {step === 2 ? "Crear cuenta" : "Continuar"}
                 {!submitting && !checking && step < 2 ? <ArrowRight className="h-4 w-4" aria-hidden="true" /> : null}
               </Button>
             </div>

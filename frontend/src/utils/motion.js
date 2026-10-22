@@ -6,6 +6,7 @@ export const MOTION = Object.freeze({
   duration: Object.freeze({
     fast: 140, navigation: 150, feedback: 100, enter: 200, exit: 120,
     page: 240, step: 160, sheet: 240, sheetExit: 160,
+    stepEnter: 140, stepExit: 80, noticeEnter: 180,
   }),
   easing: Object.freeze({
     out: Object.freeze([0.23, 1, 0.32, 1]),

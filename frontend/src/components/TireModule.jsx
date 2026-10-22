@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { useCallback, useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Ban, Plus, Disc, AlertTriangle } from "lucide-react";
@@ -23,6 +24,7 @@ function createInitialFormData(odometer) {
 }
 
 export default function TiresModule() {
+    const { guard, isActive } = useActionGuard();
     const { selectedVehicle } = useOutletContext();
     const vehicleId = selectedVehicle?.id;
     const latestOdometer = selectedVehicle?.odometer;
@@ -40,13 +42,13 @@ export default function TiresModule() {
         setError("");
         try {
             const data = await apiJson(`/api/vehicles/${vehicleId}/tires`, { signal });
-            if (!signal?.aborted) setTires(data || []);
+            if (!signal?.aborted && isActive()) setTires(data || []);
         } catch (loadError) {
-            if (!signal?.aborted) setError(loadError.message || "Error cargando neumáticos");
+            if (!signal?.aborted && isActive()) setError(loadError.message || "Error cargando neumáticos");
         } finally {
-            if (!signal?.aborted) setLoading(false);
+            if (!signal?.aborted && isActive()) setLoading(false);
         }
-    }, [vehicleId]);
+    }, [vehicleId, isActive]);
 
     useEffect(() => {
         if (!vehicleId) return undefined;
@@ -58,7 +60,7 @@ export default function TiresModule() {
         };
     }, [loadTires, vehicleId]);
 
-    const handleCreate = async (e) => {
+    const handleCreate = guard(async (e) => {
         e.preventDefault();
         if (saving) return;
         const fullSize = `${formData.width}/${formData.profile} R${formData.rim}`;
@@ -79,17 +81,19 @@ export default function TiresModule() {
                 method: "POST",
                 body: dataToSend,
             });
+            if (!isActive()) return;
             setShowForm(false);
             setFormData(createInitialFormData(latestOdometer));
             await loadTires();
         } catch (createError) {
+            if (!isActive()) return;
             setError(createError.message || "No se pudo registrar el neumático");
         } finally {
             setSaving(false);
         }
-    };
+    });
 
-    const handleDeactivate = async (id) => {
+    const handleDeactivate = guard(async (id) => {
         if (saving) return;
         const odo = window.prompt("Introduce el odómetro de baja:");
         if (odo === null) return;
@@ -104,13 +108,15 @@ export default function TiresModule() {
         setError("");
         try {
             await apiJson(`/api/vehicles/${vehicleId}/tires/${id}/deactivate?odometer=${odometer}`, { method: "PUT" });
+            if (!isActive()) return;
             await loadTires();
         } catch (deactivateError) {
+            if (!isActive()) return;
             setError(deactivateError.message || "Error al dar de baja");
         } finally {
             setSaving(false);
         }
-    };
+    });
 
     if (loading) {
         return (
@@ -147,7 +153,7 @@ export default function TiresModule() {
                     <div className="flex items-center gap-2">
                         <Button
                             onClick={() => handleDeactivate(tire.id)}
-                            disabled={saving}
+                            disabled={saving} aria-busy={saving}
                             variant="destructive" size="icon" aria-label={`Dar de baja neumático ${title.toLowerCase()}`}
                             title="Dar de baja neumático"
                         >
@@ -185,6 +191,7 @@ export default function TiresModule() {
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
+                        disabled={saving}
                         onClick={() => {
                             setFormData(createInitialFormData(latestOdometer));
                             setShowForm((current) => !current);
@@ -198,7 +205,7 @@ export default function TiresModule() {
             </Surface>
 
             {showForm && (
-                <form onSubmit={handleCreate} id="tire-installation-form" className="fl-surface fl-workspace grid gap-5 md:grid-cols-2">
+                <form aria-busy={saving} onSubmit={handleCreate} id="tire-installation-form" className="fl-surface fl-workspace grid gap-5 md:grid-cols-2">
                     <div className="md:col-span-2"><h3 className="text-base font-semibold text-white">Montar nuevo neumático</h3></div>
 
                     <label className="block">
@@ -281,7 +288,7 @@ export default function TiresModule() {
                     </label>
 
                     <div className="grid gap-2 pt-2 sm:grid-cols-2 md:col-span-2 md:flex">
-                        <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>
+                        <Button type="submit" pending={saving} pendingLabel="Guardando...">Guardar</Button>
                         <Button type="button" onClick={() => setShowForm(false)} variant="outline">Cancelar</Button>
                     </div>
                 </form>

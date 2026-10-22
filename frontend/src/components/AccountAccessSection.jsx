@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { Button } from "./ui/button";
 import { Input } from "./ui/field";
 import { useEffect, useRef, useState } from "react";
@@ -5,8 +6,11 @@ import { Check, KeyRound, Link2, ShieldCheck } from "lucide-react";
 import { apiJson } from "../services/api";
 import GoogleIdentityButton from "./GoogleIdentityButton";
 import DeleteAccountSection from "./DeleteAccountSection";
+import { AnimatePresence } from "motion/react";
+import NoticeFrame from "./NoticeFrame";
 
 export default function AccountAccessSection() {
+  const { guard, isActive } = useActionGuard();
   const [status, setStatus] = useState(null);
   const [password, setPassword] = useState("");
   const [confirmingLink, setConfirmingLink] = useState(false);
@@ -25,19 +29,20 @@ export default function AccountAccessSection() {
     return () => controller.abort();
   }, [attempt]);
 
-  const linked = async (proof) => {
+  const linked = guard(async (proof) => {
     setBusy(true);
     try {
       await apiJson("/api/auth/google/link", { method: "POST", body: { ...proof, password } });
+      if (!isActive()) return;
       setStatus((current) => ({ ...current, linked: true }));
       setConfirmingLink(false);
       setManaging(false);
       setPassword("");
       setNotice("Google está vinculado. Ya puedes utilizarlo para iniciar sesión.");
     } finally { setBusy(false); }
-  };
+  });
 
-  const unlink = async (event) => {
+  const unlink = guard(async (event) => {
     event.preventDefault();
     if (busy || !password.trim()) return;
     setBusy(true);
@@ -45,13 +50,17 @@ export default function AccountAccessSection() {
     setNotice("");
     try {
       await apiJson("/api/auth/google/link", { method: "DELETE", body: { password } });
+      if (!isActive()) return;
       setStatus((current) => ({ ...current, linked: false }));
       setManaging(false);
       setPassword("");
       setNotice("Google se ha desvinculado. Puedes seguir entrando con tu correo y contraseña.");
-    } catch (error) { setError(error.message); }
+    } catch (error) {
+      if (!isActive()) return;
+      setError(error.message);
+    }
     finally { setBusy(false); }
-  };
+  });
 
   if (!status) return <section className="fl-settings-section fl-supporting">{error ? <><p role="alert">{error}</p><Button type="button" onClick={() => { setError(""); setAttempt((value) => value + 1); }} variant="outline" className="mt-3">Reintentar</Button></> : <p role="status">Cargando métodos de acceso…</p>}</section>;
 
@@ -97,14 +106,14 @@ export default function AccountAccessSection() {
           </div>
         </div>
         {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
-        {notice ? <p role="status" className="text-sm text-teal-300">{notice}</p> : null}
+        <AnimatePresence initial={false}>{notice ? <NoticeFrame key="account-notice" tone="success" role="status" className="text-sm text-teal-300">{notice}</NoticeFrame> : null}</AnimatePresence>
         {!status.enabled && !status.linked ? <p className="text-sm text-slate-400">El acceso con Google todavía no está configurado.</p> : null}
         {managing && status.hasPassword && (status.enabled || status.linked) ? (
           <form onSubmit={status.linked ? unlink : (event) => { event.preventDefault(); setConfirmingLink(true); setError(""); setNotice(""); }} className="space-y-3">
             <label className="block text-sm text-slate-300">Confirma tu contraseña de Fuelytics
               <Input type="password" autoComplete="current-password" autoFocus required maxLength={72} value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} disabled={busy || confirmingLink} className="mt-2" />
             </label>
-            {!confirmingLink ? <Button disabled={busy || !password.trim()} variant="outline" className="h-auto min-h-11 whitespace-normal py-2.5">{busy ? "Guardando…" : status.linked ? "Desvincular Google" : "Continuar para vincular Google"}</Button> : null}
+            {!confirmingLink ? <Button pending={busy} pendingLabel="Guardando…" disabled={busy || !password.trim()} variant="outline" className="h-auto min-h-11 whitespace-normal py-2.5">{status.linked ? "Desvincular Google" : "Continuar para vincular Google"}</Button> : null}
           </form>
         ) : null}
         {confirmingLink ? <GoogleIdentityButton purpose="LINK" onVerified={linked} /> : null}

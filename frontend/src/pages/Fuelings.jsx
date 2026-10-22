@@ -1,3 +1,4 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { loadRequest } from "../utils/loadRequest";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
@@ -109,6 +110,7 @@ function toNumber(value) {
 }
 
 export default function Fuelings() {
+  const { guard, isActive } = useActionGuard();
   const { selectedVehicle } = useOutletContext();
   const [fuelings, setFuelings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,7 +214,7 @@ export default function Fuelings() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = guard(async (e) => {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
@@ -257,6 +259,7 @@ export default function Fuelings() {
       }
 
       const savedFueling = await response.json();
+      if (!isActive()) return;
 
       setFuelings((currentFuelings) =>
         editingFueling
@@ -266,13 +269,14 @@ export default function Fuelings() {
 
       closeForm();
     } catch (submitError) {
+      if (!isActive()) return;
       setFormError({ message: submitError.message || "Error guardando repostaje", fields: submitError.fields || {} });
     } finally {
       setSubmitting(false);
     }
-  };
+  });
 
-  const handleDelete = async (fueling) => {
+  const handleDelete = guard(async (fueling) => {
     const confirmed = window.confirm("¿Seguro que quieres borrar este repostaje?");
 
     if (!confirmed) {
@@ -292,13 +296,15 @@ export default function Fuelings() {
         throw new Error(errorData.message || "Error al borrar el repostaje");
       }
 
+      if (!isActive()) return;
       setFuelings((currentFuelings) => currentFuelings.filter((item) => item.id !== fueling.id));
     } catch (deleteError) {
+      if (!isActive()) return;
       setError(deleteError.message || "Error borrando repostaje");
     } finally {
       setDeletingId(null);
     }
-  };
+  });
 
   const fuelingHelpItems = [
     {
@@ -367,7 +373,7 @@ export default function Fuelings() {
             <p className="fl-supporting mt-3">Historial detallado de repostajes con cálculo por ciclo lleno a lleno.</p>
           </div>
           <div className="fl-fueling-tools">
-            <Button type="button" onClick={openCreateForm}><Plus aria-hidden="true" />Nuevo repostaje</Button>
+            <Button type="button" disabled={submitting || !!deletingId} onClick={openCreateForm}><Plus aria-hidden="true" />Nuevo repostaje</Button>
             <Button type="button" variant="outline" size="icon" onClick={() => setExportTarget({ reportType: "fuelings", vehicle: selectedVehicle })} aria-label="Exportar repostajes" title="Exportar repostajes"><Download aria-hidden="true" /></Button>
             <Button type="button" variant="ghost" onClick={() => setShowHelp(true)} aria-label="Ayuda de repostaje" title="Ayuda de repostaje" className="w-11 px-0 sm:w-auto sm:px-4"><CircleHelp aria-hidden="true" /><span className="hidden sm:inline">Ayuda de repostaje</span></Button>
           </div>
@@ -431,7 +437,7 @@ export default function Fuelings() {
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        onClick={() => openEditForm(fueling)}
+                        disabled={submitting || !!deletingId} onClick={() => openEditForm(fueling)}
                         variant="outline" className="focus-visible:transition-none"
                       >
                         <Pencil aria-hidden="true" />Editar
@@ -439,10 +445,10 @@ export default function Fuelings() {
                       <Button
                         type="button"
                         onClick={() => handleDelete(fueling)}
-                        disabled={deletingId === fueling.id}
+                        pending={deletingId === fueling.id} pendingLabel="Borrando..." disabled={!!deletingId || submitting}
                         variant="ghost" className="text-destructive hover:text-destructive focus-visible:transition-none"
                       >
-                        <Trash2 aria-hidden="true" />{deletingId === fueling.id ? "Borrando..." : "Borrar"}
+                        <Trash2 aria-hidden="true" />Borrar
                       </Button>
                     </div>
                   </div>
@@ -780,9 +786,9 @@ export default function Fuelings() {
               <div className="fl-dialog-footer"><Button type="button" variant="outline" onClick={closeFormDialog}>Cancelar</Button>
               <Button
                 type="submit"
-                disabled={submitting}
+                pending={submitting} pendingLabel="Guardando..." disabled={submitting}
               >
-                {submitting ? "Guardando..." : editingFueling ? "Guardar cambios" : "Guardar repostaje"}
+                {editingFueling ? "Guardar cambios" : "Guardar repostaje"}
               </Button></div>
             </form>
         </DialogFrame>

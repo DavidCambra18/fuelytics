@@ -1,9 +1,12 @@
+import useActionGuard from "../hooks/useActionGuard";
 import { useEffect, useState } from "react";
 import { Wrench, Droplets, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { apiFetch } from "../services/api";
 
 export default function VehicleAlerts({ vehicleId }) {
+  const { guard, isActive } = useActionGuard();
+  const [actionError, setActionError] = useState("");
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState(null);
@@ -75,18 +78,22 @@ export default function VehicleAlerts({ vehicleId }) {
     }).format(date);
   };
 
-  const completeAlert = async (expenseId) => {
+  const completeAlert = guard(async (expenseId) => {
+    setActionError("");
     setCompletingId(expenseId);
     try {
       const response = await apiFetch(`/api/vehicles/${vehicleId}/alerts/${expenseId}/complete`, {
         method: "PUT",
       });
       if (!response.ok) throw new Error("No se pudo completar la alerta");
+      if (!isActive()) return;
       setAlerts((current) => current.filter((alert) => alert.expenseId !== expenseId));
+    } catch (error) {
+      if (isActive()) setActionError(error.message || "No se pudo completar la alerta");
     } finally {
       setCompletingId(null);
     }
-  };
+  });
 
   if (loading || alerts.length === 0) return null;
 
@@ -97,6 +104,7 @@ export default function VehicleAlerts({ vehicleId }) {
         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Alertas</h3>
       </div>
 
+      {actionError ? <p role="alert" className="fl-feedback-error">{actionError}</p> : null}
       <div className="flex flex-col gap-2">
         {alerts.map((alert, index) => {
           const styles = getUrgencyStyles(alert.urgency);
@@ -135,11 +143,11 @@ export default function VehicleAlerts({ vehicleId }) {
                 <Button variant="outline"
                   type="button"
                   onClick={() => completeAlert(alert.expenseId)}
-                  disabled={completingId === alert.expenseId}
+                  pending={completingId === alert.expenseId} pendingLabel="Guardando" disabled={completingId !== null}
                   aria-label={completingId === alert.expenseId ? `Guardando ${alert.description || "mantenimiento"}` : `Marcar como hecho: ${alert.description || "mantenimiento"}`}
                   className="focus-visible:transition-none"
                 >
-                  {completingId === alert.expenseId ? "Guardando" : "Hecho"}
+                  Hecho
                 </Button>
               </div>
             </div>
