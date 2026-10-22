@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useState } from "react";
+import useDialogAccessibility from "../hooks/useDialogAccessibility";
 import { X } from "lucide-react";
 import { exportReportFile } from "../services/exportReports";
 import { DialogFrame } from "./ui/dialog-frame";
@@ -31,46 +32,7 @@ function ExportReportDialog({
   const [endDate, setEndDate] = useState(defaultEndDate);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const dialogRef = useRef(null);
-  const titleId = useId();
-
-  useEffect(() => {
-    const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    if (appearance === "atlantic") document.body.style.overflow = "hidden";
-    const dialog = dialogRef.current;
-    const focusableSelector = "button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex='-1'])";
-    dialog?.querySelector(focusableSelector)?.focus();
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-
-      if (event.key !== "Tab" || !dialog) return;
-      const focusableElements = [...dialog.querySelectorAll(focusableSelector)];
-      if (focusableElements.length === 0) return;
-      const first = focusableElements[0];
-      const last = focusableElements.at(-1);
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      if (appearance === "atlantic") document.body.style.overflow = previousOverflow;
-      previousFocus?.focus?.();
-    };
-  }, [onClose, appearance]);
+  const { dialogRef, titleId, close: closeDialog } = useDialogAccessibility(true, onClose);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -139,7 +101,7 @@ function ExportReportDialog({
           <div className="flex items-center gap-3 pt-2">
             <ExportButton
               type="button"
-              onClick={onClose}
+              onClick={closeDialog}
               variant={appearance === "atlantic" ? "outline" : undefined}
               className={appearance === "atlantic" ? "flex-1" : "flex-1 rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"}
             >
@@ -156,10 +118,10 @@ function ExportReportDialog({
         </form>
   </>);
   return appearance === "atlantic" ? (
-    <DialogFrame dialogRef={dialogRef} titleId={titleId} title={REPORT_TITLES[reportType] || "Exportar informe"} description={`${vehicle.brand} ${vehicle.model} · El archivo se descargará con el rango de fechas seleccionado.`} onClose={onClose}>
+    <DialogFrame dialogRef={dialogRef} titleId={titleId} title={REPORT_TITLES[reportType] || "Exportar informe"} description={`${vehicle.brand} ${vehicle.model} · El archivo se descargará con el rango de fechas seleccionado.`} onClose={closeDialog}>
       {content}
     </DialogFrame>
-  ) : <LegacyExportFrame dialogRef={dialogRef} titleId={titleId} reportType={reportType} onClose={onClose}>{content}</LegacyExportFrame>;
+  ) : <LegacyExportFrame dialogRef={dialogRef} titleId={titleId} reportType={reportType} onClose={closeDialog}>{content}</LegacyExportFrame>;
 }
 
 function LegacyExportFrame({ dialogRef, titleId, reportType, onClose, children }) {
@@ -176,6 +138,7 @@ function LegacyExportFrame({ dialogRef, titleId, reportType, onClose, children }
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/50 sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">

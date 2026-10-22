@@ -206,7 +206,7 @@ export default function Expenses() {
     setFormData(createInitialFormData());
   };
 
-  const { dialogRef: formDialogRef, titleId: formDialogTitleId } = useDialogAccessibility(showForm, closeForm);
+  const { dialogRef: formDialogRef, titleId: formDialogTitleId, close: closeFormDialog } = useDialogAccessibility(showForm, closeForm);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -398,7 +398,7 @@ export default function Expenses() {
       </Surface>
 
       {showForm && (
-        <DialogFrame dialogRef={formDialogRef} titleId={formDialogTitleId} title={editingExpense ? "Editar gasto" : "Nuevo gasto"} description={`${selectedVehicle.brand} ${selectedVehicle.model}`} onClose={closeForm}>
+        <DialogFrame dialogRef={formDialogRef} titleId={formDialogTitleId} title={editingExpense ? "Editar gasto" : "Nuevo gasto"} description={`${selectedVehicle.brand} ${selectedVehicle.model}`} onClose={closeFormDialog}>
           <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-5">
             <FormErrorSummary message={formError?.message} fields={formError?.fields || {}} prefix="expense" />
             <div className="fl-form-grid">
@@ -437,7 +437,7 @@ export default function Expenses() {
               </fieldset>
             )}
             <div className="fl-dialog-footer">
-              <Button type="button" variant="outline" onClick={closeForm}>Cancelar</Button>
+              <Button type="button" variant="outline" onClick={closeFormDialog}>Cancelar</Button>
               <Button type="submit" disabled={submitting} aria-busy={submitting}>
                 {submitting ? "Guardando..." : editingExpense ? "Guardar cambios" : "Guardar gasto"}
               </Button>

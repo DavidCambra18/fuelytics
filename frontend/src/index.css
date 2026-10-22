@@ -1069,3 +1069,7 @@ body {
   outline-offset: 6px;
   border-radius: 4px;
 }
+
+.app-profile-popover { transform-origin: bottom left; }
+.app-mobile-sheet { transform-origin: bottom center; }
+.fl-dialog { transform-origin: center; }

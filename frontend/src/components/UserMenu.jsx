@@ -4,6 +4,7 @@ import { Fuel, Settings, Warehouse, User, LogOut, ChevronRight, ChevronUp, Troph
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
+import useOverlayMotion from "../hooks/useOverlayMotion";
 import ViewportPortal from "./ViewportPortal";
 import ProjectLinks from "./ProjectLinks";
 
@@ -42,7 +43,11 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
   const profileRef = useRef(null);
   const profileButtonRef = useRef(null);
   const profilePanelRef = useRef(null);
-  const { dialogRef, titleId } = useDialogAccessibility(mobileOpen, () => setMobileOpen(false));
+  const { close: closeProfile, reopen: reopenProfile, isClosing: isProfileClosing } = useOverlayMotion(profileOpen, profilePanelRef, () => {
+    if (profilePanelRef.current?.contains(document.activeElement) || document.activeElement === document.body) profileButtonRef.current?.focus({ preventScroll: true });
+    setProfileOpen(false);
+  }, "menu");
+  const { dialogRef, titleId, close: closeMobile } = useDialogAccessibility(mobileOpen, () => setMobileOpen(false), "sheet");
   const initial = (username || "U").slice(0, 1).toUpperCase();
 
   useEffect(() => {
@@ -70,11 +75,11 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
     if (!profileOpen) return;
     profilePanelRef.current?.querySelector("a")?.focus();
     const closeOutside = (event) => {
-      if (!profileRef.current?.contains(event.target)) setProfileOpen(false);
+      if (!profileRef.current?.contains(event.target)) closeProfile();
     };
     const closeWithEscape = (event) => {
       if (event.key === "Escape") {
-        setProfileOpen(false);
+        closeProfile();
         profileButtonRef.current?.focus();
       }
     };
@@ -84,7 +89,7 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
       document.removeEventListener("pointerdown", closeOutside);
       document.removeEventListener("keydown", closeWithEscape);
     };
-  }, [profileOpen]);
+  }, [profileOpen, closeProfile]);
 
   const closeNavigation = () => {
     setProfileOpen(false);
@@ -124,7 +129,7 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
           </button>
 
           <div ref={profileRef} className="relative mt-3 border-t border-white/[0.07] pt-3">
-            <button ref={profileButtonRef} type="button" onClick={() => setProfileOpen((current) => !current)} aria-label="Menú de usuario" aria-expanded={profileOpen} aria-controls={profileOpen ? "profile-options" : undefined} data-current={ACCOUNT_LINKS.some((item) => isCurrent(item, pathname)) || undefined} title={expanded ? undefined : username || "Mi cuenta"} className="app-profile-trigger">
+            <button ref={profileButtonRef} type="button" onClick={() => { if (!profileOpen) setProfileOpen(true); else if (isProfileClosing()) reopenProfile(); else closeProfile(); }} aria-label="Menú de usuario" aria-expanded={profileOpen} aria-controls={profileOpen ? "profile-options" : undefined} data-current={ACCOUNT_LINKS.some((item) => isCurrent(item, pathname)) || undefined} title={expanded ? undefined : username || "Mi cuenta"} className="app-profile-trigger">
               <span className="app-profile-avatar">{initial}</span>
               {expanded ? <><span className="min-w-0 flex-1 text-left"><span className="block truncate text-sm font-semibold text-slate-100">{username || "Usuario"}</span><span className="mt-0.5 block truncate text-xs text-slate-500">{fullName || "Mi cuenta"}</span></span><ChevronUp className={`h-4 w-4 shrink-0 text-slate-500 transition ${profileOpen ? "rotate-180" : ""}`} aria-hidden="true" /></> : null}
             </button>
@@ -151,9 +156,9 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
 
       {mobileOpen ? (
         <ViewportPortal>
-          <div className="fixed inset-0 z-[70] flex items-end bg-slate-950/70 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setMobileOpen(false); }}>
+          <div className="fixed inset-0 z-[70] flex items-end bg-slate-950/70 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) closeMobile(); }}>
             <div ref={dialogRef} id="mobile-more" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="app-mobile-sheet">
-              <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[0.2em] text-teal-300">Fuelytics</p><h2 id={titleId} className="mt-1 text-xl font-semibold text-white">Más opciones</h2></div><button type="button" onClick={() => setMobileOpen(false)} aria-label="Cerrar más opciones" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-slate-300"><X className="h-5 w-5" /></button></div>
+              <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[0.2em] text-teal-300">Fuelytics</p><h2 id={titleId} className="mt-1 text-xl font-semibold text-white">Más opciones</h2></div><button type="button" onClick={closeMobile} aria-label="Cerrar más opciones" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-slate-300"><X className="h-5 w-5" /></button></div>
               <div className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4"><span className="app-profile-avatar">{initial}</span><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{username}</p>{fullName ? <p className="mt-1 truncate text-xs text-slate-500">{fullName}</p> : null}</div></div>
               <nav aria-label="Más secciones" className="space-y-1.5">
                 {MORE_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}

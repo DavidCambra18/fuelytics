@@ -193,8 +193,8 @@ export default function Fuelings() {
   };
 
   const closeHelp = () => setShowHelp(false);
-  const { dialogRef: formDialogRef, titleId: formDialogTitleId } = useDialogAccessibility(showForm, closeForm);
-  const { dialogRef: helpDialogRef, titleId: helpDialogTitleId } = useDialogAccessibility(showHelp, closeHelp);
+  const { dialogRef: formDialogRef, titleId: formDialogTitleId, close: closeFormDialog } = useDialogAccessibility(showForm, closeForm);
+  const { dialogRef: helpDialogRef, titleId: helpDialogTitleId, close: closeHelpDialog } = useDialogAccessibility(showHelp, closeHelp);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -598,7 +598,7 @@ export default function Fuelings() {
       </Surface>
 
       {showForm ? (
-        <DialogFrame dialogRef={formDialogRef} titleId={formDialogTitleId} title={editingFueling ? "Editar repostaje" : "Nuevo repostaje"} description={`${selectedVehicle.brand} ${selectedVehicle.model}`} onClose={closeForm} className="fl-fueling-dialog">
+        <DialogFrame dialogRef={formDialogRef} titleId={formDialogTitleId} title={editingFueling ? "Editar repostaje" : "Nuevo repostaje"} description={`${selectedVehicle.brand} ${selectedVehicle.model}`} onClose={closeFormDialog} className="fl-fueling-dialog">
             <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-6">
               <FormErrorSummary message={formError?.message} fields={formError?.fields || {}} prefix="fueling" />
               <fieldset className="fl-vehicle-fieldset"><legend>Datos del repostaje</legend>
@@ -777,7 +777,7 @@ export default function Fuelings() {
                 />
               </div>
 
-              <div className="fl-dialog-footer"><Button type="button" variant="outline" onClick={closeForm}>Cancelar</Button>
+              <div className="fl-dialog-footer"><Button type="button" variant="outline" onClick={closeFormDialog}>Cancelar</Button>
               <Button
                 type="submit"
                 disabled={submitting}
@@ -789,7 +789,7 @@ export default function Fuelings() {
       ) : null}
 
       {showHelp ? (
-        <DialogFrame dialogRef={helpDialogRef} titleId={helpDialogTitleId} title="Cómo registrar el repostaje" onClose={closeHelp}>
+        <DialogFrame dialogRef={helpDialogRef} titleId={helpDialogTitleId} title="Cómo registrar el repostaje" onClose={closeHelpDialog}>
             <p className="mt-4 text-sm leading-6 text-slate-300">
               La app calcula el consumo real con el método lleno a lleno. Los repostajes parciales sirven como tramos intermedios y se muestran como estimación hasta que llegue otro repostaje completo.
             </p>

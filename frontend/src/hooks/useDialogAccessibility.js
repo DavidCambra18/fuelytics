@@ -1,4 +1,6 @@
-import { useEffect, useId, useRef } from "react";
+import { useLayoutEffect, useId, useRef } from "react";
+import useOverlayMotion from "./useOverlayMotion";
+import { activateModal } from "../utils/modalScope";
 
 const FOCUSABLE_SELECTOR = [
   "button:not([disabled])",
@@ -9,27 +11,30 @@ const FOCUSABLE_SELECTOR = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(", ");
 
-export default function useDialogAccessibility(open, onClose) {
+export default function useDialogAccessibility(open, onClose, kind = "dialog") {
   const dialogRef = useRef(null);
-  const closeRef = useRef(onClose);
+  const { close, reopen, isClosing } = useOverlayMotion(open, dialogRef, onClose, kind);
+  const closeRef = useRef(close);
   const titleId = useId();
 
-  useEffect(() => {
-    closeRef.current = onClose;
-  }, [onClose]);
+  useLayoutEffect(() => {
+    closeRef.current = close;
+  }, [close]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return undefined;
 
     const previousFocus = document.activeElement;
     const dialog = dialogRef.current;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (!dialog) return;
+    const scope = activateModal(dialog);
+    const getFocusable = () => [...dialog.querySelectorAll(FOCUSABLE_SELECTOR)].filter((element) => element.tabIndex >= 0 && element.getClientRects().length && !element.closest("[inert], [hidden]"));
 
-    const focusableElements = dialog ? [...dialog.querySelectorAll(FOCUSABLE_SELECTOR)] : [];
-    (focusableElements[0] || dialog)?.focus();
+    const focusableElements = getFocusable();
+    (focusableElements[0] || dialog)?.focus({ preventScroll: true });
 
     const handleKeyDown = (event) => {
+      if (!scope.isTop()) return;
       if (event.key === "Escape") {
         event.preventDefault();
         closeRef.current?.();
@@ -38,7 +43,7 @@ export default function useDialogAccessibility(open, onClose) {
 
       if (event.key !== "Tab" || !dialog) return;
 
-      const currentFocusableElements = [...dialog.querySelectorAll(FOCUSABLE_SELECTOR)];
+      const currentFocusableElements = getFocusable();
       if (currentFocusableElements.length === 0) {
         event.preventDefault();
         dialog.focus();
@@ -60,14 +65,23 @@ export default function useDialogAccessibility(open, onClose) {
       }
     };
 
+    const containFocus = (event) => {
+      if (scope.isTop() && !dialog.contains(event.target)) (getFocusable()[0] || dialog).focus({ preventScroll: true });
+    };
+    const preventClosingSubmit = (event) => { if (isClosing()) { event.preventDefault(); event.stopPropagation(); } };
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusin", containFocus);
+    dialog.addEventListener("submit", preventClosingSubmit, true);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previousFocus?.focus?.();
+      document.removeEventListener("focusin", containFocus);
+      dialog.removeEventListener("submit", preventClosingSubmit, true);
+      const shouldRestore = dialog.contains(document.activeElement) || document.activeElement === document.body;
+      scope.release();
+      if (shouldRestore && previousFocus?.isConnected && !previousFocus.closest?.("[inert]")) previousFocus.focus?.({ preventScroll: true });
     };
-  }, [open]);
+  }, [open, isClosing]);
 
-  return { dialogRef, titleId };
+  return { dialogRef, titleId, close, reopen, isClosing };
 }
