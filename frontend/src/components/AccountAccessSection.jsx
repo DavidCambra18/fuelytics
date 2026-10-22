@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/field";
+import { useEffect, useRef, useState } from "react";
 import { Check, KeyRound, Link2, ShieldCheck } from "lucide-react";
 import { apiJson } from "../services/api";
 import GoogleIdentityButton from "./GoogleIdentityButton";
@@ -13,6 +15,7 @@ export default function AccountAccessSection() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const managingTriggerRef = useRef(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -50,11 +53,11 @@ export default function AccountAccessSection() {
     finally { setBusy(false); }
   };
 
-  if (!status) return <section className="rounded-3xl border border-white/10 p-6 text-sm text-slate-400">{error ? <><p role="alert">{error}</p><button type="button" onClick={() => { setError(""); setAttempt((value) => value + 1); }} className="mt-3 min-h-11 text-teal-300">Reintentar</button></> : <p role="status">Cargando métodos de acceso…</p>}</section>;
+  if (!status) return <section className="fl-settings-section fl-supporting">{error ? <><p role="alert">{error}</p><Button type="button" onClick={() => { setError(""); setAttempt((value) => value + 1); }} variant="outline" className="mt-3">Reintentar</Button></> : <p role="status">Cargando métodos de acceso…</p>}</section>;
 
   return (
     <>
-      <section className="space-y-4 rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-5 sm:p-7">
+      <section className="fl-settings-section space-y-4">
         <h2 className="text-xl font-semibold text-white">Métodos de acceso</h2>
         <p className="text-sm leading-6 text-slate-400">Gestiona cómo inicias sesión en Fuelytics.</p>
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
@@ -69,7 +72,7 @@ export default function AccountAccessSection() {
             </div>
           ) : null}
           <div className={`p-4 sm:p-5 ${status.linked ? "bg-teal-300/[0.03]" : ""}`}>
-            <div className="flex items-start gap-4">
+            <div className="fl-account-provider">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white">
                 <svg viewBox="0 0 48 48" className="h-6 w-6" aria-hidden="true">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
@@ -87,7 +90,7 @@ export default function AccountAccessSection() {
                   </span>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-400">{status.linked ? "Tu cuenta de Google está conectada a Fuelytics. Puedes usarla para iniciar sesión." : "Conecta Google para entrar sin escribir tu contraseña de Fuelytics."}</p>
-                {status.hasPassword && (status.enabled || status.linked) ? <button type="button" disabled={busy || managing} onClick={() => { setManaging(true); setError(""); setNotice(""); }} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-slate-200 transition hover:border-teal-300/30 hover:bg-teal-300/5 disabled:opacity-50"><Link2 className="h-4 w-4" aria-hidden="true" />{status.linked ? "Desvincular" : "Conectar Google"}</button> : null}
+                {status.hasPassword && (status.enabled || status.linked) ? <Button ref={managingTriggerRef} type="button" disabled={busy || managing} onClick={() => { setManaging(true); setError(""); setNotice(""); }} variant="outline" className="mt-3 h-auto min-h-11 whitespace-normal py-2.5"><Link2 className="h-4 w-4" aria-hidden="true" />{status.linked ? "Desvincular" : "Conectar Google"}</Button> : null}
               </div>
             </div>
             {!status.hasPassword ? <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-teal-300/10 bg-teal-300/5 p-3 text-sm leading-6 text-slate-400"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-300/70" aria-hidden="true" /><p>Google es tu único método de acceso. Para que puedas seguir entrando, esta conexión debe permanecer activa.</p></div> : null}
@@ -99,13 +102,13 @@ export default function AccountAccessSection() {
         {managing && status.hasPassword && (status.enabled || status.linked) ? (
           <form onSubmit={status.linked ? unlink : (event) => { event.preventDefault(); setConfirmingLink(true); setError(""); setNotice(""); }} className="space-y-3">
             <label className="block text-sm text-slate-300">Confirma tu contraseña de Fuelytics
-              <input type="password" autoComplete="current-password" required maxLength={72} value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} disabled={busy || confirmingLink} className="mt-2 min-h-12 w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 text-white" />
+              <Input type="password" autoComplete="current-password" autoFocus required maxLength={72} value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} disabled={busy || confirmingLink} className="mt-2" />
             </label>
-            {!confirmingLink ? <button disabled={busy || !password.trim()} className="min-h-11 rounded-xl border border-white/10 px-4 text-sm text-slate-200 disabled:opacity-50">{busy ? "Guardando…" : status.linked ? "Desvincular Google" : "Continuar para vincular Google"}</button> : null}
+            {!confirmingLink ? <Button disabled={busy || !password.trim()} variant="outline" className="h-auto min-h-11 whitespace-normal py-2.5">{busy ? "Guardando…" : status.linked ? "Desvincular Google" : "Continuar para vincular Google"}</Button> : null}
           </form>
         ) : null}
         {confirmingLink ? <GoogleIdentityButton purpose="LINK" onVerified={linked} /> : null}
-        {managing ? <button type="button" disabled={busy} onClick={() => { setManaging(false); setConfirmingLink(false); setPassword(""); setError(""); }} className="min-h-11 text-sm text-slate-400 disabled:opacity-50">Cancelar</button> : null}
+        {managing ? <Button type="button" disabled={busy} onClick={() => { setManaging(false); setConfirmingLink(false); setPassword(""); setError(""); window.requestAnimationFrame(() => managingTriggerRef.current?.focus()); }} variant="ghost">Cancelar</Button> : null}
       </section>
       <DeleteAccountSection googleOnly={!status.hasPassword} googleEnabled={status.enabled} />
     </>

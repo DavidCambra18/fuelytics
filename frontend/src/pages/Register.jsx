@@ -7,7 +7,9 @@ import { apiJson } from "../services/api";
 import useRegistrationAvailability from "../hooks/useRegistrationAvailability";
 import { normalizeRegistration, validateRegistration, validatePassword, REGISTRATION_LIMITS } from "../utils/registrationValidation";
 import GoogleSignInPanel from "../components/GoogleSignInPanel";
-import PublicFooter from "../components/PublicFooter";
+import AuthLayout from "../components/AuthLayout";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/field";
 
 const STEPS = [
   { label: "Correo", title: "Empieza con tu correo", description: "Lo usarás para acceder a tu cuenta de Fuelytics.", fields: ["email"] },
@@ -51,7 +53,7 @@ function PasswordRequirements({ password }) {
           <span className={level === 3 ? "text-teal-200" : level === 2 ? "text-amber-200" : level === 1 ? "text-rose-300" : "text-slate-400"}>{strength}</span>
         </div>
         <div role="meter" aria-label="Seguridad orientativa de la contraseña" aria-valuemin={0} aria-valuemax={3} aria-valuenow={level} aria-valuetext={strength} className="h-1.5 overflow-hidden rounded-full bg-white/10">
-          <div className={`h-full rounded-full transition-[width,background-color] duration-200 motion-reduce:transition-none ${color}`} style={{ width: `${level / 3 * 100}%` }} />
+          <div className={`h-full rounded-full ${color}`} style={{ width: `${level / 3 * 100}%` }} />
         </div>
       </div>
       <div>
@@ -77,14 +79,14 @@ function FieldRequirements({ label, requirements, password }) {
     <Tooltip.Provider delayDuration={200}>
       <Tooltip.Root open={open} onOpenChange={setOpen}>
         <Tooltip.Trigger asChild>
-          <button type="button" aria-label={`Ver requisitos: ${label}`} onClick={(event) => { event.preventDefault(); setOpen(true); }} className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-teal-300/10 hover:text-teal-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300">
+          <button type="button" aria-label={`Ver requisitos: ${label}`} onClick={(event) => { event.preventDefault(); setOpen(true); }} className="fl-requirements-trigger">
             <Info className="h-4 w-4" aria-hidden="true" />
           </button>
         </Tooltip.Trigger>
         <Tooltip.Portal>
-          <Tooltip.Content side="top" align="start" sideOffset={8} collisionPadding={16} className="z-[100] max-h-[var(--radix-tooltip-content-available-height)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-teal-300/20 bg-[#0b1620] p-4 text-sm leading-6 text-slate-300 shadow-xl shadow-black/40">
+          <Tooltip.Content side="top" align="start" sideOffset={8} collisionPadding={16} className="z-[100] max-h-[var(--radix-tooltip-content-available-height)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-teal-300/20 bg-[var(--popover)] p-4 text-sm leading-6 text-slate-300 shadow-xl shadow-black/40">
             {password !== undefined ? <PasswordRequirements password={password} /> : <><p className="mb-2 font-semibold text-white">{label}</p><ul className="list-disc space-y-1 pl-4 marker:text-teal-300/70">{requirements.map((requirement) => <li key={requirement}>{requirement}</li>)}</ul></>}
-            <Tooltip.Arrow className="fill-[#0b1620]" width={12} height={6} />
+            <Tooltip.Arrow className="fill-[var(--popover)]" width={12} height={6} />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
@@ -192,12 +194,12 @@ export default function Register() {
           {requirements ? <FieldRequirements label={label} requirements={requirements} password={field === "password" ? values.password : undefined} /> : null}
         </div>
         <div className="relative">
-          <input {...inputProps} id={`register-${field}`} name={field} type={inputProps.type || "text"}
+          <Input {...inputProps} id={`register-${field}`} name={field} type={inputProps.type || "text"}
             autoCapitalize={field === "email" || field === "username" ? "none" : undefined}
             spellCheck={field === "email" || field === "username" ? false : undefined}
             value={values[field]} onChange={(event) => updateField(field, event.target.value)}
             aria-invalid={!!error} aria-describedby={feedback ? `register-${field}-feedback` : undefined}
-            className={`min-h-12 w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${error ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20" : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"}`} />
+            className="pr-12" />
           <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center" aria-hidden="true">
             {status === "checking" ? <Loader2 className="h-5 w-5 animate-spin text-teal-400 motion-reduce:animate-none" /> : null}
             {status === "success" ? <Check className="h-5 w-5 text-teal-400" /> : null}
@@ -211,29 +213,18 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col text-slate-100">
-      <div className="section-shell grid min-w-0 flex-1 grid-cols-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:py-6">
-        <section className="order-2 min-w-0 space-y-8 lg:order-1">
-          <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Nuevo usuario</p>
-            <h1 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Crear cuenta</h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">Tu garaje, repostajes y gastos, en un solo lugar. Crea tu cuenta en tres sencillos pasos.</p>
-          </div>
-        </section>
-        <section className="order-1 glass-panel min-w-0 w-full rounded-[2rem] p-6 shadow-2xl shadow-black/25 sm:p-8 lg:order-2">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Registro</p>
-          <h2 className="mt-3 text-3xl font-semibold text-white">Crea tu cuenta</h2>
+    <AuthLayout title="Crea tu cuenta" introduction="Crear cuenta" details="Tu garaje, repostajes y gastos, en un solo lugar. Crea tu cuenta en tres sencillos pasos.">
           <form onSubmit={handleSubmit} noValidate hidden={googleRegistration} aria-busy={submitting || transitioning} className="mt-6">
-            <ol aria-label="Pasos del registro" className="mb-7 grid grid-cols-3 gap-2">
+            <ol aria-label="Pasos del registro" className="fl-registration-steps">
               {STEPS.map(({ label }, index) => <li key={label} aria-current={step === index ? "step" : undefined} className="min-w-0">
-                <div className={`mb-2 h-1 rounded-full ${index <= step ? "bg-teal-300" : "bg-white/10"}`} />
-                <span className={`flex items-center gap-1.5 text-[11px] sm:text-xs ${index === step ? "font-semibold text-teal-200" : "text-slate-400"}`}>
+                <div className="fl-registration-track" data-complete={index <= step} />
+                <span className={`flex items-center gap-1.5 text-xs ${index === step ? "font-semibold text-teal-200" : "text-slate-400"}`}>
                   {index < step ? <Check className="hidden h-3 w-3 shrink-0 sm:block" aria-hidden="true" /> : <span className="hidden sm:inline">{index + 1}.</span>}{label}
                 </span>
               </li>)}
             </ol>
             {errorMessage ? <p role="alert" className="mb-5 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{errorMessage}</p> : null}
-            <div className="overflow-hidden" inert={transitioning}>
+            <div className="fl-registration-viewport" inert={transitioning}>
               <AnimatePresence initial={false} mode="wait" custom={direction}>
                 <motion.div key={step} ref={panelRef} custom={direction}
                   variants={{ enter: (sign) => ({ opacity: reducedMotion ? 1 : 0, x: reducedMotion ? 0 : sign * 16 }), visible: { opacity: 1, x: 0 }, exit: (sign) => ({ opacity: reducedMotion ? 1 : 0, x: reducedMotion ? 0 : sign * -12 }) }}
@@ -245,7 +236,7 @@ export default function Register() {
                       focusAfterTransition.current = false;
                       window.requestAnimationFrame(() => panelRef.current?.querySelector("input")?.focus({ preventScroll: true }));
                     }
-                  }} className="px-1 pb-1">
+                  }} className="p-1">
                   <h3 className="text-lg font-semibold text-white">{STEPS[step].title}</h3>
                   <p className="mb-6 mt-2 text-sm leading-6 text-slate-400">{STEPS[step].description}</p>
                   <fieldset disabled={submitting || transitioning} className="space-y-4">
@@ -256,20 +247,17 @@ export default function Register() {
               </AnimatePresence>
             </div>
             <div className="mt-6 flex flex-col-reverse items-center gap-3 sm:flex-row">
-              {step > 0 ? <button type="button" disabled={submitting || transitioning} onClick={() => changeStep(step - 1)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium text-slate-300 hover:bg-white/5 disabled:opacity-50"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Atrás</button> : null}
-              <button type="submit" disabled={disabled} className="mx-auto inline-flex min-h-11 w-full max-w-[400px] items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50">
+              {step > 0 ? <Button type="button" variant="ghost" disabled={submitting || transitioning} onClick={() => changeStep(step - 1)}><ArrowLeft className="h-4 w-4" aria-hidden="true" />Atrás</Button> : null}
+              <Button type="submit" disabled={disabled} className="mx-auto w-full max-w-[400px]">
                 {submitting || checking ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : null}
                 {submitting ? "Creando cuenta…" : checking ? "Comprobando…" : step === 2 ? "Crear cuenta" : "Continuar"}
                 {!submitting && !checking && step < 2 ? <ArrowRight className="h-4 w-4" aria-hidden="true" /> : null}
-              </button>
+              </Button>
             </div>
             <p className="sr-only" role="status">Paso {step + 1} de 3: {STEPS[step].label}</p>
           </form>
           <div hidden={!googleRegistration && step !== 0}><GoogleSignInPanel onRegistrationChange={setGoogleRegistration} /></div>
           <p hidden={googleRegistration} className="mt-5 text-sm text-slate-400">¿Ya tienes cuenta? <Link to="/login" className="font-medium text-white transition hover:text-teal-200">Inicia sesión</Link></p>
-        </section>
-      </div>
-      <PublicFooter />
-    </div>
+    </AuthLayout>
   );
 }

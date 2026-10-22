@@ -1,3 +1,5 @@
+import { Button } from "./ui/button";
+import { Input } from "./ui/field";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/auth";
@@ -49,17 +51,17 @@ export default function GoogleSignInPanel({ onRegistrationChange }) {
 
   if (!pending) return <GoogleIdentityButton onVerified={authenticate} separator />;
   return (
-    <form onSubmit={register} className="my-5 space-y-4 rounded-2xl border border-teal-300/20 bg-teal-300/5 p-4">
+    <form onSubmit={register} className="fl-google-completion">
       <h3 className="font-semibold text-white">Completa tu cuenta de Google</h3>
       <p className="break-all text-sm text-slate-400">{pending.email}</p>
       <p className="text-sm text-slate-400">Elige cómo quieres aparecer en Fuelytics. No necesitas crear una contraseña.</p>
       <label className="block text-sm text-slate-300">Nombre de usuario
-        <input ref={usernameRef} autoComplete="username" required minLength={3} maxLength={15} disabled={busy} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} className="mt-2 min-h-12 w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 text-white" />
+        <Input ref={usernameRef} autoComplete="username" required minLength={3} maxLength={15} disabled={busy} value={username} onChange={(event) => { setUsername(event.target.value); setError(""); }} className="mt-2" />
       </label>
       {error || (username && validation) || availability.error || availability.warning ? <p role="status" className="text-sm text-rose-300">{error || validation || availability.error || availability.warning}</p> : null}
       <div className="flex flex-wrap gap-3">
-        <button disabled={busy || !!validation || !!availability.error || availability.status === "checking"} className="min-h-11 rounded-xl bg-teal-300 px-4 text-sm font-semibold text-slate-950 disabled:opacity-50">{busy ? "Creando cuenta…" : "Crear cuenta con Google"}</button>
-        <button type="button" disabled={busy} onClick={() => { setPending(null); setUsername(""); setError(""); onRegistrationChange?.(false); }} className="min-h-11 px-2 text-sm text-slate-300">Usar otra cuenta</button>
+        <Button disabled={busy || !!validation || !!availability.error || availability.status === "checking"} className="h-auto min-h-11 whitespace-normal py-2.5">{busy ? "Creando cuenta…" : "Crear cuenta con Google"}</Button>
+        <Button type="button" disabled={busy} onClick={() => { setPending(null); setUsername(""); setError(""); onRegistrationChange?.(false); }} variant="ghost">Usar otra cuenta</Button>
       </div>
     </form>
   );

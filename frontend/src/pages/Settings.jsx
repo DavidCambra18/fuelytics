@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
+import { Surface } from "../components/ui/surface";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/field";
 import AccountAccessSection from "../components/AccountAccessSection";
 import { validateUsername } from "../utils/registrationValidation";
 import ViewportPortal from "../components/ViewportPortal";
@@ -33,13 +36,13 @@ function createToast(message, tone = "success") {
 
 function Toggle({ checked, disabled, onChange, label, hint }) {
   return (
-    <label className={`flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-teal-300 ${disabled ? "opacity-60" : "hover:border-teal-300/20"}`}>
-      <span className="space-y-1">
+    <label className="fl-settings-toggle" data-disabled={disabled || undefined}>
+      <span className="min-w-0 space-y-1">
         <span className="block text-sm font-medium text-white">{label}</span>
         {hint ? <span className="block text-xs leading-5 text-slate-400">{hint}</span> : null}
       </span>
       <span
-        className={`relative mt-0.5 inline-flex h-7 w-12 items-center rounded-full border p-1 transition ${checked ? "border-teal-300/30 bg-teal-400/20" : "border-white/10 bg-slate-900/80"}`}
+        className="fl-toggle-track" data-checked={checked}
       >
         <input
           type="checkbox"
@@ -49,7 +52,7 @@ function Toggle({ checked, disabled, onChange, label, hint }) {
           onChange={(event) => onChange(event.target.checked)}
         />
         <span
-          className={`block h-5 w-5 rounded-full bg-white transition ${checked ? "translate-x-5 bg-teal-200" : "translate-x-0"}`}
+          className="fl-toggle-thumb"
         />
       </span>
     </label>
@@ -381,45 +384,43 @@ export default function Settings() {
   if (loading) {
     return (
       <div className="section-shell pb-10 text-slate-100">
-        <section className="glass-panel rounded-[2rem] p-8 text-sm text-slate-300">Cargando ajustes...</section>
+        <Surface as="section" className="fl-workspace fl-supporting" role="status">Cargando ajustes...</Surface>
       </div>
     );
   }
 
   return (
-    <div className="text-slate-100">
+    <div className="fl-settings-page">
       <main className="pb-10 lg:pb-16">
         <div className="section-shell space-y-6">
-          <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <Surface as="section" className="fl-workspace fl-settings-workspace">
+            <div className="fl-settings-heading">
               <div className="max-w-3xl">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Cuenta</p>
-                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Ajustes</h1>
-                <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                <h1 className="fl-page-title">Ajustes</h1>
+                <p className="fl-supporting mt-3 max-w-[65ch]">
                   Edita tus datos personales y controla qué información compartes con la comunidad.
                 </p>
               </div>
 
-              <button
+              <Button
                 type="button"
-                onClick={handleGoBack}
-                className="inline-flex items-center gap-2 self-start rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-black/15 transition hover:border-teal-300/30 hover:bg-slate-900/90 hover:text-teal-100"
+                onClick={handleGoBack} variant="outline" className="self-start"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 Volver
-              </button>
+              </Button>
             </div>
 
             {error ? (
-              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              <div role="alert" className="fl-feedback-error flex items-center gap-3">
                 <AlertCircle className="h-5 w-5 text-rose-400" />
                 {error}
               </div>
             ) : null}
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr]">
-              <aside className="rounded-3xl border border-white/10 bg-slate-950/40 p-3">
-                <div className="space-y-2">
+            <div className="fl-settings-layout">
+              <nav aria-label="Secciones de ajustes" className="fl-settings-navigation">
+                <div>
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
                     return (
@@ -427,7 +428,9 @@ export default function Settings() {
                         key={tab.id}
                         type="button"
                         onClick={() => setSearchParams(tab.id === "profile" ? {} : { tab: tab.id }, { replace: true })}
-                        className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${activeTab === tab.id ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/[0.05] hover:text-white"}`}
+                        aria-pressed={activeTab === tab.id}
+                        aria-controls="settings-content"
+                        className="fl-settings-navigation-button"
                       >
                         <span className="flex items-center gap-3">
                           <Icon className="h-4 w-4" />
@@ -438,24 +441,22 @@ export default function Settings() {
                     );
                   })}
                 </div>
-              </aside>
+              </nav>
 
-              <div className="min-w-0 space-y-6">
+              <div id="settings-content" className="min-w-0 space-y-6">
                 {activeTab === "account" ? <AccountAccessSection /> : null}
                 {activeTab === "profile" ? (
-                  <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-5 sm:p-7">
+                  <section className="fl-settings-section">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Perfil</p>
-                        <h2 className="mt-2 text-2xl font-semibold text-white">Información personal</h2>
+                        <h2 className="fl-section-title">Información personal</h2>
                       </div>
                     </div>
 
                     <form onSubmit={saveProfile} className="mt-6 grid gap-4 sm:grid-cols-2">
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium text-slate-300">Nombre</span>
-                        <input
-                          className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+                        <Input
                           placeholder="Nombre"
                           value={profileForm.firstName}
                           onChange={handleProfileChange("firstName")}
@@ -464,8 +465,7 @@ export default function Settings() {
 
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium text-slate-300">Apellidos</span>
-                        <input
-                          className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/20"
+                        <Input
                           placeholder="Apellidos"
                           value={profileForm.lastName}
                           onChange={handleProfileChange("lastName")}
@@ -475,12 +475,10 @@ export default function Settings() {
                       <label className="block sm:col-span-2">
                         <span className="mb-2 block text-sm font-medium text-slate-300">Nombre de usuario</span>
                         <div className="relative">
-                          <input
-                            className={`w-full rounded-2xl border bg-slate-950/60 py-3 pl-4 pr-12 text-white outline-none transition placeholder:text-slate-500 focus:ring-2 ${
-                              usernameError 
-                                ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20" 
-                                : "border-white/10 focus:border-teal-300/50 focus:ring-teal-300/20"
-                            }`}
+                          <Input
+                            className="pr-12"
+                            aria-invalid={!!usernameError}
+                            aria-describedby={usernameError ? "settings-username-error" : undefined}
                             placeholder="tu_usuario"
                             value={profileForm.username}
                             onChange={(e) => {
@@ -490,51 +488,48 @@ export default function Settings() {
                             }}
                             required
                           />
-                          <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center">
+                          <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center" aria-hidden="true">
                             {usernameStatus === "checking" && <Loader2 className="h-5 w-5 animate-spin text-teal-400" />}
                             {usernameStatus === "success" && <Check className="h-5 w-5 text-teal-400" />}
                             {usernameStatus === "error" && <X className="h-5 w-5 text-rose-500" />}
                           </div>
                         </div>
-                        {usernameError && <span className="mt-2 block text-sm text-rose-400">{usernameError}</span>}
+                        {usernameError && <span id="settings-username-error" role="status" className="mt-2 block text-sm text-rose-300">{usernameError}</span>}
                       </label>
 
                       <div className="sm:col-span-2 flex gap-3 pt-2">
-                        <button
-                          disabled={savingProfile || !!usernameError || usernameStatus === "checking"}
-                          className="flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        <Button
+                          disabled={savingProfile || !!usernameError || usernameStatus === "checking"} type="submit"
                         >
                           <Save className="h-4 w-4" />
                           {savingProfile ? "Guardando..." : "Guardar perfil"}
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </section>
                 ) : null}
 
                 {activeTab === "privacy" ? (
-                  <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-5 sm:p-7">
+                  <section className="fl-settings-section">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Privacidad</p>
-                        <h2 className="mt-2 text-2xl font-semibold text-white">Control de visibilidad</h2>
+                        <h2 className="fl-section-title">Control de visibilidad</h2>
                       </div>
 
                       <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
-                        <button
+                        <Button
                           type="button"
                           onClick={savePrivacy}
                           disabled={savingPrivacy}
-                          className="flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
                         >
                           <Save className="h-4 w-4" />
                           {savingPrivacy ? "Guardando..." : "Guardar privacidad"}
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
                     <div className="mt-6 space-y-5">
-                      <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-5">
+                      <div className="fl-settings-group">
                         <div className="flex items-center gap-3">
                           <Eye className="h-5 w-5 text-teal-400" />
                           <p className="text-sm font-semibold text-white">Privacidad de la cuenta</p>
@@ -553,7 +548,7 @@ export default function Settings() {
                         </div>
                       </div>
 
-                      <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-5">
+                      <div className="fl-settings-group">
                         <div className="flex items-center gap-3">
                           <Car className="h-5 w-5 text-teal-400" />
                           <p className="text-sm font-semibold text-white">Privacidad de los vehículos</p>
@@ -563,14 +558,14 @@ export default function Settings() {
                         </p>
 
                         <div className="mt-4">
-                          <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-3 text-slate-300 focus-within:border-teal-300/30">
+                          <label className="fl-settings-search">
                             <Search className="h-4 w-4 text-slate-500" aria-hidden="true" />
                             <input
                               aria-label="Buscar vehículos por marca, modelo, año o matrícula"
                               value={vehicleSearch}
                               onChange={(event) => setVehicleSearch(event.target.value)}
                               placeholder="Buscar coche por marca, modelo, año o matrícula"
-                              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                              className="min-h-11 min-w-0 w-full bg-transparent text-base text-white outline-none placeholder:text-[var(--muted-foreground)]"
                             />
                           </label>
                         </div>
@@ -587,7 +582,7 @@ export default function Settings() {
                             const isExpanded = expandedVehicleId === vehicle.id;
 
                             return (
-                              <article key={vehicle.id} className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/55">
+                              <article key={vehicle.id} className="fl-settings-vehicle">
                                 <button
                                   type="button"
                                   onClick={() => toggleVehiclePanel(vehicle.id)}
@@ -597,7 +592,7 @@ export default function Settings() {
                                 >
                                   <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <h3 className="truncate text-base font-semibold text-white">
+                                      <h3 className="break-words text-base font-semibold text-white">
                                         {vehicle.brand} {vehicle.model}
                                       </h3>
                                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${vehicle.isPublic ? "bg-teal-400/10 text-teal-100" : "bg-slate-400/10 text-slate-300"}`}>
@@ -607,12 +602,12 @@ export default function Settings() {
                                   </div>
 
                                   <ChevronDown
-                                    className={`h-5 w-5 shrink-0 text-slate-400 transition duration-200 ${isExpanded ? "rotate-180 text-white" : ""}`}
+                                    className={`h-5 w-5 shrink-0 text-slate-400 ${isExpanded ? "rotate-180 text-white" : ""}`}
                                     aria-hidden="true"
                                   />
                                 </button>
 
-                                <div id={`vehicle-privacy-${vehicle.id}`} inert={!isExpanded} aria-hidden={!isExpanded} className={`grid transition-all duration-300 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                                <div id={`vehicle-privacy-${vehicle.id}`} inert={!isExpanded} aria-hidden={!isExpanded} className={`grid ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                                   <div className="overflow-hidden">
                                     <div className="border-t border-white/10 px-4 py-4 sm:px-5">
                                       <div className="grid gap-3">
@@ -661,7 +656,7 @@ export default function Settings() {
 
               </div>
             </div>
-          </section>
+          </Surface>
         </div>
       </main>
 
@@ -670,6 +665,7 @@ export default function Settings() {
         {toasts.map((toast) => (
           <div
             key={toast.id}
+            role="status"
             className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-xl sm:min-w-[280px] sm:w-auto ${
               toast.tone === "error" 
                 ? "border-rose-400/20 bg-rose-500/15 text-rose-50" 

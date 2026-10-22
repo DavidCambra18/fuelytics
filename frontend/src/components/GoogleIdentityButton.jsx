@@ -127,7 +127,7 @@ export default function GoogleIdentityButton({ purpose = "LOGIN", onVerified, se
 
   return (
     <div className="my-5 min-w-0 space-y-3">
-      {separator ? <div className="flex items-center gap-3 text-xs text-slate-500"><span className="h-px flex-1 bg-white/10" />o continúa con Google<span className="h-px flex-1 bg-white/10" /></div> : null}
+      {separator ? <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)]"><span className="h-px flex-1 bg-white/10" />o continúa con Google<span className="h-px flex-1 bg-white/10" /></div> : null}
       {/* Google's light button needs a light color scheme for its iframe to stay transparent. */}
       <div className="relative mx-auto min-h-11 min-w-0 w-full max-w-[400px]">
         <div ref={containerRef} style={{ colorScheme: "light" }} aria-hidden={state.loading || state.busy || !!state.error || !state.enabled} className={`flex min-h-11 min-w-0 w-full items-center justify-center overflow-hidden ${state.loading || state.busy || state.error || !state.enabled ? "invisible pointer-events-none" : ""}`} />

@@ -1,3 +1,5 @@
+import { Button } from "./ui/button";
+import { Input } from "./ui/field";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
@@ -57,7 +59,7 @@ export default function DeleteAccountSection({ googleOnly = false, googleEnabled
   };
 
   return (
-    <section aria-labelledby="delete-account-title" className="rounded-[1.75rem] border border-rose-400/20 bg-slate-950/45 p-5 sm:p-7">
+    <section aria-labelledby="delete-account-title" className="fl-settings-section fl-settings-danger">
       <div className="flex items-start gap-3">
         <AlertTriangle aria-hidden="true" className="mt-1 h-6 w-6 shrink-0 text-rose-300" />
         <div>
@@ -68,27 +70,27 @@ export default function DeleteAccountSection({ googleOnly = false, googleEnabled
         </div>
       </div>
 
-      <button
+      <Button
         ref={triggerRef}
         type="button"
         aria-expanded={confirming}
         aria-controls={confirming ? "delete-account-confirmation" : undefined}
         disabled={confirming}
         onClick={() => setConfirming(true)}
-        className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-rose-400/30 bg-rose-400/10 px-4 text-sm font-semibold text-rose-200 transition hover:bg-rose-400/20 disabled:hidden"
+        variant="destructive" className="mt-5 h-auto min-h-11 whitespace-normal py-3 disabled:hidden"
       >
         <Trash2 aria-hidden="true" className="h-4 w-4" /> Eliminar mi cuenta
-      </button>
+      </Button>
 
       {confirming ? (
         <form id="delete-account-confirmation" aria-label="Confirmar eliminación de cuenta" aria-describedby="delete-account-description" aria-busy={deleting} onSubmit={deleteAccount} className="mt-6 space-y-4 border-t border-white/10 pt-5">
           {error ? <p role="alert" className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">{error}</p> : null}
           {googleOnly ? <label className="block text-sm text-slate-300">Escribe ELIMINAR para confirmar
-            <input ref={passwordRef} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} disabled={deleting} autoComplete="off" className="mt-2 min-h-12 w-full rounded-2xl border border-rose-400/20 bg-slate-950/60 px-4 text-white" />
+            <Input ref={passwordRef} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} disabled={deleting} autoComplete="off" className="mt-2" />
             <span className="mt-2 block text-sm text-slate-400">Después deberás confirmar tu identidad con la cuenta de Google vinculada. Al confirmarla, se eliminará tu cuenta de Fuelytics.</span>
           </label> : <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-300">Confirma tu contraseña actual</span>
-            <input
+            <Input
               ref={passwordRef}
               type="password"
               autoComplete="current-password"
@@ -97,7 +99,7 @@ export default function DeleteAccountSection({ googleOnly = false, googleEnabled
               required
               maxLength={72}
               disabled={deleting}
-              className="min-h-12 w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 text-white outline-none focus:border-rose-300/50 focus:ring-2 focus:ring-rose-300/20 disabled:opacity-50"
+              className="mt-2"
             />
           </label>}
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm leading-6 text-slate-300">
@@ -105,11 +107,11 @@ export default function DeleteAccountSection({ googleOnly = false, googleEnabled
             Entiendo que se borrarán mi cuenta y todos sus datos de forma permanente.
           </label>
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button type="button" onClick={cancel} disabled={deleting} className="min-h-12 rounded-2xl border border-white/10 px-5 text-sm font-semibold text-slate-300 transition hover:bg-white/5 disabled:opacity-50">Cancelar</button>
-            {!googleOnly ? <button type="submit" disabled={deleting || !acknowledged || !password.trim()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-rose-500 px-5 text-sm font-semibold text-white transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50">
-              {deleting ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <Trash2 aria-hidden="true" className="h-4 w-4" />}
+            <Button type="button" onClick={cancel} disabled={deleting} variant="outline" className="h-auto min-h-11 whitespace-normal py-2.5">Cancelar</Button>
+            {!googleOnly ? <Button type="submit" disabled={deleting || !acknowledged || !password.trim()} variant="destructive" className="h-auto min-h-11 whitespace-normal py-2.5">
+              {deleting ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Trash2 aria-hidden="true" className="h-4 w-4" />}
               {deleting ? "Eliminando cuenta…" : "Eliminar cuenta definitivamente"}
-            </button> : null}
+            </Button> : null}
           </div>
           {googleOnly && !googleEnabled ? <p role="alert" className="text-sm text-rose-300">Google no está disponible en este entorno. No se puede confirmar la eliminación.</p> : null}
           {googleOnly && googleEnabled && acknowledged && confirmation === "ELIMINAR" ? <GoogleIdentityButton purpose="DELETE_ACCOUNT" onVerified={(proof) => deleteAccount(null, proof)} /> : null}
