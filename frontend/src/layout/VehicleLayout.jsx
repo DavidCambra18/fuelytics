@@ -1,10 +1,6 @@
-import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
-import { MOTION, motionSeconds } from "../utils/motion";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Link, NavLink, Outlet, useParams, useLocation } from "react-router-dom";
 import { apiFetch } from "../services/api";
-import { AnimatePresence, motion } from "motion/react";
-import PageTransition from "../components/PageTransition";
 import VehicleLoadingSkeleton from "../components/VehicleLoadingSkeleton";
 import { ArrowLeft } from "lucide-react";
 import { Surface } from "../components/ui/surface";
@@ -13,10 +9,10 @@ import { formatVehicleEnergyType } from "../utils/vehicleLabels";
 
 export default function VehicleLayout() {
     const { vehicleId } = useParams();
+    const { pathname } = useLocation();
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const reducedMotion = usePrefersReducedMotion();
 
     useEffect(() => {
         const controller = new AbortController();
@@ -48,11 +44,12 @@ export default function VehicleLayout() {
         [vehicles, vehicleId]
     );
 
-    const updateVehicle = (updatedVehicle) => {
+    const updateVehicle = useCallback((updatedVehicle) => {
         setVehicles((current) => current.map((vehicle) =>
             vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
         ));
-    };
+    }, []);
+    const outletContext = useMemo(() => ({ selectedVehicle, updateVehicle }), [selectedVehicle, updateVehicle]);
 
     const navigationItems = [
         { label: "Resumen", to: "" },
@@ -62,11 +59,8 @@ export default function VehicleLayout() {
         { label: "Estadísticas", to: "statistics" },
     ];
 
-    const view = loading ? "loading" : error ? "error" : selectedVehicle ? "content" : "not-found";
-
     return (
-        <PageTransition>
-        <div className="text-slate-100">
+        <div className="text-slate-100 fl-route-content" tabIndex={-1} data-route-content={loading || error || !selectedVehicle ? pathname : undefined}>
             <main className="pb-10 lg:pb-16">
                 <div className="section-shell space-y-6">
                     {loading || (!error && selectedVehicle) ? (
@@ -74,10 +68,8 @@ export default function VehicleLayout() {
                         <header className="fl-vehicle-identity">
                             <div className="min-w-0">
                                 <Button asChild variant="link" className="px-0 h-11 focus-visible:transition-none"><Link to="/dashboard"><ArrowLeft aria-hidden="true" />Garaje</Link></Button>
-                                {loading ? <div aria-hidden="true" className="h-8 w-48 rounded-lg bg-secondary" /> : <>
-                                    <h1 className="fl-page-title break-words">{selectedVehicle.brand} {selectedVehicle.model}</h1>
-                                    <p className="fl-supporting mt-2">{selectedVehicle.year} · {formatVehicleEnergyType(selectedVehicle.vehicleEnergyType)}</p>
-                                </>}
+                                <h1 className="fl-page-title break-words">{loading ? <><span className="sr-only">Cargando vehículo</span><span aria-hidden="true" className="block h-8 w-48 rounded-lg bg-secondary" /></> : `${selectedVehicle.brand} ${selectedVehicle.model}`}</h1>
+                                {!loading ? <p className="fl-supporting mt-2">{selectedVehicle.year} · {formatVehicleEnergyType(selectedVehicle.vehicleEnergyType)}</p> : null}
                             </div>
                         </header>
 
@@ -107,34 +99,23 @@ export default function VehicleLayout() {
                     </Surface>
                     ) : null}
 
-                    <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                            key={view}
-                            initial={{ opacity: reducedMotion ? 1 : 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: reducedMotion ? 1 : 0, transition: { duration: motionSeconds(MOTION.duration.feedback, reducedMotion) } }}
-                            transition={{ duration: motionSeconds(MOTION.duration.enter, reducedMotion) }}
-                        >
-                            {loading ? <VehicleLoadingSkeleton /> : error ? (
-                                <Surface role="alert" className="fl-workspace text-destructive">{error}</Surface>
-                            ) : !selectedVehicle ? (
-                                <Surface className="fl-workspace">
-                                    <p className="text-lg font-semibold text-white">Vehículo no encontrado</p>
-                                    <p className="mt-3 text-sm text-slate-300">Vuelve al selector para elegir otro coche.</p>
-                                    <Button asChild variant="outline" className="mt-6"><Link to="/dashboard">
-                                        Volver al selector
-                                    </Link></Button>
-                                </Surface>
-                            ) : (
-                                <Suspense fallback={<VehicleLoadingSkeleton />}>
-                                    <Outlet context={{ selectedVehicle, updateVehicle }} />
-                                </Suspense>
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
+                    {loading ? <VehicleLoadingSkeleton /> : error ? (
+                        <Surface role="alert" className="fl-workspace text-destructive">{error}</Surface>
+                    ) : !selectedVehicle ? (
+                        <Surface className="fl-workspace">
+                            <p className="text-lg font-semibold text-white">Vehículo no encontrado</p>
+                            <p className="mt-3 text-sm text-slate-300">Vuelve al selector para elegir otro coche.</p>
+                            <Button asChild variant="outline" className="mt-6"><Link to="/dashboard">
+                                Volver al selector
+                            </Link></Button>
+                        </Surface>
+                    ) : (
+                        <Suspense fallback={<VehicleLoadingSkeleton />}>
+                            <Outlet key={vehicleId} context={outletContext} />
+                        </Suspense>
+                    )}
                 </div>
             </main>
         </div>
-        </PageTransition>
     );
 }

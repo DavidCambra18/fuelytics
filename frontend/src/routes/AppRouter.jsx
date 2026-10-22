@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AnimatePresence } from "motion/react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PageTransition from "../components/PageTransition";
+import RouteNavigation from "../components/RouteNavigation";
 
 import VehicleLayout from "../layout/VehicleLayout";
 import ProtectedLayout from "../layout/ProtectedLayout";
@@ -30,7 +30,7 @@ const GasStations = lazy(() => import("../pages/GasStations"));
 
 function RouteFallback() {
   return (
-    <div className="section-shell flex min-h-[40vh] items-center justify-center text-sm text-slate-400">
+    <div role="status" className="section-shell flex min-h-[40vh] items-center justify-center text-sm text-slate-400">
       Cargando contenido...
     </div>
   );
@@ -49,18 +49,16 @@ function PublicOnlyRoute({ children }) {
 export default function AppRouter() {
   return (
     <BrowserRouter>
+      <RouteNavigation />
       <InnerRoutes />
     </BrowserRouter>
   );
 }
 
 function InnerRoutes() {
-  const location = useLocation();
-
   return (
-    <AnimatePresence mode="wait" initial={false}>
       <Suspense fallback={<RouteFallback />}>
-        <Routes location={location}>
+        <Routes>
 
         <Route path="/" element={<PageTransition><Home /></PageTransition>} />
         <Route element={<OptionalAppLayout />}>
@@ -97,7 +95,7 @@ function InnerRoutes() {
           <Route path="/ranking" element={<PageTransition><Ranking /></PageTransition>} />
           <Route path="/friends" element={<PageTransition><Friends /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
-          <Route path="/calculator" element={<TripCalculator />} />
+          <Route path="/calculator" element={<PageTransition><TripCalculator /></PageTransition>} />
           <Route path="/my-profile" element={<PageTransition><MyProfile /></PageTransition>} />
           <Route path="/vehicles/new" element={<PageTransition><VehicleCreate /></PageTransition>} />
           <Route path="/vehicles/:vehicleId" element={<VehicleLayout />}>
@@ -105,7 +103,7 @@ function InnerRoutes() {
             <Route path="edit" element={<PageTransition><VehicleEdit /></PageTransition>} />
             <Route path="fuelings" element={<PageTransition><Fuelings /></PageTransition>} />
             <Route path="expenses" element={<PageTransition><Expenses /></PageTransition>} />
-            <Route path="tires" element={<TireModule />} />
+            <Route path="tires" element={<PageTransition><TireModule /></PageTransition>} />
             <Route path="statistics" element={<PageTransition><Statistics /></PageTransition>} />
           </Route>
         </Route>
@@ -114,6 +112,5 @@ function InnerRoutes() {
 
         </Routes>
       </Suspense>
-    </AnimatePresence>
   );
 }

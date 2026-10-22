@@ -1,3 +1,4 @@
+import { loadRequest } from "../utils/loadRequest";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Building2, CircleAlert, CircleHelp, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck, Download, Plus, Pencil, Trash2 } from "lucide-react";
@@ -154,33 +155,19 @@ export default function Fuelings() {
   }, [fuelings]);
 
   useEffect(() => {
+    if (!selectedVehicle?.id) return;
     const controller = new AbortController();
-    const loadFuelings = async () => {
-      if (!selectedVehicle?.id) return;
-
-      setLoading(true);
-      setError("");
-
-      try {
-        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("No se pudieron cargar los repostajes");
-        }
-
-        const data = await response.json();
-        setFuelings(data || []);
-      } catch (fetchError) {
-        if (fetchError.name === "AbortError") return;
-        setError(fetchError.message || "Error cargando repostajes");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFuelings();
+    loadRequest({
+      signal: controller.signal,
+      load: async () => {
+        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("No se pudieron cargar los repostajes");
+        return response.json();
+      },
+      onSuccess: (data) => setFuelings(data || []),
+      onError: (error) => setError(error.message || "Error cargando repostajes"),
+      onSettled: () => setLoading(false),
+    });
     return () => controller.abort();
   }, [selectedVehicle?.id]);
 
@@ -385,7 +372,7 @@ export default function Fuelings() {
             <Button type="button" variant="ghost" onClick={() => setShowHelp(true)} aria-label="Ayuda de repostaje" title="Ayuda de repostaje" className="w-11 px-0 sm:w-auto sm:px-4"><CircleHelp aria-hidden="true" /><span className="hidden sm:inline">Ayuda de repostaje</span></Button>
           </div>
         </header>
-        <div className="fl-ledger-heading"><h3 className="fl-section-title">Historial</h3><p className="fl-ledger-count">{fuelings.length} registros</p></div>
+        <div className="fl-ledger-heading"><h3 className="fl-section-title">Historial</h3>{!loading && (!error || fuelings.length > 0) ? <p className="fl-ledger-count">{fuelings.length} registros</p> : null}</div>
         {error ? (
           <div role="alert" className="fl-feedback-error">
             {error}
@@ -394,7 +381,7 @@ export default function Fuelings() {
 
         {loading ? (
           <div role="status" className="fl-expense-state">Cargando repostajes...</div>
-        ) : fuelings.length === 0 ? (
+        ) : fuelings.length === 0 && error ? null : fuelings.length === 0 ? (
           <div className="fl-expense-state">
             No hay repostajes registrados. ¡Crea uno para empezar!
           </div>

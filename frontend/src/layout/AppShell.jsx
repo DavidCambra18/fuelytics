@@ -1,12 +1,11 @@
 import { Suspense, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import UserMenu from "../components/UserMenu";
 import useMediaQuery from "../hooks/useMediaQuery";
 
 const SIDEBAR_PREFERENCE = "fuelytics:sidebar-mode";
 
 export default function AppShell() {
-  const { pathname } = useLocation();
   const hasSidebar = useMediaQuery("(min-width: 640px)");
   const [sidebarMode, setSidebarMode] = useState(() => {
     try {
@@ -34,7 +33,7 @@ export default function AppShell() {
       <UserMenu key={hasSidebar ? "sidebar" : "mobile"} expanded={expanded} onToggleSidebar={toggleSidebar} />
       <div id="app-content" tabIndex={-1} className="protected-page-content outline-none">
         <Suspense fallback={<div role="status" className="section-shell glass-panel rounded-[2rem] p-8 text-sm text-slate-400">Cargando contenido…</div>}>
-          <Outlet key={pathname} />
+          <Outlet />
         </Suspense>
       </div>
     </div>

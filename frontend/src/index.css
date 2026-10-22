@@ -1063,3 +1063,9 @@ body {
   .fl-gas-page .leaflet-zoom-animated,
   .fl-gas-page .leaflet-fade-anim .leaflet-popup { transition: none; }
 }
+.fl-route-content:focus-visible,
+.fl-route-content :is(h1, h2)[tabindex="-1"]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 6px;
+  border-radius: 4px;
+}

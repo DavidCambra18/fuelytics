@@ -1,3 +1,4 @@
+import { loadRequest } from "../utils/loadRequest";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Download, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
@@ -119,7 +120,7 @@ export default function Expenses() {
   const { selectedVehicle } = useOutletContext();
   const [expenses, setExpenses] = useState([]);
   const [availableTires, setAvailableTires] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -147,26 +148,19 @@ export default function Expenses() {
   }, [expenses]);
 
   useEffect(() => {
+    if (!selectedVehicle?.id) return;
     const controller = new AbortController();
-    const loadExpenses = async () => {
-      if (!selectedVehicle?.id) return;
-      setLoading(true);
-      setError("");
-      try {
-        const response = await apiFetch(`/api/expenses/vehicle/${selectedVehicle.id}`, {
-          signal: controller.signal,
-        });
+    loadRequest({
+      signal: controller.signal,
+      load: async () => {
+        const response = await apiFetch(`/api/expenses/vehicle/${selectedVehicle.id}`, { signal: controller.signal });
         if (!response.ok) throw new Error("No se pudieron cargar los gastos");
-        const data = await response.json();
-        setExpenses(data || []);
-      } catch (fetchError) {
-        if (fetchError.name === "AbortError") return;
-        setError(fetchError.message || "Error cargando gastos");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadExpenses();
+        return response.json();
+      },
+      onSuccess: (data) => setExpenses(data || []),
+      onError: (error) => setError(error.message || "Error cargando gastos"),
+      onSettled: () => setLoading(false),
+    });
     return () => controller.abort();
   }, [selectedVehicle?.id]);
 
@@ -180,10 +174,10 @@ export default function Expenses() {
         });
         if (res.ok) {
           const data = await res.json();
-          setAvailableTires(data || []);
+          if (!controller.signal.aborted) setAvailableTires(data || []);
         }
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (controller.signal.aborted || err.name === "AbortError") return;
         console.error(err);
       }
     };

@@ -1,3 +1,4 @@
+import { loadRequest } from "../utils/loadRequest";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Download, Check } from "lucide-react";
@@ -69,35 +70,19 @@ export default function Statistics() {
   const costRateLabel = selectedVehicle?.vehicleType === "agricultural" ? "Coste por hora" : "Coste por 100 km";
 
   useEffect(() => {
+    if (!selectedVehicle?.id) return;
     const controller = new AbortController();
-    const loadFuelings = async () => {
-      if (!selectedVehicle?.id) {
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-
-      try {
-        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("No se pudieron cargar las estadísticas");
-        }
-
-        const data = await response.json();
-        setFuelings(data || []);
-      } catch (fetchError) {
-        if (fetchError.name === "AbortError") return;
-        setError(fetchError.message || "Error cargando estadísticas");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFuelings();
+    loadRequest({
+      signal: controller.signal,
+      load: async () => {
+        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("No se pudieron cargar las estadísticas");
+        return response.json();
+      },
+      onSuccess: (data) => setFuelings(data || []),
+      onError: (error) => setError(error.message || "Error cargando estadísticas"),
+      onSettled: () => setLoading(false),
+    });
     return () => controller.abort();
   }, [selectedVehicle?.id]);
 
@@ -319,7 +304,7 @@ export default function Statistics() {
       <Surface as="article" className="fl-workspace">
         <header className="fl-workspace-heading">
           <div><h2 className="fl-page-title">Estadísticas</h2><p className="fl-supporting mt-3">Resumen del comportamiento del vehículo a partir de sus repostajes.</p></div>
-          <Button type="button" variant="outline" onClick={() => setExportTarget({ reportType: "summary", vehicle: selectedVehicle })} aria-label="Exportar resumen"><Download aria-hidden="true" />Exportar resumen</Button>
+          <Button type="button" variant="outline" disabled={loading || !!error} onClick={() => setExportTarget({ reportType: "summary", vehicle: selectedVehicle })} aria-label="Exportar resumen"><Download aria-hidden="true" />Exportar resumen</Button>
         </header>
 
         {error ? (
@@ -330,7 +315,7 @@ export default function Statistics() {
 
         {loading ? (
           <div role="status" className="fl-expense-state">Cargando estadísticas...</div>
-        ) : (
+        ) : !error ? (
           <>
             <div className="fl-metric-selector" role="group" aria-label="Métrica de la gráfica">
               {cards.map((card, index) => {
@@ -391,7 +376,7 @@ export default function Statistics() {
               ) : null}
             </section>
           </>
-        )}
+        ) : null}
       </Surface>
 
       <Surface as="article" className="fl-workspace">
@@ -399,10 +384,12 @@ export default function Statistics() {
           <div>
             <h3 className="fl-section-title">Últimos repostajes</h3>
           </div>
-          <p className="fl-ledger-count">{fuelings.length} registros</p>
+          {!loading && !error ? <p className="fl-ledger-count">{fuelings.length} registros</p> : null}
         </div>
 
-        {recentFuelings.length === 0 ? (
+        {loading ? <div role="status" className="fl-expense-state">Cargando últimos repostajes...</div> : error ? (
+          <p className="fl-expense-state">No se pudieron cargar los últimos repostajes.</p>
+        ) : recentFuelings.length === 0 ? (
           <div className="fl-expense-state">
             Todavía no hay repostajes para mostrar.
           </div>

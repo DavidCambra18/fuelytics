@@ -1,3 +1,4 @@
+import { loadRequest } from "../utils/loadRequest";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
@@ -12,24 +13,19 @@ export default function Dashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadVehicles = async () => {
-      try {
-        const response = await apiFetch("/api/vehicles");
-
-        if (!response.ok) {
-          throw new Error("No se pudieron cargar los vehículos");
-        }
-
-        const data = await response.json();
-        setVehicles(data);
-      } catch (fetchError) {
-        setError(fetchError.message || "Error cargando vehículos");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadVehicles();
+    const controller = new AbortController();
+    loadRequest({
+      signal: controller.signal,
+      load: async () => {
+        const response = await apiFetch("/api/vehicles", { signal: controller.signal });
+        if (!response.ok) throw new Error("No se pudieron cargar los vehículos");
+        return response.json();
+      },
+      onSuccess: setVehicles,
+      onError: (error) => setError(error.message || "Error cargando vehículos"),
+      onSettled: () => setLoading(false),
+    });
+    return () => controller.abort();
   }, []);
 
   return (

@@ -9,22 +9,24 @@ export default function VehicleAlerts({ vehicleId }) {
   const [completingId, setCompletingId] = useState(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadAlerts = async () => {
       if (!vehicleId) return;
       try {
-        const response = await apiFetch(`/api/vehicles/${vehicleId}/alerts`);
+        const response = await apiFetch(`/api/vehicles/${vehicleId}/alerts`, { signal: controller.signal });
         if (response.ok) {
           const data = await response.json();
-          setAlerts(data || []);
+          if (!controller.signal.aborted) setAlerts(data || []);
         }
       } catch (error) {
-        console.error(error);
+        if (!controller.signal.aborted) console.error(error);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     loadAlerts();
+    return () => controller.abort();
   }, [vehicleId]);
 
   const getIcon = (description) => {
