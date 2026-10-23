@@ -115,7 +115,7 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
         </div>
 
         <div className="app-sidebar-navigation">
-          {expanded ? <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tu espacio</p> : null}
+          {expanded ? <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Tu espacio</p> : null}
           <nav aria-label="Navegación principal" className="space-y-1.5">
             {NAVIGATION.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} compact={!expanded} onNavigate={closeNavigation} />)}
           </nav>
@@ -131,11 +131,11 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
           <div ref={profileRef} className="relative mt-3 border-t border-white/[0.07] pt-3">
             <button ref={profileButtonRef} type="button" onClick={() => { if (!profileOpen) setProfileOpen(true); else if (isProfileClosing()) reopenProfile(); else closeProfile(); }} aria-label="Menú de usuario" aria-expanded={profileOpen} aria-controls={profileOpen ? "profile-options" : undefined} data-current={ACCOUNT_LINKS.some((item) => isCurrent(item, pathname)) || undefined} title={expanded ? undefined : username || "Mi cuenta"} className="app-profile-trigger">
               <span className="app-profile-avatar">{initial}</span>
-              {expanded ? <><span className="min-w-0 flex-1 text-left"><span className="block truncate text-sm font-semibold text-slate-100">{username || "Usuario"}</span><span className="mt-0.5 block truncate text-xs text-slate-500">{fullName || "Mi cuenta"}</span></span><ChevronUp className={`h-4 w-4 shrink-0 text-slate-500 transition ${profileOpen ? "rotate-180" : ""}`} aria-hidden="true" /></> : null}
+              {expanded ? <><span className="min-w-0 flex-1 text-left"><span className="block truncate text-sm font-semibold text-slate-100">{username || "Usuario"}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{fullName || "Mi cuenta"}</span></span><ChevronUp className={`h-4 w-4 shrink-0 text-muted-foreground transition ${profileOpen ? "rotate-180" : ""}`} aria-hidden="true" /></> : null}
             </button>
             {profileOpen ? (
               <div ref={profilePanelRef} id="profile-options" className="app-profile-popover">
-                <p className="mb-2 truncate px-3 pt-2 text-xs font-medium text-slate-500">@{username}</p>
+                <p className="mb-2 truncate px-3 pt-2 text-xs font-medium text-muted-foreground">@{username}</p>
                 <nav aria-label="Opciones de la cuenta" className="space-y-1">
                   {ACCOUNT_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}
                 </nav>
@@ -159,7 +159,7 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
           <div className="fixed inset-0 z-[70] flex items-end bg-slate-950/70 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) closeMobile(); }}>
             <div ref={dialogRef} id="mobile-more" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="app-mobile-sheet">
               <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[0.2em] text-teal-300">Fuelytics</p><h2 id={titleId} className="mt-1 text-xl font-semibold text-white">Más opciones</h2></div><button type="button" onClick={closeMobile} aria-label="Cerrar más opciones" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-slate-300"><X className="h-5 w-5" /></button></div>
-              <div className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4"><span className="app-profile-avatar">{initial}</span><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{username}</p>{fullName ? <p className="mt-1 truncate text-xs text-slate-500">{fullName}</p> : null}</div></div>
+              <div className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4"><span className="app-profile-avatar">{initial}</span><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{username}</p>{fullName ? <p className="mt-1 truncate text-xs text-muted-foreground">{fullName}</p> : null}</div></div>
               <nav aria-label="Más secciones" className="space-y-1.5">
                 {MORE_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}
                 <ProjectLinks onNavigate={closeNavigation} />

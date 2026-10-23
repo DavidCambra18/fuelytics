@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import { optionalResource } from "../utils/optionalResource";
 import { Surface } from "../components/ui/surface";
 import { Button } from "../components/ui/button";
 import { ArrowLeft, AlertCircle, User, Car, Calendar, Medal, Award, Fuel, Receipt, Leaf, Wrench } from "lucide-react";
@@ -29,12 +30,14 @@ export default function PublicProfile() {
   const [rankingPositions, setRankingPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [badgesError, setBadgesError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     const loadProfileData = async () => {
       setLoading(true);
       setError("");
+      setBadgesError("");
       setProfile(null);
       setRankingPositions([]);
 
@@ -42,7 +45,7 @@ export default function PublicProfile() {
         const [profileRes, rankingRes, badgesRes] = await Promise.all([
           apiFetch(`/api/users/public/${encodeURIComponent(username)}`, { signal: controller.signal }),
           apiFetch("/api/ranking", { signal: controller.signal }),
-          apiFetch(`/api/badges/public/${encodeURIComponent(username)}`, { signal: controller.signal })
+          optionalResource(apiFetch(`/api/badges/public/${encodeURIComponent(username)}`, { signal: controller.signal }), { signal: controller.signal, fallback: [], message: "No se pudieron cargar las insignias públicas. Vuelve a intentarlo más tarde." })
         ]);
 
         if (!profileRes.ok) {
@@ -51,9 +54,9 @@ export default function PublicProfile() {
         }
 
         const profileData = await profileRes.json();
-        const badgesData = badgesRes.ok ? await badgesRes.json() : [];
-
         if (controller.signal.aborted) return;
+        const badgesData = badgesRes.data;
+        setBadgesError(badgesRes.error);
         setProfile({
           ...profileData,
           badges: badgesData
@@ -224,7 +227,7 @@ export default function PublicProfile() {
                     <Award className="h-6 w-6 text-amber-300" />
                   </div>
 
-                  {profile.badges && profile.badges.length > 0 ? (
+                  {badgesError ? <p role="alert" className="fl-feedback-error">{badgesError}</p> : profile.badges && profile.badges.length > 0 ? (
                     <div className="fl-profile-badges">
                       {profile.badges.map((badge, index) => {
                         const IconComponent = BADGE_ICONS[badge.iconName] || BADGE_ICONS.default;

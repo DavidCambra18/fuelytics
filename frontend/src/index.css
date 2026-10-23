@@ -349,7 +349,7 @@ body {
 
     .app-sidebar-footer > nav > .app-nav-link > span,
     .app-sidebar-footer > nav > .app-nav-link > svg {
-      color: #64748b;
+      color: var(--muted-foreground);
     }
 
     .app-sidebar-footer > nav > .app-nav-link:hover > span,
@@ -365,7 +365,7 @@ body {
       gap: 0.8rem;
       border-radius: 0.75rem;
       padding: 0.75rem;
-      color: #64748b;
+      color: var(--muted-foreground);
       font-size: 0.75rem;
     }
 

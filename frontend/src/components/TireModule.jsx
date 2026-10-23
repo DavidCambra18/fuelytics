@@ -1,5 +1,5 @@
 import useActionGuard from "../hooks/useActionGuard";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Ban, Plus, Disc, AlertTriangle } from "lucide-react";
 import { apiJson } from "../services/api";
@@ -32,19 +32,33 @@ export default function TiresModule() {
     const [tires, setTires] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [loadFailed, setLoadFailed] = useState(false);
+    const retryFocus = useRef(false);
+    const retryButtonRef = useRef(null);
+    const headingRef = useRef(null);
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const [formData, setFormData] = useState(() => createInitialFormData(latestOdometer));
 
+    useEffect(() => {
+        if (loading || !retryFocus.current) return;
+        retryFocus.current = false;
+        (loadFailed ? retryButtonRef : headingRef).current?.focus({ preventScroll: true });
+    }, [loading, loadFailed]);
+
     const loadTires = useCallback(async (signal) => {
         setLoading(true);
         setError("");
+        setLoadFailed(false);
         try {
             const data = await apiJson(`/api/vehicles/${vehicleId}/tires`, { signal });
             if (!signal?.aborted && isActive()) setTires(data || []);
         } catch (loadError) {
-            if (!signal?.aborted && isActive()) setError(loadError.message || "Error cargando neumáticos");
+            if (!signal?.aborted && isActive()) {
+                setLoadFailed(true);
+                setError(loadError.message || "Error cargando neumáticos");
+            }
         } finally {
             if (!signal?.aborted && isActive()) setLoading(false);
         }
@@ -120,7 +134,7 @@ export default function TiresModule() {
 
     if (loading) {
         return (
-            <div className="py-8 text-center text-sm text-slate-400">
+            <div role="status" className="py-8 text-center text-sm text-slate-400">
                 Cargando neumáticos...
             </div>
         );
@@ -180,6 +194,14 @@ export default function TiresModule() {
         );
     };
 
+    if (loadFailed) return (
+        <Surface as="section" className="fl-workspace">
+            <h2 className="fl-section-title">Neumáticos</h2>
+            <p role="alert" className="fl-feedback-error mt-4">{error}</p>
+            <Button ref={retryButtonRef} type="button" variant="outline" className="mt-4" onClick={() => { retryFocus.current = true; loadTires(); }}>Reintentar</Button>
+        </Surface>
+    );
+
     return (
         <div className="space-y-6">
             {error && <div role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div>}
@@ -187,7 +209,7 @@ export default function TiresModule() {
             <Surface as="header" className="fl-workspace-heading fl-workspace">
                 <div className="flex items-center gap-2">
                     <Disc className="h-5 w-5 text-teal-400" />
-                    <h2 className="fl-section-title">Neumáticos</h2>
+                    <h2 ref={headingRef} tabIndex={-1} className="fl-section-title focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ring)]">Neumáticos</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button

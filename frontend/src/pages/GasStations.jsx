@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
@@ -10,7 +10,8 @@ import { Surface } from "../components/ui/surface";
 import { Button } from "../components/ui/button";
 import CustomSelect from "../components/CustomSelect";
 import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
-import { mapFlightOptions, scrollBehavior } from "../utils/motion";
+import { mapFlightOptions, prefersReducedMotion, scrollBehavior } from "../utils/motion";
+import { syncPopupMotion, MAP_POPUP_PADDING } from "../utils/mapPopup";
 import { apiJson } from "../services/api";
 
 const DEFAULT_CENTER = [40.4168, -3.7038];
@@ -59,9 +60,9 @@ function getMarkerTone(price, range) {
 
 function createStationIcon(tone, price) {
   const toneStyles = {
-    emerald: "background: linear-gradient(180deg, #34d399 0%, #059669 100%); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);",
-    amber: "background: linear-gradient(180deg, #fbbf24 0%, #f97316 100%); box-shadow: 0 10px 20px rgba(249, 115, 22, 0.35);",
-    rose: "background: linear-gradient(180deg, #f87171 0%, #dc2626 100%); box-shadow: 0 10px 20px rgba(220, 38, 38, 0.35);",
+    emerald: "background: linear-gradient(180deg, #047857 0%, #065f46 100%); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);",
+    amber: "background: linear-gradient(180deg, #b45309 0%, #92400e 100%); box-shadow: 0 10px 20px rgba(249, 115, 22, 0.35);",
+    rose: "background: linear-gradient(180deg, #be123c 0%, #9f1239 100%); box-shadow: 0 10px 20px rgba(220, 38, 38, 0.35);",
   };
   const priceLabel = Number.isFinite(price)
     ? `${price.toLocaleString("es-ES", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} €`
@@ -83,9 +84,9 @@ function createStationIcon(tone, price) {
 
 function createClusterIcon(cluster, tone) {
   const toneStyles = {
-    emerald: "background: linear-gradient(145deg, #34d399 0%, #047857 100%); box-shadow: 0 12px 26px rgba(16, 185, 129, 0.4);",
-    amber: "background: linear-gradient(145deg, #fbbf24 0%, #ea580c 100%); box-shadow: 0 12px 26px rgba(249, 115, 22, 0.4);",
-    rose: "background: linear-gradient(145deg, #fb7185 0%, #be123c 100%); box-shadow: 0 12px 26px rgba(225, 29, 72, 0.4);",
+    emerald: "background: linear-gradient(145deg, #047857 0%, #065f46 100%); box-shadow: 0 12px 26px rgba(16, 185, 129, 0.4);",
+    amber: "background: linear-gradient(145deg, #b45309 0%, #92400e 100%); box-shadow: 0 12px 26px rgba(249, 115, 22, 0.4);",
+    rose: "background: linear-gradient(145deg, #be123c 0%, #9f1239 100%); box-shadow: 0 12px 26px rgba(225, 29, 72, 0.4);",
   };
   const minimumPrice = Number.isFinite(cluster.minimumPrice)
     ? cluster.minimumPrice.toLocaleString("es-ES", { minimumFractionDigits: 3, maximumFractionDigits: 3 })
@@ -162,7 +163,21 @@ function buildStationClusters(stations, map, zoom) {
   });
 }
 
-function StationPopup({ station, tone }) {
+function PopupMotionSync({ popupRef, station }) {
+  const map = useMap();
+  const reducedMotion = usePrefersReducedMotion();
+  // This runs inside the portal after its content has actually been laid out.
+  useLayoutEffect(() => {
+    const popup = popupRef.current;
+    if (popup?.isOpen()) syncPopupMotion(map, popup, reducedMotion, reducedMotion);
+  }, [map, popupRef, station, reducedMotion]);
+  return null;
+}
+
+const StationPopup = memo(function StationPopup({ station, tone }) {
+  const map = useMap();
+  const popupRef = useRef(null);
+  const reducedMotion = usePrefersReducedMotion();
   const priceTone = {
     emerald: "border-emerald-300/20 bg-emerald-400/10 text-emerald-200",
     amber: "border-amber-300/20 bg-amber-400/10 text-amber-200",
@@ -173,10 +188,16 @@ function StationPopup({ station, tone }) {
 
   return (
     <Popup
+      ref={popupRef}
       className="fuelytics-station-popup"
       maxWidth={300}
       minWidth={230}
+      autoPan={!reducedMotion}
+      maxHeight={Math.max(160, map.getSize().y - 132)}
+      autoPanPaddingTopLeft={[MAP_POPUP_PADDING.left, MAP_POPUP_PADDING.top]}
+      autoPanPaddingBottomRight={[MAP_POPUP_PADDING.right, MAP_POPUP_PADDING.bottom]}
     >
+      <>
       <article className="fl-station-popup-content">
         <header className="fl-station-popup-header">
           <div className="inline-flex items-center gap-2 text-xs font-medium text-primary">
@@ -223,9 +244,11 @@ function StationPopup({ station, tone }) {
           </a></Button>
         </div>
       </article>
+      <PopupMotionSync popupRef={popupRef} station={station} />
+      </>
     </Popup>
   );
-}
+});
 
 function StationMarker({ station, priceRange, selected, onSelect, onPopupOpen, onPopupClose }) {
   const markerRef = useRef(null);
@@ -264,11 +287,13 @@ function ClusteredStationMarkers({
   onStationPopupClose,
 }) {
   const map = useMap();
-  const [zoom, setZoom] = useState(() => map.getZoom());
-
-  useMapEvents({
-    zoomend: (event) => setZoom(event.target.getZoom()),
-  });
+  const subscribeZoom = useCallback((onChange) => {
+    map.on("zoomend", onChange);
+    return () => map.off("zoomend", onChange);
+  }, [map]);
+  const readZoom = useCallback(() => map.getZoom(), [map]);
+  // Recheck after subscribing: an immediate setView can precede passive effects.
+  const zoom = useSyncExternalStore(subscribeZoom, readZoom, readZoom);
 
   const clusters = useMemo(
     () => buildStationClusters(stations, map, zoom),
@@ -340,9 +365,22 @@ function MapMotionPreference() {
   const map = useMap();
   const reducedMotion = usePrefersReducedMotion();
 
+  useMapEvents({
+    resize: () => {
+      map.eachLayer((layer) => {
+        if (layer instanceof L.Popup && layer.isOpen()) syncPopupMotion(map, layer, prefersReducedMotion(), true);
+      });
+    },
+  });
+
   useEffect(() => {
     // Stop an in-flight camera movement without starting another flight.
-    if (reducedMotion) map.stop();
+    if (reducedMotion) {
+      map.stop();
+      map.eachLayer((layer) => {
+        if (layer instanceof L.Popup && layer.isOpen()) syncPopupMotion(map, layer, true, true);
+      });
+    }
   }, [map, reducedMotion]);
 
   return null;
@@ -534,6 +572,9 @@ export default function GasStations() {
   const [openStationPopupId, setOpenStationPopupId] = useState(null);
   const selectedCardRef = useRef(null);
   const mapSectionRef = useRef(null);
+  const handleMapCenterChange = useCallback((next) => {
+    setMapCenter((current) => current[0] === next[0] && current[1] === next[1] ? current : next);
+  }, []);
 
   useEffect(() => {
     if (selectedStationId && window.matchMedia("(min-width: 1024px)").matches) {
@@ -589,15 +630,16 @@ export default function GasStations() {
 
         const path = `/api/external/gas-stations?${params.toString()}`;
         const resp = await apiJson(path, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         setStations(resp.stations || []);
         setUpdatedAt(resp.updatedAt || "");
         setSourceState(resp.sourceReady ? "ready" : (resp.stations || []).length > 0 ? "stale" : "unavailable");
         setSourceError(resp.sourceError || "");
       } catch (fetchError) {
-        if (fetchError.name === "AbortError") return;
+        if (controller.signal.aborted || fetchError.name === "AbortError") return;
         setError(fetchError.message || "No se pudieron cargar las gasolineras");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
@@ -885,7 +927,7 @@ export default function GasStations() {
                 <MapContainer center={mapCenter} zoom={location ? 13 : 6} className="absolute inset-0 h-full w-full" preferCanvas scrollWheelZoom={true}>
                   <MapMotionPreference />
                   <MapSizeSync />
-                  <MapCenterTracker onCenterChange={setMapCenter} />
+                  <MapCenterTracker onCenterChange={handleMapCenterChange} />
                   <SelectedStationController station={selectedStation} />
                   <MapLocationControl
                     location={location}

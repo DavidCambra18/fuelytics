@@ -1,4 +1,5 @@
 import useActionGuard from "../hooks/useActionGuard";
+import useValidationFocus from "../hooks/useValidationFocus";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
@@ -33,6 +34,7 @@ export default function VehicleCreate() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [fieldErrors, setFieldErrors] = useState({});
+  const formRef = useValidationFocus(fieldErrors);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -60,7 +62,6 @@ export default function VehicleCreate() {
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      // focus first invalid field? keep simple: abort
       return;
     }
 
@@ -105,7 +106,7 @@ export default function VehicleCreate() {
       <Surface as="section" className="fl-workspace fl-vehicle-editor">
         <header className="fl-workspace-heading"><div><p className="fl-eyebrow">Alta de vehículo</p><h1 className="fl-page-title mt-2">Un nuevo espacio en tu garaje</h1><p className="fl-supporting mt-3">Completa los datos principales. Los campos con * son obligatorios.</p></div><Button asChild variant="outline"><Link to="/dashboard">Volver al selector</Link></Button></header>
         {errorMessage && <div role="alert" className="fl-feedback-error">{errorMessage}</div>}
-        <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-7">
+        <form ref={formRef} onSubmit={handleSubmit} aria-busy={submitting} className="space-y-7">
         <fieldset className="fl-vehicle-fieldset">
           <legend>Identificación</legend>
           <p className="fl-supporting mb-5">Los datos que distinguen tu vehículo.</p>

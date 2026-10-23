@@ -1,4 +1,5 @@
 import useActionGuard from "../hooks/useActionGuard";
+import useValidationFocus from "../hooks/useValidationFocus";
 import { useState } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { apiFetch } from "../services/api";
@@ -32,6 +33,7 @@ export default function VehicleEdit() {
     gearbox: selectedVehicle?.gearbox || "",
   });
   const [fieldErrors, setFieldErrors] = useState({});
+  const formRef = useValidationFocus(fieldErrors);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -105,7 +107,7 @@ export default function VehicleEdit() {
     <Surface as="section" className="fl-workspace fl-vehicle-editor">
       <header className="mb-7"><p className="fl-eyebrow">Editar vehículo</p><h2 className="fl-section-title mt-2">Cada detalle, en su sitio</h2><p className="fl-supporting mt-2">Actualiza los datos del vehículo. Los campos con * son obligatorios.</p></header>
       {errorMessage && <div role="alert" className="fl-feedback-error">{errorMessage}</div>}
-      <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-7">
+      <form ref={formRef} onSubmit={handleSubmit} aria-busy={submitting} className="space-y-7">
         <fieldset className="fl-vehicle-fieldset">
           <legend>Identificación</legend>
           <p className="fl-supporting mb-5">Los datos que distinguen tu vehículo.</p>

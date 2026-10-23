@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import { optionalResource } from "../utils/optionalResource";
 import { Surface } from "../components/ui/surface";
 import { Button } from "../components/ui/button";
 import { ArrowLeft, AlertCircle, User, Info, Settings, Car, Calendar, Award, Fuel, Receipt, Leaf, Wrench } from "lucide-react";
@@ -27,17 +28,20 @@ export default function MyProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sectionErrors, setSectionErrors] = useState({});
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadProfileData = async () => {
       setLoading(true);
       setError("");
+      setSectionErrors({});
 
       try {
         const [profileRes, vehiclesRes, badgesRes] = await Promise.all([
-          apiFetch("/api/users/profile"),
-          apiFetch("/api/vehicles"),
-          apiFetch("/api/badges")
+          apiFetch("/api/users/profile", { signal: controller.signal }),
+          optionalResource(apiFetch("/api/vehicles", { signal: controller.signal }), { signal: controller.signal, fallback: [], message: "No se pudieron cargar tus vehículos. Vuelve a intentarlo más tarde." }),
+          optionalResource(apiFetch("/api/badges", { signal: controller.signal }), { signal: controller.signal, fallback: [], message: "No se pudieron cargar tus insignias. Vuelve a intentarlo más tarde." })
         ]);
 
         if (!profileRes.ok) {
@@ -45,8 +49,10 @@ export default function MyProfile() {
         }
 
         const profileData = await profileRes.json();
-        const vehiclesData = vehiclesRes.ok ? await vehiclesRes.json() : [];
-        const badgesData = badgesRes.ok ? await badgesRes.json() : [];
+        if (controller.signal.aborted) return;
+        const vehiclesData = vehiclesRes.data;
+        const badgesData = badgesRes.data;
+        setSectionErrors({ vehicles: vehiclesRes.error, badges: badgesRes.error });
 
         setProfile({
           ...profileData,
@@ -54,13 +60,15 @@ export default function MyProfile() {
           badges: badgesData
         });
       } catch (fetchError) {
+        if (controller.signal.aborted) return;
         setError(fetchError.message || "Error al cargar los datos");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     loadProfileData();
+    return () => controller.abort();
   }, []);
 
   const getInitial = () => {
@@ -172,7 +180,7 @@ export default function MyProfile() {
                         <Car className="h-5 w-5 text-primary" />
                       </div>
 
-                      {profile.vehicles && profile.vehicles.length > 0 ? (
+                      {sectionErrors.vehicles ? <p role="alert" className="fl-feedback-error">{sectionErrors.vehicles}</p> : profile.vehicles && profile.vehicles.length > 0 ? (
                         <div className="grid gap-4 sm:grid-cols-2">
                           {profile.vehicles.map((vehicle) => (
                             <article key={vehicle.id} className="fl-profile-vehicle">
@@ -213,7 +221,7 @@ export default function MyProfile() {
                     <Award className="h-6 w-6 text-amber-300" />
                   </div>
 
-                  {profile.badges && profile.badges.length > 0 ? (
+                  {sectionErrors.badges ? <p role="alert" className="fl-feedback-error">{sectionErrors.badges}</p> : profile.badges && profile.badges.length > 0 ? (
                     <div className="fl-profile-badges">
                       {profile.badges.map((badge, index) => {
                         const IconComponent = BADGE_ICONS[badge.iconName] || BADGE_ICONS.default;

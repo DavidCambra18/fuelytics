@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import { optionalResource } from "../utils/optionalResource";
 import { Surface } from "../components/ui/surface";
 import { Button } from "../components/ui/button";
 import { ArrowLeft, AlertCircle, LockKeyhole, Car, Calendar, Gauge, Fuel, Settings2, Activity, Receipt, BarChart3 } from "lucide-react";
@@ -22,6 +23,7 @@ export default function PublicVehicle() {
   const [expenses, setExpenses] = useState([]);
   const [stats, setStats] = useState(null);
   const [extraLoading, setExtraLoading] = useState(true);
+  const [sectionErrors, setSectionErrors] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -36,6 +38,7 @@ export default function PublicVehicle() {
       setExpenses([]);
       setStats(null);
       setExtraLoading(true);
+      setSectionErrors({});
       try {
         const response = await apiFetch(`/api/vehicles/${id}`, { signal: controller.signal });
         if (!response.ok) {
@@ -62,27 +65,23 @@ export default function PublicVehicle() {
       try {
         const promises = [];
 
-        const loadResource = async (path, setter, emptyValue) => {
-          try {
-            const response = await apiFetch(path, { signal: controller.signal });
-            if (!response.ok) throw new Error("No se pudo cargar la información pública");
-            const resource = await response.json();
-            if (!controller.signal.aborted) setter(resource);
-          } catch {
-            if (!controller.signal.aborted) setter(emptyValue);
-          }
+        const loadResource = async (path, setter, emptyValue, key, message) => {
+          const result = await optionalResource(apiFetch(path, { signal: controller.signal }), { signal: controller.signal, fallback: emptyValue, message });
+          if (!result) return;
+          setter(result.data);
+          setSectionErrors((current) => ({ ...current, [key]: result.error }));
         };
 
         if (vehicle.showFuelData) {
-          promises.push(loadResource(`/api/vehicles/${id}/fuelings`, setFuelings, []));
+          promises.push(loadResource(`/api/vehicles/${id}/fuelings`, setFuelings, [], "fuelings", "No se pudieron cargar los repostajes públicos. Vuelve a intentarlo más tarde."));
         }
 
         if (vehicle.showExpenses) {
-          promises.push(loadResource(`/api/vehicles/${id}/expenses`, setExpenses, []));
+          promises.push(loadResource(`/api/vehicles/${id}/expenses`, setExpenses, [], "expenses", "No se pudieron cargar los gastos públicos. Vuelve a intentarlo más tarde."));
         }
 
         if (vehicle.showStatistics) {
-          promises.push(loadResource(`/api/vehicles/${id}/statistics`, setStats, null));
+          promises.push(loadResource(`/api/vehicles/${id}/statistics`, setStats, null, "statistics", "No se pudieron cargar las estadísticas públicas. Vuelve a intentarlo más tarde."));
         }
 
         await Promise.allSettled(promises);
@@ -228,7 +227,7 @@ export default function PublicVehicle() {
                         <Fuel className="h-5 w-5 text-primary" />
                       </div>
                       <div tabIndex={0} role="region" aria-label="Historial de repostajes" className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                        {fuelings.length > 0 ? (
+                        {sectionErrors.fuelings ? <p role="alert" className="fl-feedback-error">{sectionErrors.fuelings}</p> : fuelings.length > 0 ? (
                           fuelings.map((fuel) => (
                             <article key={fuel.id} className="fl-public-record">
                               <div>
@@ -256,7 +255,7 @@ export default function PublicVehicle() {
                         <Receipt className="h-5 w-5 text-primary" />
                       </div>
                       <div tabIndex={0} role="region" aria-label="Historial de gastos" className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                        {expenses.length > 0 ? (
+                        {sectionErrors.expenses ? <p role="alert" className="fl-feedback-error">{sectionErrors.expenses}</p> : expenses.length > 0 ? (
                           expenses.map((expense) => (
                             <article key={expense.id} className="fl-public-record">
                               <div>
@@ -309,7 +308,7 @@ export default function PublicVehicle() {
                 {vehicle.showStatistics && !stats && (
                   <Surface as="section" className="fl-workspace" aria-label="Estadísticas verificadas">
                     <h2 className="fl-section-title">Estadísticas verificadas</h2>
-                    <p role={extraLoading ? "status" : undefined} className="fl-supporting mt-3">{extraLoading ? "Cargando estadísticas..." : "No hay estadísticas disponibles para mostrar."}</p>
+                    {sectionErrors.statistics ? <p role="alert" className="fl-feedback-error mt-3">{sectionErrors.statistics}</p> : <p role={extraLoading ? "status" : undefined} className="fl-supporting mt-3">{extraLoading ? "Cargando estadísticas..." : "No hay estadísticas disponibles para mostrar."}</p>}
                   </Surface>
                 )}
 

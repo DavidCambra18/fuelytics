@@ -88,6 +88,17 @@ export default function Settings() {
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [accountPrivacy, setAccountPrivacy] = useState(true);
   const [vehicles, setVehicles] = useState([]);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const retryFocus = useRef(false);
+  const retryButtonRef = useRef(null);
+  const headingRef = useRef(null);
+
+  useEffect(() => {
+    if (loading || !retryFocus.current) return;
+    retryFocus.current = false;
+    (loadFailed ? retryButtonRef : headingRef).current?.focus({ preventScroll: true });
+  }, [loading, loadFailed]);
 
   const handleGoBack = () => {
     if (window.history.length > 1) {
@@ -98,14 +109,16 @@ export default function Settings() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     const loadSettings = async () => {
       setLoading(true);
       setError("");
+      setLoadFailed(false);
 
       try {
         const [profileResponse, vehiclesResponse] = await Promise.all([
-          apiFetch("/api/users/profile"),
-          apiFetch("/api/vehicles"),
+          apiFetch("/api/users/profile", { signal: controller.signal }),
+          apiFetch("/api/vehicles", { signal: controller.signal }),
         ]);
 
         if (!profileResponse.ok) {
@@ -120,6 +133,7 @@ export default function Settings() {
 
         const profileData = await profileResponse.json();
         const vehiclesData = await vehiclesResponse.json();
+        if (controller.signal.aborted) return;
 
         setProfileForm({
           username: profileData.username || username || "",
@@ -140,19 +154,22 @@ export default function Settings() {
           }))
         );
       } catch (loadError) {
+        if (controller.signal.aborted) return;
+        setLoadFailed(true);
         setError(loadError.message || "No se pudo cargar la configuración");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     loadSettings();
 
     return () => {
+      controller.abort();
       toastTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
       toastTimersRef.current = [];
     };
-  }, [username]);
+  }, [username, loadAttempt]);
 
   useEffect(() => {
     const val = profileForm.username.trim();
@@ -400,6 +417,20 @@ export default function Settings() {
     );
   }
 
+  if (loadFailed) {
+    return <main className="section-shell pb-10">
+      <Surface as="section" className="fl-workspace">
+        <h1 className="fl-page-title">Ajustes</h1>
+        <p role="alert" className="fl-feedback-error mt-5">{error}</p>
+        <p className="fl-supporting mt-3">No se han cargado tus ajustes. Vuelve a intentarlo antes de realizar cambios.</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Button ref={retryButtonRef} type="button" onClick={() => { retryFocus.current = true; setLoadAttempt((current) => current + 1); }}>Reintentar</Button>
+          <Button type="button" variant="outline" onClick={handleGoBack}>Volver</Button>
+        </div>
+      </Surface>
+    </main>;
+  }
+
   return (
     <div className="fl-settings-page">
       <main className="pb-10 lg:pb-16">
@@ -407,7 +438,7 @@ export default function Settings() {
           <Surface as="section" className="fl-workspace fl-settings-workspace">
             <div className="fl-settings-heading">
               <div className="max-w-3xl">
-                <h1 className="fl-page-title">Ajustes</h1>
+                <h1 ref={headingRef} tabIndex={-1} className="fl-page-title focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ring)]">Ajustes</h1>
                 <p className="fl-supporting mt-3 max-w-[65ch]">
                   Edita tus datos personales y controla qué información compartes con la comunidad.
                 </p>
