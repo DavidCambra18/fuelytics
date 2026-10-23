@@ -1,4 +1,8 @@
-export const MAP_POPUP_PADDING = Object.freeze({ top: 110, right: 5, bottom: 12, left: 5 });
+export const MAP_POPUP_PADDING = Object.freeze({ top: 110, right: 5, bottom: 85, left: 5 });
+
+export function popupContentMaxHeight(mapHeight) {
+  return Math.max(160, mapHeight - MAP_POPUP_PADDING.top - MAP_POPUP_PADDING.bottom - 10);
+}
 
 export function popupPanOffset(map, popup, padding = MAP_POPUP_PADDING) {
   let x = 0, y = 0;
@@ -21,7 +25,7 @@ export function fitPopupImmediately(map, popup) {
 export function syncPopupMotion(map, popup, reduced, resized = false) {
   const changed = popup.options.autoPan !== !reduced;
   popup.options.autoPan = !reduced;
-  if (resized) popup.options.maxHeight = Math.max(160, map.getSize().y - 132);
+  if (resized) popup.options.maxHeight = popupContentMaxHeight(map.getSize().y);
   if (resized || (changed && !reduced)) popup.update();
   if (reduced) fitPopupImmediately(map, popup);
 }

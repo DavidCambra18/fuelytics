@@ -4,11 +4,11 @@ import { popupPanOffset, fitPopupImmediately, syncPopupMotion } from "../src/uti
 
 const mapBounds = { left: 100, right: 600, top: 200, bottom: 700 };
 test("una ficha dentro del espacio disponible no mueve el mapa", () => {
-  assert.deepEqual(popupPanOffset(mapBounds, { left: 180, right: 440, top: 330, bottom: 660 }), [0, 0]);
+  assert.deepEqual(popupPanOffset(mapBounds, { left: 180, right: 440, top: 330, bottom: 600 }), [0, 0]);
 });
 test("el ajuste reserva espacio al zoom y la leyenda sin cambiar coordenadas de la estación", () => {
   assert.deepEqual(popupPanOffset(mapBounds, { left: 90, right: 350, top: 210, bottom: 540 }), [-15, -100]);
-  assert.deepEqual(popupPanOffset(mapBounds, { left: 400, right: 660, top: 410, bottom: 740 }), [65, 52]);
+  assert.deepEqual(popupPanOffset(mapBounds, { left: 400, right: 660, top: 410, bottom: 700 }), [65, 85]);
 });
 test("el encuadre reducido cancela el pan implícito y solo utiliza panBy sin animación", () => {
   const calls = [];
@@ -25,7 +25,7 @@ test("el popup reducido desactiva el pan nativo antes de actualizar su contenido
   const map = { getSize: () => ({ y: 500 }) };
   syncPopupMotion(map, popup, true, true);
   assert.deepEqual(calls, [false]);
-  assert.equal(popup.options.maxHeight, 368);
+  assert.equal(popup.options.maxHeight, 295);
 });
 
 test("la preferencia normal se restaura sin actualizaciones redundantes", () => {

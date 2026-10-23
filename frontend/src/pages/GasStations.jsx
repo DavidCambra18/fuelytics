@@ -11,7 +11,7 @@ import { Button } from "../components/ui/button";
 import CustomSelect from "../components/CustomSelect";
 import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
 import { mapFlightOptions, prefersReducedMotion, scrollBehavior } from "../utils/motion";
-import { syncPopupMotion, MAP_POPUP_PADDING } from "../utils/mapPopup";
+import { syncPopupMotion, popupContentMaxHeight, MAP_POPUP_PADDING } from "../utils/mapPopup";
 import { apiJson } from "../services/api";
 
 const DEFAULT_CENTER = [40.4168, -3.7038];
@@ -193,7 +193,7 @@ const StationPopup = memo(function StationPopup({ station, tone }) {
       maxWidth={300}
       minWidth={230}
       autoPan={!reducedMotion}
-      maxHeight={Math.max(160, map.getSize().y - 132)}
+      maxHeight={popupContentMaxHeight(map.getSize().y)}
       autoPanPaddingTopLeft={[MAP_POPUP_PADDING.left, MAP_POPUP_PADDING.top]}
       autoPanPaddingBottomRight={[MAP_POPUP_PADDING.right, MAP_POPUP_PADDING.bottom]}
     >
