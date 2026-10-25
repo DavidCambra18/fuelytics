@@ -69,8 +69,9 @@ public class ExportService {
         validateRange(startDate, endDate);
 
         Vehicle vehicle = getOwnedVehicle(vehicleId, email);
+        List<FuelEntry> fullHistory = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId);
         List<FuelEntry> fuelings = filterFuelingsByDateRange(
-                fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId),
+                fullHistory,
                 startDate,
                 endDate);
 
@@ -78,7 +79,7 @@ public class ExportService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No hay repostajes en el rango seleccionado");
         }
 
-        byte[] body = buildFuelingsPdf(vehicle, fuelings, startDate, endDate);
+        byte[] body = buildFuelingsPdf(vehicle, fuelings, startDate, endDate, fullHistory);
         return buildResponse(body, buildFileName("repostajes", vehicle, startDate, endDate));
     }
 
@@ -113,8 +114,9 @@ public class ExportService {
         validateRange(startDate, endDate);
 
         Vehicle vehicle = getOwnedVehicle(vehicleId, email);
+        List<FuelEntry> fullHistory = fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId);
         List<FuelEntry> fuelings = filterFuelingsByDateRange(
-                fuelingRepository.findByVehicleIdOrderByDateDesc(vehicleId),
+                fullHistory,
                 startDate,
                 endDate);
         List<Expense> expenses = filterExpensesByDateRange(
@@ -126,7 +128,7 @@ public class ExportService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No hay datos en el rango seleccionado");
         }
 
-        byte[] body = buildSummaryPdf(vehicle, fuelings, expenses, startDate, endDate);
+        byte[] body = buildSummaryPdf(vehicle, fuelings, expenses, startDate, endDate, fullHistory);
         return buildResponse(body, buildFileName("resumen", vehicle, startDate, endDate));
     }
 
@@ -192,8 +194,8 @@ public class ExportService {
         return true;
     }
 
-    private byte[] buildFuelingsPdf(Vehicle vehicle, List<FuelEntry> fuelings, LocalDate startDate, LocalDate endDate) {
-        SummaryTotals totals = calculateTotals(vehicle, fuelings, List.of());
+    private byte[] buildFuelingsPdf(Vehicle vehicle, List<FuelEntry> fuelings, LocalDate startDate, LocalDate endDate, List<FuelEntry> fullHistory) {
+        SummaryTotals totals = calculateTotals(vehicle, fuelings, List.of(), fullHistory, startDate, endDate);
         String distanceUnit = distanceUnit(vehicle);
         String quantityUnit = quantityUnit(vehicle);
 
@@ -266,8 +268,8 @@ public class ExportService {
     }
 
     private byte[] buildSummaryPdf(Vehicle vehicle, List<FuelEntry> fuelings, List<Expense> expenses,
-            LocalDate startDate, LocalDate endDate) {
-        SummaryTotals totals = calculateTotals(vehicle, fuelings, expenses);
+            LocalDate startDate, LocalDate endDate, List<FuelEntry> fullHistory) {
+        SummaryTotals totals = calculateTotals(vehicle, fuelings, expenses, fullHistory, startDate, endDate);
         String distanceUnit = distanceUnit(vehicle);
         String quantityUnit = quantityUnit(vehicle);
 
@@ -305,6 +307,11 @@ public class ExportService {
     }
 
     private SummaryTotals calculateTotals(Vehicle vehicle, List<FuelEntry> fuelings, List<Expense> expenses) {
+        return calculateTotals(vehicle, fuelings, expenses, fuelings, null, null);
+    }
+
+    private SummaryTotals calculateTotals(Vehicle vehicle, List<FuelEntry> fuelings, List<Expense> expenses,
+            List<FuelEntry> fullHistory, LocalDate startDate, LocalDate endDate) {
         BigDecimal totalDistance = BigDecimal.ZERO;
         BigDecimal totalQuantity = BigDecimal.ZERO;
         BigDecimal totalFuelCost = BigDecimal.ZERO;
@@ -322,7 +329,7 @@ public class ExportService {
             totalExpenseCost = totalExpenseCost.add(nullToZero(expense.getCost()));
         }
 
-        ConsumptionCalculator.ConsumptionSummary consumption = consumptionCalculator.calculate(fuelings, vehicle);
+        ConsumptionCalculator.ConsumptionSummary consumption = consumptionCalculator.calculate(fullHistory, vehicle, startDate, endDate);
         return new SummaryTotals(fuelings.size(), expenses.size(), totalDistance, totalQuantity, totalFuelCost,
                 totalExpenseCost, consumption.averageConsumption(), consumption.costPerUnit(),
                 consumption.averageUnitPrice());

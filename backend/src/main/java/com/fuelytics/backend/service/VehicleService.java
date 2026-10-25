@@ -143,14 +143,15 @@ public class VehicleService {
         return response;
     }
 
+    @Transactional
     public VehicleResponseDTO updateVehicle(
             Integer id,
             VehicleUpdateDTO dto,
             String email) {
 
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
 
-        Vehicle vehicle = vehicleRepository.findById(id)
+        Vehicle vehicle = vehicleRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Vehicle not found"));

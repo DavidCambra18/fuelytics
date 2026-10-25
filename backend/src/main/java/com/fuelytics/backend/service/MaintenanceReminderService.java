@@ -120,8 +120,11 @@ public class MaintenanceReminderService {
         Expense completed = r.getCompletedExpense();
         Integer km = r.getTargetOdometer() == null ? null : r.getTargetOdometer() - odometer;
         Long days = r.getTargetDate() == null ? null : ChronoUnit.DAYS.between(LocalDate.now(), r.getTargetDate());
-        String urgency = (km != null && km <= 500) || (days != null && days <= 7) ? "CRITICAL"
-                : (km != null && km <= 1200) || (days != null && days <= 30) ? "WARNING" : "OK";
+        boolean hours = r.getVehicle().getVehicleType() == com.fuelytics.backend.entity.enums.VehicleType.agricultural;
+        int criticalLead = hours ? 10 : 500;
+        int warningLead = hours ? 25 : 1200;
+        String urgency = (km != null && km <= criticalLead) || (days != null && days <= 7) ? "CRITICAL"
+                : (km != null && km <= warningLead) || (days != null && days <= 30) ? "WARNING" : "OK";
         return new MaintenanceReminderResponseDTO(r.getId(), r.getVehicle().getId(), r.getTitle(), r.getNotes(),
                 r.getTargetOdometer(), r.getTargetDate(), km, days, completed == null ? urgency : "OK",
                 completed == null ? "PENDING" : "COMPLETED", completed == null ? null : completed.getId(),

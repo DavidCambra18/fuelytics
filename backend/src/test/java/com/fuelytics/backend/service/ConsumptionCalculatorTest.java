@@ -79,6 +79,22 @@ class ConsumptionCalculatorTest {
         assertEquals(new BigDecimal("3"), summary.verifiedQuantity());
     }
 
+    @Test
+    void dateRangeRetainsEarlierPartialsAndCountsCyclesOnTheirClosingDate() {
+        var history = List.of(
+                entry(1, "2026-01-01", RefuelingType.initial, FuelType.diesel, "0", "40", "60"),
+                entry(2, "2026-01-20", RefuelingType.partial, FuelType.diesel, "200", "20", "30"),
+                entry(3, "2026-02-01", RefuelingType.complete, FuelType.diesel, "300", "25", "40"),
+                entry(4, "2026-03-01", RefuelingType.complete, FuelType.diesel, "500", "50", "80"));
+        var vehicle = vehicle(VehicleEnergyType.diesel, VehicleType.car);
+        var summary = calculator.calculate(history, vehicle, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 2, 28));
+        assertEquals(1, summary.verifiedCycles());
+        assertEquals(new BigDecimal("9.00"), summary.averageConsumption());
+        assertEquals(new BigDecimal("14.00"), summary.costPerUnit());
+        assertEquals(0, calculator.calculate(history, vehicle, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31)).verifiedCycles());
+        assertEquals(new BigDecimal("10.00"), calculator.calculate(history, vehicle, LocalDate.of(2026, 3, 1), null).averageConsumption());
+    }
+
     private Vehicle vehicle(VehicleEnergyType energyType, VehicleType vehicleType) {
         Vehicle vehicle = new Vehicle();
         vehicle.setVehicleEnergyType(energyType);

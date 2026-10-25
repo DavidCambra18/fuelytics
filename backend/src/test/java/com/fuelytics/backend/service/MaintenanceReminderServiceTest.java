@@ -148,4 +148,16 @@ class MaintenanceReminderServiceTest {
         var cleared = mapper.readValue("{\"maintenanceReminderId\":null}", ExpenseDTO.class);
         assertTrue(cleared.isMaintenanceReminderSpecified()); assertNull(cleared.getMaintenanceReminderId());
     }
+    @Test void agriculturalRemindersUseHoursRatherThanKilometreLeadTimes() {
+        vehicle.setVehicleType(com.fuelytics.backend.entity.enums.VehicleType.agricultural);
+        when(reminders.findByVehicleIdOrderByIdDesc(1)).thenReturn(List.of(reminder));
+        reminder.setTargetOdometer(100100);
+        assertEquals("OK", service.list(1, "owner@example.com").get(0).urgency());
+        reminder.setTargetOdometer(100025);
+        assertEquals("WARNING", service.list(1, "owner@example.com").get(0).urgency());
+        reminder.setTargetOdometer(100010);
+        assertEquals("CRITICAL", service.list(1, "owner@example.com").get(0).urgency());
+        reminder.setTargetOdometer(99999);
+        assertEquals(-1, service.list(1, "owner@example.com").get(0).remainingKm());
+    }
 }

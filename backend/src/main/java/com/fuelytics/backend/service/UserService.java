@@ -127,8 +127,10 @@ public class UserService {
         return dto;
     }
 
+    @Transactional
     public UserProfileDTO updateProfile(String email, UserProfileDTO dto) {
-        User user = findUserByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
+        if (user == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
         String nextUsername = normalize(dto.getUsername());
         if (nextUsername != null && !nextUsername.equals(user.getUsername())) ReservedUsernames.requireAllowed(nextUsername);
 
@@ -149,8 +151,10 @@ public class UserService {
         return toProfileDTO(user);
     }
 
+    @Transactional
     public UserProfileDTO updatePrivacy(String email, UserPrivacyDTO dto) {
-        User user = findUserByEmail(email);
+        User user = userRepository.findByEmailForUpdate(email);
+        if (user == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
 
         if (dto.getProfilePublic() != null) {
             user.setProfilePublic(dto.getProfilePublic());

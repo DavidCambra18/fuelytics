@@ -64,7 +64,7 @@ class ReservedUsernamesTest {
         var user = new User();
         user.setId(7);
         user.setUsername("usuario");
-        when(users.findByEmail("user@example.com")).thenReturn(user);
+        when(users.findByEmailForUpdate("user@example.com")).thenReturn(user);
         for (String value : RESERVED) {
             var update = new UserProfileDTO();
             update.setUsername(value);
@@ -79,7 +79,7 @@ class ReservedUsernamesTest {
         var user = new User();
         user.setId(7);
         user.setUsername("admin");
-        when(users.findByEmail("user@example.com")).thenReturn(user);
+        when(users.findByEmailForUpdate("user@example.com")).thenReturn(user);
         var update = new UserProfileDTO();
         update.setUsername("admin");
         update.setFirstName("María");

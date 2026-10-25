@@ -18,6 +18,12 @@ import com.fuelytics.backend.entity.enums.VehicleType;
 public class ConsumptionCalculator {
 
     public ConsumptionSummary calculate(List<FuelEntry> entries, Vehicle vehicle) {
+        return calculate(entries, vehicle, null, null);
+    }
+
+    // Attribute a closed cycle to its closing date, retaining its earlier baseline and partial fills.
+    public ConsumptionSummary calculate(List<FuelEntry> entries, Vehicle vehicle,
+            java.time.LocalDate startDate, java.time.LocalDate endDate) {
         Measurement measurement = measurementFor(vehicle.getVehicleEnergyType());
         List<FuelEntry> sorted = entries.stream()
                 .filter(entry -> measurementFor(entry.getFuelType()) == measurement)
@@ -55,10 +61,14 @@ public class ConsumptionCalculator {
             cycleCost = cycleCost.add(zeroIfNull(entry.getPriceTotal()));
 
             if (type == RefuelingType.complete && cycleDistance.signum() > 0) {
-                verifiedDistance = verifiedDistance.add(cycleDistance);
-                verifiedQuantity = verifiedQuantity.add(cycleQuantity);
-                verifiedCost = verifiedCost.add(cycleCost);
-                verifiedCycles++;
+                if (entry.getDate() != null
+                        && (startDate == null || !entry.getDate().isBefore(startDate))
+                        && (endDate == null || !entry.getDate().isAfter(endDate))) {
+                    verifiedDistance = verifiedDistance.add(cycleDistance);
+                    verifiedQuantity = verifiedQuantity.add(cycleQuantity);
+                    verifiedCost = verifiedCost.add(cycleCost);
+                    verifiedCycles++;
+                }
                 cycleDistance = BigDecimal.ZERO;
                 cycleQuantity = BigDecimal.ZERO;
                 cycleCost = BigDecimal.ZERO;
