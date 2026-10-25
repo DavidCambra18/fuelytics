@@ -10,4 +10,7 @@ public interface MaintenanceReminderRepository extends JpaRepository<Maintenance
     @EntityGraph(attributePaths = "completedExpense")
     List<MaintenanceReminder> findByVehicleIdOrderByIdDesc(Integer vehicleId);
     Optional<MaintenanceReminder> findByCompletedExpenseId(Integer expenseId);
+
+    List<com.fuelytics.backend.entity.MaintenanceReminder> findByCompletedExpense_IdIn(List<Integer> ids);
+
 }

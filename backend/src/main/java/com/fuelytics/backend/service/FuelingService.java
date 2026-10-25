@@ -244,7 +244,7 @@ public class FuelingService {
         vehicleRepository.save(vehicle);
     }
 
-    private FuelingResponseDTO mapToDTO(FuelEntry fuelEntry) {
+    FuelingResponseDTO mapToDTO(FuelEntry fuelEntry) {
 
         FuelingResponseDTO dto = new FuelingResponseDTO();
 

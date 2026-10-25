@@ -166,7 +166,7 @@ public class ExpenseService {
         return mapToDTO(expense, reminderId);
     }
 
-    private ExpenseResponseDTO mapToDTO(Expense expense, Integer reminderId) {
+    ExpenseResponseDTO mapToDTO(Expense expense, Integer reminderId) {
         ExpenseResponseDTO dto = new ExpenseResponseDTO();
         dto.setId(expense.getId());
         dto.setVehicleId(expense.getVehicle().getId());

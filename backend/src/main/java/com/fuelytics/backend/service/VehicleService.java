@@ -83,14 +83,21 @@ public class VehicleService {
 
         User user = userRepository.findByEmail(email);
 
-        return vehicleRepository.findByUserId(user.getId())
-                .stream()
-                .map(this::mapToDTO)
+        Map<Integer, Integer> odometers = fuelingRepository.maxOdometersForUser(user.getId()).stream()
+                .filter(value -> value.getOdometer() != null)
+                .collect(java.util.stream.Collectors.toMap(FuelingRepository.VehicleOdometer::getVehicleId,
+                        FuelingRepository.VehicleOdometer::getOdometer));
+        return vehicleRepository.findByUserId(user.getId()).stream()
+                .map(vehicle -> mapToDTO(vehicle, Math.max(vehicle.getOdometer() == null ? 0 : vehicle.getOdometer(),
+                        odometers.getOrDefault(vehicle.getId(), 0))))
                 .toList();
     }
 
     private VehicleResponseDTO mapToDTO(Vehicle v) {
+        return mapToDTO(v, currentOdometer(v));
+    }
 
+    private VehicleResponseDTO mapToDTO(Vehicle v, int odometer) {
         VehicleResponseDTO dto = new VehicleResponseDTO();
 
         dto.setId(v.getId());
@@ -101,7 +108,7 @@ public class VehicleService {
         dto.setPower(v.getPower());
         dto.setCc(v.getCc());
         dto.setYear(v.getYear());
-        dto.setOdometer(currentOdometer(v));
+        dto.setOdometer(odometer);
         dto.setTankCapacity(v.getTankCapacity());
         dto.setGearbox(v.getGearbox());
         dto.setOfficialConsumption(v.getOfficialConsumption());
