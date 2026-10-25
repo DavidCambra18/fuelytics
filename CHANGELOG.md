@@ -4,7 +4,36 @@ Todos los cambios importantes de este proyecto se documentarán en este archivo.
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones siguen [Semantic Versioning](https://semver.org/lang/es/).
 
-Las fechas corresponden a la publicación de cada versión en GitHub.
+## [v1.1.0] — 2026-10-25
+
+### Añadido
+
+- **Acceso con Google**, con gestión de la cuenta vinculada desde Ajustes.
+- **Amigos y clasificación entre amigos**: busca usuarios mientras escribes, envía solicitudes y compara consumos.
+- **Recordatorios independientes** por fecha o kilometraje, que puedes vincular al gasto del mantenimiento realizado.
+- **Nuevas estadísticas** de consumo, precio y distancia, con filtros por fechas o últimos repostajes, consumo mensual y desglose de gastos por categoría.
+- **Recorrido guiado** para las cuentas nuevas, disponible también desde el menú de usuario.
+- Opción para **eliminar tu cuenta** y sus datos desde Ajustes.
+- Correos de bienvenida y solicitudes de amistad cuando el envío de correo está activado.
+
+### Mejorado
+
+- **Interfaz renovada en toda la aplicación**, con navegación lateral, menú móvil y formularios más cómodos en pantallas pequeñas.
+- **Mapa de gasolineras más claro**: etiquetas con el precio del combustible elegido, fichas de estación mejor organizadas y más combustibles disponibles.
+- Ubicación personal en el mapa, botón para volver a ella y distancias calculadas desde tu posición cuando está disponible.
+- **Registro en tres pasos**, con comprobación de disponibilidad del correo y del usuario, y requisitos de contraseña más claros.
+- Historiales de repostajes y gastos paginados, manteniendo los resúmenes de todo el historial.
+- Navegación y estados de carga más fluidos, mejores controles por teclado y animaciones que respetan la preferencia de movimiento reducido.
+
+### Corregido
+
+- Cálculos de consumo que podían perder repostajes parciales o mezclar unidades, e informes PDF que perdían la referencia anterior al filtrar fechas.
+- Kilometraje desactualizado en el resumen del vehículo y al montar neumáticos después de registrar o modificar un repostaje.
+- Recordatorios que podían cerrarse por registrar otro mantenimiento, y errores al sustituir neumáticos o vincular gastos de otro vehículo.
+- Cierres de sesión causados por respuestas antiguas y falta de sincronización al entrar o salir desde otra pestaña.
+- Problemas de privacidad en las estadísticas y datos de vehículos públicos, y conflictos entre cambios simultáneos de perfil o vehículo.
+- Fechas que aparecían en el día anterior, resultados inválidos en la calculadora y unidades incorrectas en vehículos eléctricos, de gas y agrícolas.
+- Fallos al cargar gasolineras, mover rápidamente el mapa o abrir sus fichas, además de avisos temporales de «Vehículo no encontrado» y estadísticas a cero durante la carga.
 
 ## [v1.0.0] - 2026-06-11
 
