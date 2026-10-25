@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import { apiJson } from "../services/api";
+import { queueWelcomeTour } from "../utils/onboarding";
 import { validateUsername } from "../utils/registrationValidation";
 import useRegistrationAvailability from "../hooks/useRegistrationAvailability";
 import GoogleIdentityButton from "./GoogleIdentityButton";
@@ -47,6 +48,7 @@ export default function GoogleSignInPanel({ onRegistrationChange }) {
     setError("");
     try {
       const result = await apiJson("/api/auth/google/register", { method: "POST", body: { registrationToken: pending.registrationToken, username: normalized } });
+      queueWelcomeTour(result.username);
       if (!isActive()) return;
       finish(result);
     } catch (error) {

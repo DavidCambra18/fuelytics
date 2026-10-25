@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Loader2, Check, X, Info } from "lucide-react";
 import { Tooltip } from "radix-ui";
 import { apiJson } from "../services/api";
+import { queueWelcomeTour } from "../utils/onboarding";
 import useRegistrationAvailability from "../hooks/useRegistrationAvailability";
 import { normalizeRegistration, validateRegistration, validatePassword, REGISTRATION_LIMITS } from "../utils/registrationValidation";
 import GoogleSignInPanel from "../components/GoogleSignInPanel";
@@ -185,6 +186,7 @@ export default function Register() {
     setErrorMessage("");
     try {
       await apiJson("/api/users/register", { method: "POST", body });
+      queueWelcomeTour(body.username);
       if (!isActive()) return;
       navigate("/login");
     } catch (error) {

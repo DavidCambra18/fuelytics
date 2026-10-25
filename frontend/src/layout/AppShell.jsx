@@ -1,6 +1,7 @@
 import { Suspense, useState } from "react";
 import { Outlet } from "react-router-dom";
 import UserMenu from "../components/UserMenu";
+import OnboardingTour from "../components/OnboardingTour";
 import useMediaQuery from "../hooks/useMediaQuery";
 
 const SIDEBAR_PREFERENCE = "fuelytics:sidebar-mode";
@@ -36,6 +37,7 @@ export default function AppShell() {
           <Outlet />
         </Suspense>
       </div>
+      <OnboardingTour />
     </div>
   );
 }

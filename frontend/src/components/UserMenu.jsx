@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Fuel, Settings, Warehouse, User, LogOut, ChevronRight, ChevronUp, Trophy, Calculator, Users, PanelLeftClose, PanelLeftOpen, MoreHorizontal, X, Droplets } from "lucide-react";
+import { Fuel, Settings, Warehouse, User, LogOut, ChevronRight, ChevronUp, Trophy, Calculator, Users, PanelLeftClose, PanelLeftOpen, MoreHorizontal, X, Droplets, Compass } from "lucide-react";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../services/api";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
@@ -9,24 +9,25 @@ import ViewportPortal from "./ViewportPortal";
 import ProjectLinks from "./ProjectLinks";
 
 const NAVIGATION = [
-  { to: "/dashboard", label: "Garaje", icon: Warehouse, matches: (path) => path === "/dashboard" || path.startsWith("/vehicles/") },
-  { to: "/gas-stations", label: "Gasolineras", icon: Fuel },
+  { to: "/dashboard", label: "Garaje", tour: "garage", icon: Warehouse, matches: (path) => path === "/dashboard" || path.startsWith("/vehicles/") },
+  { to: "/gas-stations", label: "Gasolineras", tour: "gas-stations", icon: Fuel },
   { to: "/ranking", label: "Clasificación", icon: Trophy },
-  { to: "/friends", label: "Amigos", icon: Users },
-  { to: "/calculator", label: "Calculadora", icon: Calculator },
+  { to: "/friends", label: "Amigos", tour: "friends", icon: Users },
+  { to: "/calculator", label: "Calculadora", tour: "calculator", icon: Calculator },
 ];
 const ACCOUNT_LINKS = [
   { to: "/my-profile", label: "Mi perfil", icon: User },
   { to: "/settings", label: "Ajustes", icon: Settings },
 ];
+const TOUR_LINK = { to: "/dashboard?tour=1", label: "Recorrido guiado", icon: Compass };
 const MOBILE_LINKS = [NAVIGATION[0], NAVIGATION[1], NAVIGATION[3]];
-const MORE_LINKS = [NAVIGATION[2], NAVIGATION[4], ...ACCOUNT_LINKS];
+const MORE_LINKS = [NAVIGATION[2], NAVIGATION[4], ...ACCOUNT_LINKS, TOUR_LINK];
 const isCurrent = (item, pathname) => item.matches ? item.matches(pathname) : pathname === item.to;
 
 function NavigationLink({ item, pathname, onNavigate, compact = false }) {
   const Icon = item.icon;
   return (
-    <Link to={item.to} onClick={onNavigate} aria-current={isCurrent(item, pathname) ? "page" : undefined} aria-label={item.label} title={compact ? item.label : undefined} className="app-nav-link">
+    <Link data-tour={item.tour} to={item.to} onClick={onNavigate} aria-current={isCurrent(item, pathname) ? "page" : undefined} aria-label={item.label} title={compact ? item.label : undefined} className="app-nav-link">
       <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
       <span className={compact ? "sr-only" : "min-w-0 truncate"}>{item.label}</span>
     </Link>
@@ -129,7 +130,7 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
           </button>
 
           <div ref={profileRef} className="relative mt-3 border-t border-white/[0.07] pt-3">
-            <button ref={profileButtonRef} type="button" onClick={() => { if (!profileOpen) setProfileOpen(true); else if (isProfileClosing()) reopenProfile(); else closeProfile(); }} aria-label="Menú de usuario" aria-expanded={profileOpen} aria-controls={profileOpen ? "profile-options" : undefined} data-current={ACCOUNT_LINKS.some((item) => isCurrent(item, pathname)) || undefined} title={expanded ? undefined : username || "Mi cuenta"} className="app-profile-trigger">
+            <button ref={profileButtonRef} data-tour="account" type="button" onClick={() => { if (!profileOpen) setProfileOpen(true); else if (isProfileClosing()) reopenProfile(); else closeProfile(); }} aria-label="Menú de usuario" aria-expanded={profileOpen} aria-controls={profileOpen ? "profile-options" : undefined} data-current={ACCOUNT_LINKS.some((item) => isCurrent(item, pathname)) || undefined} title={expanded ? undefined : username || "Mi cuenta"} className="app-profile-trigger">
               <span className="app-profile-avatar">{initial}</span>
               {expanded ? <><span className="min-w-0 flex-1 text-left"><span className="block truncate text-sm font-semibold text-slate-100">{username || "Usuario"}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{fullName || "Mi cuenta"}</span></span><ChevronUp className={`h-4 w-4 shrink-0 text-muted-foreground transition ${profileOpen ? "rotate-180" : ""}`} aria-hidden="true" /></> : null}
             </button>
@@ -137,7 +138,7 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
               <div ref={profilePanelRef} id="profile-options" className="app-profile-popover">
                 <p className="mb-2 truncate px-3 pt-2 text-xs font-medium text-muted-foreground">@{username}</p>
                 <nav aria-label="Opciones de la cuenta" className="space-y-1">
-                  {ACCOUNT_LINKS.map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}
+                  {[...ACCOUNT_LINKS, TOUR_LINK].map((item) => <NavigationLink key={item.to} item={item} pathname={pathname} onNavigate={closeNavigation} />)}
                 </nav>
                 <button type="button" onClick={logout} className="app-logout-button"><LogOut className="h-4 w-4" aria-hidden="true" />Cerrar sesión</button>
               </div>
@@ -149,9 +150,9 @@ export default function UserMenu({ expanded, onToggleSidebar }) {
       <nav className="app-mobile-navigation" aria-label="Navegación principal móvil">
         {MOBILE_LINKS.map((item) => {
           const Icon = item.icon;
-          return <Link key={item.to} to={item.to} onClick={closeNavigation} aria-current={isCurrent(item, pathname) ? "page" : undefined} className="app-mobile-link"><Icon className="h-5 w-5" aria-hidden="true" /><span>{item.label}</span></Link>;
+          return <Link key={item.to} data-tour={item.tour} to={item.to} onClick={closeNavigation} aria-current={isCurrent(item, pathname) ? "page" : undefined} className="app-mobile-link"><Icon className="h-5 w-5" aria-hidden="true" /><span>{item.label}</span></Link>;
         })}
-        <button type="button" onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen} aria-controls={mobileOpen ? "mobile-more" : undefined} className={`app-mobile-link ${MORE_LINKS.some((item) => isCurrent(item, pathname)) ? "is-current" : ""}`}><MoreHorizontal className="h-5 w-5" aria-hidden="true" /><span>Más</span></button>
+        <button type="button" data-tour="mobile-more" onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen} aria-controls={mobileOpen ? "mobile-more" : undefined} className={`app-mobile-link ${MORE_LINKS.some((item) => isCurrent(item, pathname)) ? "is-current" : ""}`}><MoreHorizontal className="h-5 w-5" aria-hidden="true" /><span>Más</span></button>
       </nav>
 
       {mobileOpen ? (

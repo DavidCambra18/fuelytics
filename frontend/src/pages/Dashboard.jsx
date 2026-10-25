@@ -37,7 +37,7 @@ export default function Dashboard() {
             <h1 className="fl-page-title mt-2">Tu garaje</h1>
             <p className="fl-supporting mt-3">Repostajes, mantenimiento y gastos. Todo empieza por tu vehículo.</p>
           </div>
-          <Button asChild><Link to="/vehicles/new"><Plus aria-hidden="true" />Crear coche</Link></Button>
+          <Button asChild><Link to="/vehicles/new" data-tour="create-vehicle"><Plus aria-hidden="true" />Crear coche</Link></Button>
         </header>
         {loading ? <p role="status" className="fl-supporting py-8">Cargando vehículos...</p>
           : error ? <p role="alert" className="fl-feedback-error">{error}</p>
