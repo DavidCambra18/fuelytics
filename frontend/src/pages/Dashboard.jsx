@@ -61,7 +61,7 @@ export default function Dashboard() {
                     </span>
                     <ArrowUpRight size={20} className="shrink-0 text-muted-foreground" aria-hidden="true" />
                   </Link>
-                  <VehicleAlerts vehicleId={vehicle.id} />
+                  <VehicleAlerts vehicleType={vehicle.vehicleType} vehicleId={vehicle.id} />
                 </Surface>
               ))}
             </div>

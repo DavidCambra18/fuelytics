@@ -52,6 +52,7 @@ export async function apiFetch(path, options = {}) {
 		finalHeaders.set("Content-Type", "application/json");
 	}
 
+	const requestToken = finalHeaders.get("Authorization");
 	const requestBody =
 		body && finalHeaders.get("Content-Type") === "application/json" && typeof body !== "string"
 			? JSON.stringify(body)
@@ -64,7 +65,7 @@ export async function apiFetch(path, options = {}) {
 			body: requestBody,
 		});
 
-		if (response.status === 401 && getAuthToken() && typeof window !== "undefined") {
+		if (response.status === 401 && requestToken && requestToken === `Bearer ${getAuthToken()}` && typeof window !== "undefined") {
 			localStorage.removeItem("token");
 			localStorage.removeItem("username");
 			window.dispatchEvent(new Event("fuelytics:unauthorized"));

@@ -1,6 +1,6 @@
+import { localDate } from "../utils/localDate";
 import useActionGuard from "../hooks/useActionGuard";
-import { loadRequest } from "../utils/loadRequest";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 import { Download, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
@@ -11,7 +11,8 @@ import { Surface } from "../components/ui/surface";
 import { Field, Input } from "../components/ui/field";
 import { DialogFrame } from "../components/ui/dialog-frame";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
-import usePagination from "../hooks/usePagination";
+import useHistoryPage from "../hooks/useHistoryPage";
+import { getPageNumbers } from "../utils/pagination";
 import FormErrorSummary from "../components/FormErrorSummary";
 import {
   Pagination,
@@ -63,7 +64,7 @@ function formatDateEs(value) {
 
 function createInitialFormData() {
   return {
-    date: new Date().toISOString().split("T")[0],
+    date: localDate(),
     type: "maintenance",
     description: "",
     cost: "",
@@ -74,7 +75,7 @@ function createInitialFormData() {
 
 function toFormData(expense) {
   return {
-    date: expense?.date || new Date().toISOString().split("T")[0],
+    date: expense?.date || localDate(),
     type: expense?.type || "maintenance",
     description: expense?.description || "",
     cost: expense?.cost ?? "",
@@ -89,30 +90,11 @@ function toNumber(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function parseExpenseDate(value) {
-  if (!value) return null;
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 function formatMoney(value) {
   return value.toLocaleString("es-ES", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-
-function getMonthSpan(expensesList) {
-  const dates = expensesList
-    .map((expense) => parseExpenseDate(expense.date))
-    .filter(Boolean)
-    .sort((left, right) => left - right);
-
-  if (dates.length === 0) return 0;
-  const firstDate = dates[0];
-  const lastDate = dates[dates.length - 1];
-
-  return (lastDate.getFullYear() - firstDate.getFullYear()) * 12 + (lastDate.getMonth() - firstDate.getMonth()) + 1;
 }
 
 export default function Expenses() {
@@ -121,14 +103,15 @@ export default function Expenses() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedReminder = Number(searchParams.get("reminderId"));
   const hasRequestedReminder = Number.isInteger(requestedReminder) && requestedReminder > 0;
-  const [expenses, setExpenses] = useState([]);
+  const currentYear = new Date().getFullYear();
+  const { data: history, loading, error: historyError, setPage: setCurrentPage, reload: reloadHistory } = useHistoryPage("expenses", selectedVehicle?.id, currentYear);
+  const expenses = history.content;
   const [availableTires, setAvailableTires] = useState([]);
   const [availableReminders, setAvailableReminders] = useState([]);
   const [remindersLoading, setRemindersLoading] = useState(true);
   const [remindersError, setRemindersError] = useState("");
   const [remindersAttempt, setRemindersAttempt] = useState(0);
   const retryingReminders = useRef(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState(null);
   const [showForm, setShowForm] = useState(hasRequestedReminder);
@@ -138,39 +121,15 @@ export default function Expenses() {
   const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(() => ({ ...createInitialFormData(), maintenanceReminderId: hasRequestedReminder ? String(requestedReminder) : "" }));
   const itemsPerPage = 15;
-  const { page: currentPage, totalPages, startIndex, setPage: setCurrentPage } = usePagination(expenses.length, itemsPerPage);
+  const { page: currentPage, totalPages, totalElements: totalItems } = history;
+  const startIndex = (currentPage - 1) * itemsPerPage;
   const fieldProps = (name) => ({
     id: `expense-${name}`,
     "aria-invalid": !!formError?.fields[name],
     "aria-describedby": formError?.fields[name] ? `expense-${name}-error` : undefined,
   });
 
-  const now = new Date();
-  const currentYear = now.getFullYear();
-
-  const exportDateRange = useMemo(() => {
-    if (expenses.length === 0) return {};
-    const dates = expenses.map((e) => e.date).filter(Boolean).sort();
-    if (dates.length === 0) return {};
-    return { startDate: dates[0], endDate: dates[dates.length - 1] };
-  }, [expenses]);
-
-  useEffect(() => {
-    if (!selectedVehicle?.id) return;
-    const controller = new AbortController();
-    loadRequest({
-      signal: controller.signal,
-      load: async () => {
-        const response = await apiFetch(`/api/expenses/vehicle/${selectedVehicle.id}`, { signal: controller.signal });
-        if (!response.ok) throw new Error("No se pudieron cargar los gastos");
-        return response.json();
-      },
-      onSuccess: (data) => setExpenses(data || []),
-      onError: (error) => setError(error.message || "Error cargando gastos"),
-      onSettled: () => setLoading(false),
-    });
-    return () => controller.abort();
-  }, [selectedVehicle?.id]);
+  const exportDateRange = { startDate: history.startDate, endDate: history.endDate };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -300,11 +259,7 @@ export default function Expenses() {
       setAvailableReminders((current) => current.map((reminder) => reminder.id === savedExpense.maintenanceReminderId
         ? { ...reminder, status: "COMPLETED", expenseId: savedExpense.id }
         : reminder.expenseId === savedExpense.id ? { ...reminder, status: "PENDING", expenseId: null } : reminder));
-      setExpenses((current) =>
-        editingExpense
-          ? current.map((item) => (item.id === savedExpense.id ? savedExpense : item))
-          : [savedExpense, ...current]
-      );
+      reloadHistory(!editingExpense);
       closeForm();
     } catch (submitError) {
       if (!isActive()) return;
@@ -328,7 +283,7 @@ export default function Expenses() {
       if (!isActive()) return;
       setAvailableReminders((current) => current.map((reminder) => reminder.expenseId === expense.id
         ? { ...reminder, status: "PENDING", expenseId: null } : reminder));
-      setExpenses((current) => current.filter((item) => item.id !== expense.id));
+      reloadHistory();
     } catch (deleteError) {
       if (!isActive()) return;
       setError(deleteError.message || "Error borrando gasto");
@@ -337,17 +292,11 @@ export default function Expenses() {
     }
   });
 
-  const totalCost = expenses.reduce((acc, expense) => acc + Number(expense.cost || 0), 0);
-  const monthSpan = getMonthSpan(expenses);
+  const totalCost = Number(history.summary.totalCost || 0);
+  const monthSpan = Number(history.summary.monthSpan || 0);
   const monthlyAverageCost = monthSpan > 0 ? totalCost / monthSpan : 0;
-  const yearlyCost = expenses.reduce((acc, expense) => {
-    const expenseDate = parseExpenseDate(expense.date);
-    if (!expenseDate) return acc;
-    if (expenseDate.getFullYear() === currentYear) return acc + Number(expense.cost || 0);
-    return acc;
-  }, 0);
-
-  const currentExpenses = expenses.slice(startIndex, startIndex + itemsPerPage);
+  const yearlyCost = Number(history.summary.yearlyCost || 0);
+  const currentExpenses = expenses;
 
   return (
     <section className="w-full min-w-0">
@@ -366,10 +315,10 @@ export default function Expenses() {
           </div>
         </header>
 
-        {error && <div role="alert" className="fl-expense-error">{error}</div>}
+        {(error || historyError) && <div role="alert" className="fl-expense-error"><p>{error || historyError}</p>{historyError && <Button variant="outline" className="mt-3" onClick={() => reloadHistory()}>Reintentar</Button>}</div>}
         {loading ? (
           <div role="status" className="fl-expense-state">Cargando gastos...</div>
-        ) : expenses.length === 0 ? (error ? null : (
+        ) : expenses.length === 0 ? ((error || historyError) ? null : (
           <Surface variant="inset" className="fl-expense-state">
             <ReceiptText aria-hidden="true" />
             <h3>No hay gastos registrados</h3>
@@ -384,7 +333,7 @@ export default function Expenses() {
             </dl>
             <div className="fl-ledger-heading">
               <h3 className="fl-section-title">Historial</h3>
-              <p className="fl-ledger-count">{expenses.length} {expenses.length === 1 ? "registro" : "registros"}</p>
+              <p className="fl-ledger-count">{totalItems} {totalItems === 1 ? "registro" : "registros"}</p>
             </div>
             <table className="fl-ledger">
               <caption className="sr-only">Historial de gastos de {selectedVehicle.brand} {selectedVehicle.model}</caption>
@@ -425,24 +374,24 @@ export default function Expenses() {
         )}
         {totalPages > 1 && (
           <div className="fl-expense-pagination">
-            <p>{startIndex + 1}–{Math.min(startIndex + itemsPerPage, expenses.length)} de {expenses.length}</p>
+            <p>{startIndex + 1}–{Math.min(startIndex + itemsPerPage, totalItems)} de {totalItems}</p>
             <Pagination aria-label="Páginas del historial de gastos">
-              <PaginationContent>
+              <PaginationContent className="flex-wrap justify-center overflow-visible">
                 <PaginationItem>
-                  <PaginationPrevious href="#" aria-label="Página anterior" aria-disabled={currentPage === 1} onClick={(e) => {
+                  <PaginationPrevious href="#" aria-label="Página anterior" aria-disabled={currentPage === 1} tabIndex={currentPage === 1 ? -1 : undefined} onClick={(e) => {
                     e.preventDefault();
                     if (currentPage > 1) setCurrentPage(prev => prev - 1);
                   }} className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
                 </PaginationItem>
-                {[...Array(totalPages)].map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink href="#" aria-label={`Página ${i + 1}`} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }} isActive={currentPage === i + 1}>
-                      {i + 1}
+                {getPageNumbers(totalPages, currentPage).map((number) => (
+                  <PaginationItem key={number}>
+                    <PaginationLink href="#" aria-label={`Página ${number}`} onClick={(e) => { e.preventDefault(); setCurrentPage(number); }} isActive={currentPage === number}>
+                      {number}
                     </PaginationLink>
                   </PaginationItem>
                 ))}
                 <PaginationItem>
-                  <PaginationNext href="#" aria-label="Página siguiente" aria-disabled={currentPage === totalPages} onClick={(e) => {
+                  <PaginationNext href="#" aria-label="Página siguiente" aria-disabled={currentPage === totalPages} tabIndex={currentPage === totalPages ? -1 : undefined} onClick={(e) => {
                     e.preventDefault();
                     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
                   }} className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />

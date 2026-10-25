@@ -1,6 +1,6 @@
+import { localDate } from "../utils/localDate";
 import useActionGuard from "../hooks/useActionGuard";
-import { loadRequest } from "../utils/loadRequest";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Building2, CircleAlert, CircleHelp, Flame, Fuel, Gauge, Route, Snowflake, Sparkles, Truck, Download, Plus, Pencil, Trash2 } from "lucide-react";
 import { apiFetch } from "../services/api";
@@ -11,9 +11,9 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/field";
 import { DialogFrame } from "../components/ui/dialog-frame";
 import useDialogAccessibility from "../hooks/useDialogAccessibility";
-import usePagination from "../hooks/usePagination";
+import useHistoryPage from "../hooks/useHistoryPage";
+import { getPageNumbers } from "../utils/pagination";
 import FormErrorSummary from "../components/FormErrorSummary";
-import { buildFuelingRows } from "../utils/consumption";
 import {
   REFUELING_TYPE_OPTIONS,
   FUEL_TYPE_OPTIONS,
@@ -38,7 +38,7 @@ import {
 
 function createInitialFormData(vehicle) {
   return {
-    date: new Date().toISOString().split("T")[0],
+    date: localDate(),
     odometer: "",
     refueling: "complete",
     fuelType: getDefaultFuelType(vehicle?.vehicleEnergyType),
@@ -61,7 +61,7 @@ function createInitialFormData(vehicle) {
 
 function toFormData(fueling) {
   return {
-    date: fueling?.date || new Date().toISOString().split("T")[0],
+    date: fueling?.date || localDate(),
     odometer: fueling?.odometer ?? "",
     refueling: fueling?.refueling || "complete",
     fuelType: fueling?.fuelType || "diesel",
@@ -111,9 +111,9 @@ function toNumber(value) {
 
 export default function Fuelings() {
   const { guard, isActive } = useActionGuard();
-  const { selectedVehicle } = useOutletContext();
-  const [fuelings, setFuelings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { selectedVehicle, refreshVehicle } = useOutletContext();
+  const { data: history, loading, error: historyError, setPage: setCurrentPage, reload: reloadHistory } = useHistoryPage("fuelings", selectedVehicle?.id);
+  const fuelings = history.content.map((row) => ({ ...row.fueling, displayState: row.displayState, displayConsumption: row.displayConsumption }));
   const [error, setError] = useState("");
   const [formError, setFormError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -123,55 +123,15 @@ export default function Fuelings() {
   const [deletingId, setDeletingId] = useState(null);
   const [exportTarget, setExportTarget] = useState(null);
   const [formData, setFormData] = useState(() => createInitialFormData(selectedVehicle));
-  const fuelingRows = useMemo(
-    () => buildFuelingRows(fuelings, selectedVehicle?.vehicleType),
-    [fuelings, selectedVehicle?.vehicleType]
-  );
   const fuelOptions = getFuelOptionsForEnergy(selectedVehicle?.vehicleEnergyType);
   const formQuantityUnit = getQuantityUnitForFuel(formData.fuelType);
-  const itemsPerPage = 15;
-  const { page: currentPage, totalPages, startIndex, setPage: setCurrentPage } = usePagination(fuelingRows.length, itemsPerPage);
+  const { page: currentPage, totalPages, totalElements: totalItems } = history;
   const fieldProps = (name) => ({
     id: `fueling-${name}`,
     "aria-invalid": !!formError?.fields[name],
     "aria-describedby": formError?.fields[name] ? `fueling-${name}-error` : undefined,
   });
-  const exportDateRange = useMemo(() => {
-    if (fuelings.length === 0) {
-      return {};
-    }
-
-    const dates = fuelings
-      .map((fueling) => fueling.date)
-      .filter(Boolean)
-      .sort();
-
-    if (dates.length === 0) {
-      return {};
-    }
-
-    return {
-      startDate: dates[0],
-      endDate: dates[dates.length - 1],
-    };
-  }, [fuelings]);
-
-  useEffect(() => {
-    if (!selectedVehicle?.id) return;
-    const controller = new AbortController();
-    loadRequest({
-      signal: controller.signal,
-      load: async () => {
-        const response = await apiFetch(`/api/fuelings/vehicle/${selectedVehicle.id}`, { signal: controller.signal });
-        if (!response.ok) throw new Error("No se pudieron cargar los repostajes");
-        return response.json();
-      },
-      onSuccess: (data) => setFuelings(data || []),
-      onError: (error) => setError(error.message || "Error cargando repostajes"),
-      onSettled: () => setLoading(false),
-    });
-    return () => controller.abort();
-  }, [selectedVehicle?.id]);
+  const exportDateRange = { startDate: history.startDate, endDate: history.endDate };
 
   const openCreateForm = () => {
     setFormError(null);
@@ -258,14 +218,11 @@ export default function Fuelings() {
         throw Object.assign(new Error(errorData.message || "Error al guardar el repostaje"), { fields: errorData.fields || {} });
       }
 
-      const savedFueling = await response.json();
+      await response.json();
+      void refreshVehicle(selectedVehicle.id);
       if (!isActive()) return;
 
-      setFuelings((currentFuelings) =>
-        editingFueling
-          ? currentFuelings.map((item) => (item.id === savedFueling.id ? savedFueling : item))
-          : [savedFueling, ...currentFuelings]
-      );
+      reloadHistory(!editingFueling);
 
       closeForm();
     } catch (submitError) {
@@ -296,8 +253,9 @@ export default function Fuelings() {
         throw new Error(errorData.message || "Error al borrar el repostaje");
       }
 
+      void refreshVehicle(selectedVehicle.id);
       if (!isActive()) return;
-      setFuelings((currentFuelings) => currentFuelings.filter((item) => item.id !== fueling.id));
+      reloadHistory();
     } catch (deleteError) {
       if (!isActive()) return;
       setError(deleteError.message || "Error borrando repostaje");
@@ -360,9 +318,9 @@ export default function Fuelings() {
     },
   ];
 
-  const displayFuelings = [...fuelingRows].reverse();
+  const displayFuelings = fuelings;
 
-  const currentFuelings = displayFuelings.slice(startIndex, startIndex + itemsPerPage);
+  const currentFuelings = displayFuelings;
 
   return (
     <section className="w-full space-y-6">
@@ -378,16 +336,17 @@ export default function Fuelings() {
             <Button type="button" variant="ghost" onClick={() => setShowHelp(true)} aria-label="Ayuda de repostaje" title="Ayuda de repostaje" className="w-11 px-0 sm:w-auto sm:px-4"><CircleHelp aria-hidden="true" /><span className="hidden sm:inline">Ayuda de repostaje</span></Button>
           </div>
         </header>
-        <div className="fl-ledger-heading"><h3 className="fl-section-title">Historial</h3>{!loading && (!error || fuelings.length > 0) ? <p className="fl-ledger-count">{fuelings.length} registros</p> : null}</div>
-        {error ? (
+        <div className="fl-ledger-heading"><h3 className="fl-section-title">Historial</h3>{!loading && (!error || fuelings.length > 0) ? <p className="fl-ledger-count">{totalItems} registros</p> : null}</div>
+        {error || historyError ? (
           <div role="alert" className="fl-feedback-error">
-            {error}
+            <p>{error || historyError}</p>
+            {historyError && <Button variant="outline" className="mt-3" onClick={() => reloadHistory()}>Reintentar</Button>}
           </div>
         ) : null}
 
         {loading ? (
           <div role="status" className="fl-expense-state">Cargando repostajes...</div>
-        ) : fuelings.length === 0 && error ? null : fuelings.length === 0 ? (
+        ) : fuelings.length === 0 && (error || historyError) ? null : fuelings.length === 0 ? (
           <div className="fl-expense-state">
             No hay repostajes registrados. ¡Crea uno para empezar!
           </div>
@@ -540,7 +499,7 @@ export default function Fuelings() {
         {totalPages > 1 && (
           <div className="fl-fueling-pagination">
             <Pagination aria-label="Páginas de repostajes">
-              <PaginationContent>
+              <PaginationContent className="flex-wrap justify-center overflow-visible">
                 <PaginationItem>
                   <PaginationPrevious
                     href="#"
@@ -559,23 +518,23 @@ export default function Fuelings() {
                   />
                 </PaginationItem>
 
-                {[...Array(totalPages)].map((_, i) => (
-                  <PaginationItem key={i}>
+                {getPageNumbers(totalPages, currentPage).map((number) => (
+                  <PaginationItem key={number}>
                     <PaginationLink
                       href="#"
-                      aria-label={`Página ${i + 1}`}
+                      aria-label={`Página ${number}`}
                       onClick={(e) => {
                         e.preventDefault();
-                        setCurrentPage(i + 1);
+                        setCurrentPage(number);
                       }}
-                      isActive={currentPage === i + 1}
+                      isActive={currentPage === number}
                       className={
-                        currentPage === i + 1
+                        currentPage === number
                           ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground border-transparent"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                       }
                     >
-                      {i + 1}
+                      {number}
                     </PaginationLink>
                   </PaginationItem>
                 ))}

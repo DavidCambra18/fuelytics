@@ -1,3 +1,4 @@
+import { getOdometerUnit } from "../utils/vehicleLabels";
 import { useEffect, useRef, useState } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import { Plus, Pencil, Link2, Unlink, Trash2 } from "lucide-react";
@@ -18,6 +19,7 @@ const money = (value) => new Intl.NumberFormat("es-ES", { style: "currency", cur
 export default function Reminders() {
   const { selectedVehicle } = useOutletContext();
   const vehicleId = selectedVehicle.id;
+  const odometerUnit = getOdometerUnit(selectedVehicle.vehicleType);
   const { guard, isActive } = useActionGuard();
   const [items, setItems] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -138,8 +140,8 @@ export default function Reminders() {
         {shown.map((reminder) => <article key={reminder.id} className="space-y-4 py-6 first:pt-0">
           <div className="flex flex-wrap items-start justify-between gap-3"><h3 className="min-w-0 break-words text-lg font-semibold">{reminder.title}</h3><span className={`text-sm font-medium ${reminder.status === "COMPLETED" ? "text-primary" : reminder.urgency === "CRITICAL" ? "text-rose-300" : reminder.urgency === "WARNING" ? "text-amber-200" : "text-muted-foreground"}`}>{reminder.status === "COMPLETED" ? "Realizado" : reminder.urgency === "CRITICAL" ? "Urgente" : reminder.urgency === "WARNING" ? "Próximo" : "Programado"}</span></div>
           {reminder.notes ? <p className="fl-supporting whitespace-pre-wrap break-words">{reminder.notes}</p> : null}
-          <dl className="grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Odómetro previsto</dt><dd className="mt-1 tabular-nums">{reminder.targetOdometer == null ? "Sin límite por km" : `${reminder.targetOdometer.toLocaleString("es-ES")} km`}</dd></div><div><dt className="text-muted-foreground">Fecha prevista</dt><dd className="mt-1">{date(reminder.targetDate)}</dd></div></dl>
-          {reminder.status === "COMPLETED" ? <p className="fl-supporting">Gasto #{reminder.expenseId} · {date(reminder.completedDate)} · {money(reminder.completedCost)}</p> : <p className="fl-supporting">{reminder.remainingKm == null ? "" : reminder.remainingKm <= 0 ? `Vencido por ${Math.abs(reminder.remainingKm).toLocaleString("es-ES")} km. ` : `En ${reminder.remainingKm.toLocaleString("es-ES")} km. `}{reminder.remainingDays == null ? "" : reminder.remainingDays < 0 ? `Fecha vencida hace ${Math.abs(reminder.remainingDays)} días.` : `En ${reminder.remainingDays} días.`}</p>}
+          <dl className="grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Odómetro previsto</dt><dd className="mt-1 tabular-nums">{reminder.targetOdometer == null ? `Sin límite por ${odometerUnit}` : `${reminder.targetOdometer.toLocaleString("es-ES")} ${odometerUnit}`}</dd></div><div><dt className="text-muted-foreground">Fecha prevista</dt><dd className="mt-1">{date(reminder.targetDate)}</dd></div></dl>
+          {reminder.status === "COMPLETED" ? <p className="fl-supporting">Gasto #{reminder.expenseId} · {date(reminder.completedDate)} · {money(reminder.completedCost)}</p> : <p className="fl-supporting">{reminder.remainingKm == null ? "" : reminder.remainingKm <= 0 ? `Vencido por ${Math.abs(reminder.remainingKm).toLocaleString("es-ES")} ${odometerUnit}. ` : `En ${reminder.remainingKm.toLocaleString("es-ES")} ${odometerUnit}. `}{reminder.remainingDays == null ? "" : reminder.remainingDays < 0 ? `Fecha vencida hace ${Math.abs(reminder.remainingDays)} días.` : `En ${reminder.remainingDays} días.`}</p>}
           <div className="flex flex-wrap gap-2">
             {reminder.status === "PENDING" ? <><Button asChild><Link to={`/vehicles/${vehicleId}/expenses?reminderId=${reminder.id}`} aria-disabled={saving || undefined} tabIndex={saving ? -1 : undefined} onClick={(event) => { if (saving) event.preventDefault(); }}>Registrar mantenimiento</Link></Button><Button variant="outline" onClick={() => open("link", reminder)} disabled={saving}><Link2 aria-hidden="true" />Vincular gasto</Button><Button variant="ghost" onClick={() => open("edit", reminder)} disabled={saving} aria-label={`Editar recordatorio: ${reminder.title}`}><Pencil aria-hidden="true" />Editar</Button></> : <Button variant="outline" onClick={() => unlink(reminder)} disabled={saving}><Unlink aria-hidden="true" />Desvincular mantenimiento</Button>}
             <Button variant="ghost" className="text-destructive" onClick={() => remove(reminder)} disabled={saving} aria-label={`Borrar recordatorio: ${reminder.title}`}><Trash2 aria-hidden="true" />Borrar</Button>
@@ -157,7 +159,7 @@ export default function Reminders() {
         </> : <>
           <Field id="reminder-title" label="Título"><Input {...props("title")} name="title" required maxLength={120} value={form.title} onChange={update} /></Field>
           <Field id="reminder-notes" label="Notas (opcional)"><textarea {...props("notes")} name="notes" className="fl-field min-h-24" maxLength={500} value={form.notes} onChange={update} /></Field>
-          <Field id="reminder-targetOdometer" label="Odómetro previsto (km)"><Input {...props("targetOdometer")} name="targetOdometer" type="number" min="1" max="2147483647" step="1" value={form.targetOdometer} onChange={update} /></Field>
+          <Field id="reminder-targetOdometer" label={`Odómetro previsto (${odometerUnit})`}><Input {...props("targetOdometer")} name="targetOdometer" type="number" min="1" max="2147483647" step="1" value={form.targetOdometer} onChange={update} /></Field>
           <Field id="reminder-targetDate" label="Fecha prevista"><Input {...props("targetDate")} name="targetDate" type="date" value={form.targetDate} onChange={update} /></Field>
           <p className="fl-supporting">Indica el odómetro total previsto, una fecha o ambos. Se avisará cuando se acerque cualquiera de los dos límites.</p>
         </>}

@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useParams, useLocation } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import VehicleLoadingSkeleton from "../components/VehicleLoadingSkeleton";
@@ -13,6 +13,10 @@ export default function VehicleLayout() {
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const refreshes = useRef(new Map());
+    const active = useRef(true);
+    const [refreshErrors, setRefreshErrors] = useState({});
+    const [refreshingIds, setRefreshingIds] = useState(() => new Set());
 
     useEffect(() => {
         const controller = new AbortController();
@@ -49,7 +53,41 @@ export default function VehicleLayout() {
             vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
         ));
     }, []);
-    const outletContext = useMemo(() => ({ selectedVehicle, updateVehicle }), [selectedVehicle, updateVehicle]);
+    useEffect(() => {
+        active.current = true;
+        const requests = refreshes.current;
+        return () => {
+            active.current = false;
+            for (const controller of requests.values()) controller.abort();
+            requests.clear();
+        };
+    }, []);
+
+    const refreshVehicle = useCallback(async (id) => {
+        if (!active.current) return;
+        refreshes.current.get(id)?.abort();
+        const controller = new AbortController();
+        refreshes.current.set(id, controller);
+        setRefreshingIds((current) => new Set(current).add(id));
+        try {
+            const response = await apiFetch(`/api/vehicles/${id}`, { signal: controller.signal });
+            if (!response.ok) throw new Error("No se pudo actualizar la información del vehículo. Vuelve a intentarlo.");
+            const vehicle = await response.json();
+            if (controller.signal.aborted) return;
+            updateVehicle(vehicle);
+            setRefreshErrors((current) => ({ ...current, [id]: "" }));
+        } catch (failure) {
+            if (!controller.signal.aborted) setRefreshErrors((current) => ({ ...current, [id]: failure.message }));
+        } finally {
+            if (refreshes.current.get(id) === controller && !controller.signal.aborted) {
+                refreshes.current.delete(id);
+                setRefreshingIds((current) => { const next = new Set(current); next.delete(id); return next; });
+            }
+        }
+    }, [updateVehicle]);
+    const outletContext = useMemo(() => ({ selectedVehicle, updateVehicle, refreshVehicle,
+        vehicleRefreshing: refreshingIds.has(selectedVehicle?.id), vehicleRefreshError: refreshErrors[selectedVehicle?.id] || "" }),
+        [selectedVehicle, updateVehicle, refreshVehicle, refreshingIds, refreshErrors]);
 
     const navigationItems = [
         { label: "Resumen", to: "" },
@@ -100,6 +138,10 @@ export default function VehicleLayout() {
                     </Surface>
                     ) : null}
 
+                    {refreshErrors[vehicleId] && <Surface role="alert" className="fl-workspace">
+                        <p>{refreshErrors[vehicleId]}</p>
+                        <Button variant="outline" className="mt-3" onClick={() => refreshVehicle(selectedVehicle.id)}>Actualizar vehículo</Button>
+                    </Surface>}
                     {loading ? <VehicleLoadingSkeleton /> : error ? (
                         <Surface role="alert" className="fl-workspace text-destructive">{error}</Surface>
                     ) : !selectedVehicle ? (

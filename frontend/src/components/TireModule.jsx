@@ -1,9 +1,10 @@
+import { localDate } from "../utils/localDate";
 import useActionGuard from "../hooks/useActionGuard";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Ban, Plus, Disc, AlertTriangle } from "lucide-react";
 import { apiJson } from "../services/api";
-import { TIRE_AXLE_OPTIONS } from "../utils/vehicleLabels";
+import { TIRE_AXLE_OPTIONS, getOdometerUnit } from "../utils/vehicleLabels";
 import { Surface } from "./ui/surface";
 import { Input } from "./ui/field";
 import { Button } from "./ui/button";
@@ -18,16 +19,18 @@ function createInitialFormData(odometer) {
         profile: "",
         rim: "",
         axle: "FRONT",
-        installationDate: new Date().toISOString().split("T")[0],
-        installationOdometer: odometer || "",
+        installationDate: localDate(),
+        installationOdometer: odometer ?? "",
     };
 }
 
 export default function TiresModule() {
     const { guard, isActive } = useActionGuard();
-    const { selectedVehicle } = useOutletContext();
+    const { selectedVehicle, vehicleRefreshing, vehicleRefreshError } = useOutletContext();
     const vehicleId = selectedVehicle?.id;
     const latestOdometer = selectedVehicle?.odometer;
+    const odometerUnit = getOdometerUnit(selectedVehicle?.vehicleType);
+    const usesHours = odometerUnit === "h";
 
     const [tires, setTires] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -162,7 +165,7 @@ export default function TiresModule() {
                     <div className="min-w-0">
                         <span className="text-xs font-bold uppercase tracking-wider text-teal-400">{title}</span>
                         <h3 className="mt-0.5 break-words text-lg font-semibold text-foreground">{tire.brand} {tire.model}</h3>
-                        <p className="fl-supporting mt-2">Medida: {tire.size} · Montados a {tire.installationOdometer.toLocaleString()} km</p>
+                        <p className="fl-supporting mt-2">Medida: {tire.size} · Montados a {tire.installationOdometer.toLocaleString()} {odometerUnit}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
@@ -176,7 +179,7 @@ export default function TiresModule() {
                     </div>
                 </div>
 
-                <div className="pt-2">
+                {usesHours ? <p className="fl-supporting">Uso acumulado: {km.toLocaleString("es-ES")} h. Revisa el desgaste según las indicaciones del fabricante.</p> : <div className="pt-2">
                     <div className="mb-3 flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                         <span className="text-slate-400 flex items-center gap-1">
                             Ciclo de Vida Útil {km >= 40000 && <AlertTriangle className="h-3.5 w-3.5 text-rose-500 inline" />}
@@ -189,7 +192,7 @@ export default function TiresModule() {
                             style={{ width: `${replacePct}%` }}
                         />
                     </div>
-                </div>
+                </div>}
             </div>
         );
     };
@@ -213,7 +216,8 @@ export default function TiresModule() {
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
-                        disabled={saving}
+                        disabled={saving || vehicleRefreshing || !!vehicleRefreshError}
+                        pending={vehicleRefreshing} pendingLabel="Actualizando..."
                         onClick={() => {
                             setFormData(createInitialFormData(latestOdometer));
                             setShowForm((current) => !current);
@@ -297,7 +301,7 @@ export default function TiresModule() {
                         />
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="fl-label block mb-2">Odómetro de montaje (km)</span>
+                        <span className="fl-label block mb-2">Odómetro de montaje ({odometerUnit})</span>
                         <Input
                             type="number"
                             min="0"
@@ -329,11 +333,11 @@ export default function TiresModule() {
                             <div key={tire.id} className="fl-tire-history-row">
                                 <div className="min-w-0">
                                     <p className="font-semibold text-slate-200">{tire.brand} {tire.model} - {tire.size} ({tire.axle === "FRONT" ? "Delantero" : "Trasero"})</p>
-                                    <p className="text-muted-foreground mt-1">Instalación: {tire.installationOdometer.toLocaleString()} km → Baja: {tire.removalOdometer?.toLocaleString()} km</p>
+                                    <p className="text-muted-foreground mt-1">Instalación: {tire.installationOdometer.toLocaleString()} {odometerUnit} → Baja: {tire.removalOdometer?.toLocaleString()} {odometerUnit}</p>
                                 </div>
                                 <div className="shrink-0 text-left sm:text-right">
                                     <span className="block tabular-nums text-primary font-medium mb-1">
-                                        +{tire.currentKm.toLocaleString()} km
+                                        +{tire.currentKm.toLocaleString()} {odometerUnit}
                                     </span>
                                     {tire.expenseCost > 0 && (
                                         <span className="block text-amber-400 font-semibold">

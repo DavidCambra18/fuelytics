@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { Surface } from "../components/ui/surface";
 import { apiFetch } from "../services/api";
 import { useState } from "react";
-import { formatGearboxType, formatVehicleEnergyType, getConsumptionUnit, getOdometerLabel, getOdometerUnit } from "../utils/vehicleLabels";
+import { formatGearboxType, formatVehicleEnergyType, getConsumptionUnit, getQuantityUnit, getOdometerLabel, getOdometerUnit } from "../utils/vehicleLabels";
 
 export default function VehicleOverview() {
   const { guard, isActive } = useActionGuard();
@@ -22,9 +22,9 @@ export default function VehicleOverview() {
     { label: "Potencia", value: selectedVehicle.power ? `${selectedVehicle.power} CV` : "---" },
     { label: "Cilindrada", value: selectedVehicle.cc ? `${selectedVehicle.cc} cc` : "---" },
     { label: "Cambio", value: formatGearboxType(selectedVehicle.gearbox) },
-    { label: "Capacidad depósito", value: selectedVehicle.tankCapacity ? `${selectedVehicle.tankCapacity} L` : "---" },
+    { label: selectedVehicle.vehicleEnergyType === "electric" ? "Capacidad batería" : "Capacidad depósito", value: selectedVehicle.tankCapacity != null ? `${selectedVehicle.tankCapacity} ${getQuantityUnit(selectedVehicle.vehicleEnergyType)}` : "---" },
     { label: "Consumo oficial", value: selectedVehicle.officialConsumption ? `${selectedVehicle.officialConsumption} ${getConsumptionUnit(selectedVehicle.vehicleType, selectedVehicle.vehicleEnergyType)}` : "---" },
-    { label: getOdometerLabel(selectedVehicle.vehicleType), value: selectedVehicle.odometer ? `${selectedVehicle.odometer.toLocaleString("es-ES")} ${getOdometerUnit(selectedVehicle.vehicleType)}` : "---" },
+    { label: getOdometerLabel(selectedVehicle.vehicleType), value: selectedVehicle.odometer != null ? `${selectedVehicle.odometer.toLocaleString("es-ES")} ${getOdometerUnit(selectedVehicle.vehicleType)}` : "---" },
   ];
 
   return (

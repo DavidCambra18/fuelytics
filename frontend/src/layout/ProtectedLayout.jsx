@@ -1,3 +1,4 @@
+import { sessionIdentity } from "../utils/authStorage";
 import { Navigate } from "react-router-dom";
 import AppShell from "./AppShell";
 import { isTokenValid, useAuth } from "../context/auth";
@@ -9,5 +10,5 @@ export default function ProtectedLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  return <AppShell />;
+  return <AppShell key={sessionIdentity(token)} />;
 }

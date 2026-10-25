@@ -1,35 +1,33 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AuthContext, getTokenExpiry, isTokenValid } from "./auth";
+import { discardExpiredStoredAuth, observeStoredAuth, readStoredAuth } from "../utils/authStorage";
+import { AuthContext, getTokenExpiry } from "./auth";
 
 export function AuthProvider({ children }) {
-	const [token, setToken] = useState(() => {
-		const storedToken = localStorage.getItem("token") || "";
-		return isTokenValid(storedToken) ? storedToken : "";
-	});
-	const [username, setUsername] = useState(() => localStorage.getItem("username") || "");
+	const [token, setToken] = useState(() => readStoredAuth(localStorage).token);
+	const [username, setUsername] = useState(() => readStoredAuth(localStorage).username);
 	const setAuth = useCallback(({ token: nextToken, username: nextUsername }) => {
+		if (nextToken) localStorage.setItem("token", nextToken);
+		else localStorage.removeItem("token");
+		if (nextUsername) localStorage.setItem("username", nextUsername);
+		else localStorage.removeItem("username");
 		setToken(nextToken || "");
 		setUsername(nextUsername || "");
 	}, []);
 
 	const clearAuth = useCallback(() => {
+		localStorage.removeItem("token");
+		localStorage.removeItem("username");
 		setToken("");
 		setUsername("");
 	}, []);
 
 	useEffect(() => {
-		if (token) {
-			localStorage.setItem("token", token);
-		} else {
-			localStorage.removeItem("token");
-		}
-
-		if (username) {
-			localStorage.setItem("username", username);
-		} else {
-			localStorage.removeItem("username");
-		}
-	}, [token, username]);
+		discardExpiredStoredAuth(localStorage);
+		return observeStoredAuth(window, localStorage, (auth) => {
+			setToken(auth.token);
+			setUsername(auth.username);
+		});
+	}, []);
 
 	useEffect(() => {
 		window.addEventListener("fuelytics:unauthorized", clearAuth);
@@ -44,7 +42,7 @@ export function AuthProvider({ children }) {
 		const expiresAt = getTokenExpiry(token);
 
 		const timeoutId = window.setTimeout(() => {
-			clearAuth();
+			if (localStorage.getItem("token") === token) clearAuth();
 		}, Math.max(expiresAt - Date.now(), 0));
 
 		return () => window.clearTimeout(timeoutId);

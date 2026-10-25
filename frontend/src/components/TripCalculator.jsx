@@ -1,3 +1,4 @@
+import { tripEstimate } from "../utils/tripEstimate";
 import { useState } from "react";
 import { MapPin, Fuel, Users, Droplets, Gauge } from "lucide-react";
 
@@ -10,14 +11,10 @@ export default function TripCalculator() {
   const [people, setPeople] = useState(1);
   const [consumption, setConsumption] = useState("");
 
-  const numDistance = parseFloat(distance) || 0;
-  const numPrice = parseFloat(fuelPrice) || 0;
-  const numPeople = parseInt(people, 10) || 1;
-  const numConsumption = parseFloat(consumption) || 0;
-
-  const estimatedLiters = (numDistance * numConsumption) / 100;
-  const totalCost = estimatedLiters * numPrice;
-  const costPerPerson = numPeople > 0 ? totalCost / numPeople : totalCost;
+  const { errors, valid, estimatedLiters, totalCost, costPerPerson } = tripEstimate({ distance, fuelPrice, people, consumption });
+  const fieldProps = (field) => ({ "aria-invalid": !!errors[field], "aria-describedby": errors[field] ? `trip-${field}-error` : undefined });
+  const fieldError = (field) => errors[field] && <p id={`trip-${field}-error`} className="mt-2 text-sm text-destructive" role="alert">{errors[field]}</p>;
+  const result = (value, unit) => valid ? `${value.toFixed(2)} ${unit}` : "—";
 
   return (
     <section className="section-shell space-y-6 pb-10">
@@ -37,6 +34,7 @@ export default function TripCalculator() {
                 </label>
                 <Input
                   id="trip-consumption"
+                  {...fieldProps("consumption")}
                   type="number"
                   min="0"
                   step="0.1"
@@ -44,6 +42,7 @@ export default function TripCalculator() {
                   onChange={(e) => setConsumption(e.target.value)}
                   placeholder="Ej: 6.5"
                 />
+                {fieldError("consumption")}
               </div>
             </div>
 
@@ -55,6 +54,7 @@ export default function TripCalculator() {
                 </label>
                 <Input
                   id="trip-distance"
+                  {...fieldProps("distance")}
                   type="number"
                   min="0"
                   step="0.1"
@@ -62,6 +62,7 @@ export default function TripCalculator() {
                   onChange={(e) => setDistance(e.target.value)}
                   placeholder="Ej: 450"
                 />
+                {fieldError("distance")}
               </div>
               <div>
                 <label htmlFor="trip-fuel-price" className="fl-label mb-2 flex items-center gap-2">
@@ -70,6 +71,7 @@ export default function TripCalculator() {
                 </label>
                 <Input
                   id="trip-fuel-price"
+                  {...fieldProps("fuelPrice")}
                   type="number"
                   min="0"
                   step="0.001"
@@ -77,6 +79,7 @@ export default function TripCalculator() {
                   onChange={(e) => setFuelPrice(e.target.value)}
                   placeholder="Ej: 1.659"
                 />
+                {fieldError("fuelPrice")}
               </div>
             </div>
 
@@ -87,23 +90,26 @@ export default function TripCalculator() {
               </label>
               <Input
                 id="trip-people"
+                  {...fieldProps("people")}
                 type="number"
                 min="1"
                 step="1"
                 value={people}
                 onChange={(e) => setPeople(e.target.value)}
               />
+                {fieldError("people")}
             </div>
           </div>
 
           <Surface variant="inset" as="section" className="fl-trip-result" aria-labelledby="trip-estimate-title">
             <h2 id="trip-estimate-title" className="fl-section-title">Estimación</h2>
+            {!valid && <p className="fl-supporting mt-3">Completa los campos con valores válidos para ver la estimación.</p>}
             <dl>
-              <div className="fl-trip-result-row"><dt><Droplets size={18} aria-hidden="true" />Cantidad necesaria</dt><dd>{estimatedLiters.toFixed(2)} L</dd></div>
-              <div className="fl-trip-total"><dt>Coste total</dt><dd>{totalCost.toFixed(2)} €</dd></div>
-              <div className="fl-trip-result-row"><dt><Users size={18} aria-hidden="true" />Por persona</dt><dd>{costPerPerson.toFixed(2)} €</dd></div>
+              <div className="fl-trip-result-row"><dt><Droplets size={18} aria-hidden="true" />Cantidad necesaria</dt><dd>{result(estimatedLiters, "L")}</dd></div>
+              <div className="fl-trip-total"><dt>Coste total</dt><dd>{result(totalCost, "€")}</dd></div>
+              <div className="fl-trip-result-row"><dt><Users size={18} aria-hidden="true" />Por persona</dt><dd>{result(costPerPerson, "€")}</dd></div>
             </dl>
-            {numPeople <= 1 && <p className="fl-supporting mt-3">Añade más pasajeros para dividir el coste</p>}
+            {valid && Number(people) <= 1 && <p className="fl-supporting mt-3">Añade más pasajeros para dividir el coste</p>}
           </Surface>
         </div>
       </Surface>

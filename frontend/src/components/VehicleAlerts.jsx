@@ -1,10 +1,12 @@
+import { getOdometerUnit } from "../utils/vehicleLabels";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Wrench } from "lucide-react";
 import { Button } from "./ui/button";
 import { apiJson } from "../services/api";
 
-export default function VehicleAlerts({ vehicleId }) {
+export default function VehicleAlerts({ vehicleId, vehicleType }) {
+  const odometerUnit = getOdometerUnit(vehicleType);
   const [reminders, setReminders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,7 +47,7 @@ export default function VehicleAlerts({ vehicleId }) {
     {reminders.map((reminder) => <div key={reminder.id} className="rounded-xl border border-border bg-secondary/30 p-3">
       <p className="break-words text-sm font-medium">{reminder.title}</p>
       <p className="mt-1 text-xs leading-5 text-muted-foreground">
-        {reminder.remainingKm != null ? reminder.remainingKm <= 0 ? `Vencido por ${Math.abs(reminder.remainingKm).toLocaleString("es-ES")} km` : `En ${reminder.remainingKm.toLocaleString("es-ES")} km` : null}
+        {reminder.remainingKm != null ? reminder.remainingKm <= 0 ? `Vencido por ${Math.abs(reminder.remainingKm).toLocaleString("es-ES")} ${odometerUnit}` : `En ${reminder.remainingKm.toLocaleString("es-ES")} ${odometerUnit}` : null}
         {reminder.remainingKm != null && reminder.targetDate ? " · " : ""}
         {reminder.targetDate ? new Intl.DateTimeFormat("es-ES").format(new Date(`${reminder.targetDate}T00:00:00`)) : null}
       </p>
