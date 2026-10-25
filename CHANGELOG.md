@@ -2,42 +2,15 @@
 
 Todos los cambios importantes de este proyecto se documentarán en este archivo.
 
-El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones siguen [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Pre-release]
+Las fechas corresponden a la publicación de cada versión en GitHub.
 
-## [0.3.0-beta] - 2026-06-05
+## [v1.0.0] - 2026-06-11
 
-### Añadido
+Versión estable publicada sin notas de cambios en GitHub.
 
-- Perfil publico de usuarios.
-- Vista de vehiculos publicos con informacion de repostajes y gastos.
-- Ranking global de consumos público.
-- Paginacion en pagina de repostajes y gastos.
-- Calculadora de viaje para compartir gastos.
-- Generación y exportación de informes completos en formato PDF (gastos, repostajes y resumen global).
-- Mapa de gasolineras con comparador de precios en tiempo real.
-- Sistema de alertas de mantenimientos.
-- Logros e insignas en el perfil del usuario.
-- Campos opcionales de nombre y apellidos en el registro de usuarios.
-- Migración de las peticiones fetch a un nuevo archivo de utilidad centralizado para la API.
-- Animaciones de transición en los cambios de página utilizando Framer Motion.
-- Validación visual asíncrona (*debounce*) en el registro y en los ajustes para comprobar en tiempo real la disponibilidad del correo y nombre de usuario.
-- Nuevos endpoints en el backend (`/check-username` y `/check-email`) para soportar validaciones de formulario rápidas.
-- Visualización del nombre y apellidos del usuario en el menú principal desplegable.
-
-### Cambiado
-
-- Modernización de la interfaz en los componentes `Settings`, `UserMenu` y `UserProfile` mediante la incorporación sistemática de la iconografía de `lucide-react`.
-- Mejora de los badges informativos en el `README.md` detallando las versiones exactas del stack tecnológico.
-- Mejora del manejador global de peticiones (`apiFetch`) para interceptar caídas de red o del servidor y mostrar un error amigable en toda la aplicación.
-- Actualizacion automatica del odometro del coche al registrar o modificar un repostaje.
-
-### Corregido
-
-- Añadido *rewrite* en la configuración de Vercel para solucionar el error 404 Not Found al recargar rutas en React.
-
-## [0.2.0-beta] - 2026-05-23
+## [v0.2.0-beta] - 2026-05-23
 
 ### Añadido
 
@@ -65,6 +38,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) y
 - Se ajusta la configuración de conexión a la base de datos para evitar errores de arranque.
 - Se corrige el comportamiento del selector personalizado para que cierre al seleccionar una opción y con un cierre suave al perder el foco.
 
-## [0.1.0-beta] - 2026-05-15
+## [v0.1.0-beta] - 2026-05-19
 
 - Lanzamiento inicial (beta).
+
+[v1.0.0]: https://github.com/DavidCambra18/fuelytics/releases/tag/v1.0.0
+[v0.2.0-beta]: https://github.com/DavidCambra18/fuelytics/releases/tag/v0.2.0-beta
+[v0.1.0-beta]: https://github.com/DavidCambra18/fuelytics/releases/tag/v0.1.0-beta
