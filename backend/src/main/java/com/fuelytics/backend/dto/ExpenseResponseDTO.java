@@ -13,6 +13,10 @@ public class ExpenseResponseDTO {
     private String description;
     private BigDecimal cost;
     private Integer tireSetId;
+    private Integer maintenanceReminderId;
+
+    public Integer getMaintenanceReminderId() { return maintenanceReminderId; }
+    public void setMaintenanceReminderId(Integer value) { maintenanceReminderId = value; }
     private Integer nextMaintenanceKm;
     private java.time.LocalDate nextMaintenanceDate;
 

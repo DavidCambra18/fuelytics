@@ -17,6 +17,7 @@ const VehicleEdit = lazy(() => import("../pages/VehicleEdit"));
 const VehicleOverview = lazy(() => import("../pages/VehicleOverview"));
 const Fuelings = lazy(() => import("../pages/Fuelings"));
 const Expenses = lazy(() => import("../pages/Expenses"));
+const Reminders = lazy(() => import("../pages/Reminders"));
 const Statistics = lazy(() => import("../pages/Statistics"));
 const Settings = lazy(() => import("../pages/Settings"));
 const Friends = lazy(() => import("../pages/Friends"));
@@ -103,6 +104,7 @@ function InnerRoutes() {
             <Route path="edit" element={<PageTransition><VehicleEdit /></PageTransition>} />
             <Route path="fuelings" element={<PageTransition><Fuelings /></PageTransition>} />
             <Route path="expenses" element={<PageTransition><Expenses /></PageTransition>} />
+            <Route path="reminders" element={<PageTransition><Reminders /></PageTransition>} />
             <Route path="tires" element={<PageTransition><TireModule /></PageTransition>} />
             <Route path="statistics" element={<PageTransition><Statistics /></PageTransition>} />
           </Route>

@@ -17,6 +17,7 @@ import com.fuelytics.backend.repository.ExpenseRepository;
 import com.fuelytics.backend.repository.TireSetRepository;
 import com.fuelytics.backend.repository.UserRepository;
 import com.fuelytics.backend.repository.VehicleRepository;
+import com.fuelytics.backend.repository.MaintenanceReminderRepository;
 
 @Service
 public class ExpenseService {
@@ -26,17 +27,21 @@ public class ExpenseService {
     private final UserRepository userRepository;
     private final TireSetRepository tireSetRepository;
     private final BadgeService badgeService;
+    private final MaintenanceReminderService reminderService;
+    private final MaintenanceReminderRepository reminders;
 
     public ExpenseService(ExpenseRepository expenseRepository,
             VehicleRepository vehicleRepository,
             UserRepository userRepository,
             TireSetRepository tireSetRepository,
-            BadgeService badgeService) {
+            BadgeService badgeService, MaintenanceReminderService reminderService, MaintenanceReminderRepository reminders) {
         this.expenseRepository = expenseRepository;
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
         this.tireSetRepository = tireSetRepository;
         this.badgeService = badgeService;
+        this.reminderService = reminderService;
+        this.reminders = reminders;
     }
 
     @Transactional
@@ -56,8 +61,7 @@ public class ExpenseService {
         expense.setType(dto.getType());
         expense.setDescription(dto.getDescription());
         expense.setCost(dto.getCost());
-        expense.setNextMaintenanceKm(dto.getNextMaintenanceKm());
-        expense.setNextMaintenanceDate(dto.getNextMaintenanceDate());
+        applyMaintenanceSchedule(expense, dto);
 
         if (dto.getType() == ExpenseType.tire_change && dto.getTireSetId() != null) {
             TireSet tireSet = tireSetRepository.findById(dto.getTireSetId())
@@ -67,6 +71,7 @@ public class ExpenseService {
         }
 
         Expense saved = expenseRepository.save(expense);
+        reminderService.syncExpenseLink(saved, dto.getMaintenanceReminderId());
 
         badgeService.checkExpenseBadges(user, vehicle);
 
@@ -83,9 +88,12 @@ public class ExpenseService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
         }
 
+        var reminderIds = reminders.findByVehicleIdOrderByIdDesc(vehicleId).stream()
+                .filter(r -> r.getCompletedExpense() != null)
+                .collect(java.util.stream.Collectors.toMap(r -> r.getCompletedExpense().getId(), r -> r.getId()));
         return expenseRepository.findByVehicleIdOrderByDateDesc(vehicleId)
                 .stream()
-                .map(this::mapToDTO)
+                .map(expense -> mapToDTO(expense, reminderIds.get(expense.getId())))
                 .toList();
     }
 
@@ -110,8 +118,7 @@ public class ExpenseService {
         if (dto.getCost() != null)
             expense.setCost(dto.getCost());
 
-        expense.setNextMaintenanceKm(dto.getNextMaintenanceKm());
-        expense.setNextMaintenanceDate(dto.getNextMaintenanceDate());
+        applyMaintenanceSchedule(expense, dto);
 
         if (expense.getType() == ExpenseType.tire_change && dto.getTireSetId() != null) {
             TireSet tireSet = tireSetRepository.findById(dto.getTireSetId())
@@ -123,6 +130,8 @@ public class ExpenseService {
         }
 
         Expense updated = expenseRepository.save(expense);
+        if (dto.isMaintenanceReminderSpecified() || updated.getType() != ExpenseType.maintenance)
+            reminderService.syncExpenseLink(updated, dto.getMaintenanceReminderId());
 
         badgeService.checkExpenseBadges(user, expense.getVehicle());
 
@@ -140,10 +149,24 @@ public class ExpenseService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
         }
 
+        vehicleRepository.findByIdForUpdate(expense.getVehicle().getId());
+        reminderService.syncExpenseLink(expense, null);
         expenseRepository.deleteById(id);
     }
 
+    private void applyMaintenanceSchedule(Expense expense, ExpenseDTO dto) {
+        boolean maintenance = expense.getType() == ExpenseType.maintenance;
+        Integer targetKm = dto.getNextMaintenanceKm();
+        expense.setNextMaintenanceKm(maintenance && targetKm != null && targetKm > 0 ? targetKm : null);
+        expense.setNextMaintenanceDate(maintenance ? dto.getNextMaintenanceDate() : null);
+    }
+
     private ExpenseResponseDTO mapToDTO(Expense expense) {
+        Integer reminderId = reminders.findByCompletedExpenseId(expense.getId()).map(r -> r.getId()).orElse(null);
+        return mapToDTO(expense, reminderId);
+    }
+
+    private ExpenseResponseDTO mapToDTO(Expense expense, Integer reminderId) {
         ExpenseResponseDTO dto = new ExpenseResponseDTO();
         dto.setId(expense.getId());
         dto.setVehicleId(expense.getVehicle().getId());
@@ -151,6 +174,7 @@ public class ExpenseService {
         dto.setType(expense.getType());
         dto.setDescription(expense.getDescription());
         dto.setCost(expense.getCost());
+        dto.setMaintenanceReminderId(reminderId);
         dto.setNextMaintenanceKm(expense.getNextMaintenanceKm());
         dto.setNextMaintenanceDate(expense.getNextMaintenanceDate());
         

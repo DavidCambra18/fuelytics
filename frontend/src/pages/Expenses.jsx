@@ -1,10 +1,10 @@
 import useActionGuard from "../hooks/useActionGuard";
 import { loadRequest } from "../utils/loadRequest";
-import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 import { Download, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
-import { apiFetch } from "../services/api";
+import { apiFetch, apiJson } from "../services/api";
 import ExportReportModal from "../components/ExportReportModal";
 import { Button } from "../components/ui/button";
 import { Surface } from "../components/ui/surface";
@@ -68,8 +68,7 @@ function createInitialFormData() {
     description: "",
     cost: "",
     tireSetId: "",
-    nextMaintenanceKm: "",
-    nextMaintenanceDate: "",
+    maintenanceReminderId: "",
   };
 }
 
@@ -80,8 +79,7 @@ function toFormData(expense) {
     description: expense?.description || "",
     cost: expense?.cost ?? "",
     tireSetId: expense?.tireSetId ?? "",
-    nextMaintenanceKm: expense?.nextMaintenanceKm ?? "",
-    nextMaintenanceDate: expense?.nextMaintenanceDate || "",
+    maintenanceReminderId: expense?.maintenanceReminderId ?? "",
   };
 }
 
@@ -120,17 +118,25 @@ function getMonthSpan(expensesList) {
 export default function Expenses() {
   const { guard, isActive } = useActionGuard();
   const { selectedVehicle } = useOutletContext();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedReminder = Number(searchParams.get("reminderId"));
+  const hasRequestedReminder = Number.isInteger(requestedReminder) && requestedReminder > 0;
   const [expenses, setExpenses] = useState([]);
   const [availableTires, setAvailableTires] = useState([]);
+  const [availableReminders, setAvailableReminders] = useState([]);
+  const [remindersLoading, setRemindersLoading] = useState(true);
+  const [remindersError, setRemindersError] = useState("");
+  const [remindersAttempt, setRemindersAttempt] = useState(0);
+  const retryingReminders = useRef(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(hasRequestedReminder);
   const [editingExpense, setEditingExpense] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [exportTarget, setExportTarget] = useState(null);
-  const [formData, setFormData] = useState(createInitialFormData());
+  const [formData, setFormData] = useState(() => ({ ...createInitialFormData(), maintenanceReminderId: hasRequestedReminder ? String(requestedReminder) : "" }));
   const itemsPerPage = 15;
   const { page: currentPage, totalPages, startIndex, setPage: setCurrentPage } = usePagination(expenses.length, itemsPerPage);
   const fieldProps = (name) => ({
@@ -187,6 +193,26 @@ export default function Expenses() {
     return () => controller.abort();
   }, [selectedVehicle?.id]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      setRemindersLoading(true); setRemindersError("");
+      try {
+        const data = await apiJson(`/api/vehicles/${selectedVehicle.id}/reminders`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        setAvailableReminders(data);
+        setFormData((current) => {
+          const selected = data.find((item) => String(item.id) === String(current.maintenanceReminderId));
+          return selected && !current.description ? { ...current, description: selected.title } : current;
+        });
+      } catch (failure) {
+        if (!controller.signal.aborted) setRemindersError(failure.message || "No se pudieron consultar los recordatorios");
+      } finally { if (!controller.signal.aborted) setRemindersLoading(false); }
+    }
+    load();
+    return () => controller.abort();
+  }, [selectedVehicle.id, remindersAttempt]);
+
   const openCreateForm = () => {
     setFormError(null);
     setEditingExpense(null);
@@ -202,6 +228,11 @@ export default function Expenses() {
   };
 
   const closeForm = () => {
+    if (searchParams.has("reminderId")) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("reminderId");
+      setSearchParams(nextParams, { replace: true });
+    }
     setFormError(null);
     setShowForm(false);
     setEditingExpense(null);
@@ -209,6 +240,12 @@ export default function Expenses() {
   };
 
   const { dialogRef: formDialogRef, titleId: formDialogTitleId, close: closeFormDialog } = useDialogAccessibility(showForm, closeForm);
+
+  useEffect(() => {
+    if (remindersLoading || !retryingReminders.current) return;
+    retryingReminders.current = false;
+    if (showForm) document.getElementById(remindersError ? "expense-reminders-retry" : "expense-maintenanceReminderId")?.focus({ preventScroll: true });
+  }, [remindersLoading, remindersError, showForm]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -222,6 +259,13 @@ export default function Expenses() {
   const handleSubmit = guard(async (e) => {
     e.preventDefault();
     if (submitting) return;
+    if (formData.type === "maintenance" && (remindersLoading || remindersError)) {
+      setFormError({ message: "Espera a que se carguen los recordatorios o pulsa Reintentar para consultarlos de nuevo.", fields: {} }); return;
+    }
+    if (formData.type === "maintenance" && formData.maintenanceReminderId && !availableReminders.some((item) =>
+      String(item.id) === String(formData.maintenanceReminderId) && (item.status === "PENDING" || item.expenseId === editingExpense?.id))) {
+      setFormError({ message: "El recordatorio ya no está disponible. Selecciona otro o guarda sin vincularlo.", fields: { maintenanceReminderId: "Selecciona un recordatorio disponible" } }); return;
+    }
     setSubmitting(true);
     setFormError(null);
 
@@ -233,8 +277,9 @@ export default function Expenses() {
         description: formData.description,
         cost: toNumber(formData.cost),
         tireSetId: formData.type === "tire_change" && formData.tireSetId ? Number(formData.tireSetId) : null,
-        nextMaintenanceKm: toNumber(formData.nextMaintenanceKm),
-        nextMaintenanceDate: formData.nextMaintenanceDate || null,
+        maintenanceReminderId: formData.type === "maintenance" ? toNumber(formData.maintenanceReminderId) : null,
+        nextMaintenanceKm: null,
+        nextMaintenanceDate: null,
       };
 
       const response = await apiFetch(
@@ -252,6 +297,9 @@ export default function Expenses() {
 
       const savedExpense = await response.json();
       if (!isActive()) return;
+      setAvailableReminders((current) => current.map((reminder) => reminder.id === savedExpense.maintenanceReminderId
+        ? { ...reminder, status: "COMPLETED", expenseId: savedExpense.id }
+        : reminder.expenseId === savedExpense.id ? { ...reminder, status: "PENDING", expenseId: null } : reminder));
       setExpenses((current) =>
         editingExpense
           ? current.map((item) => (item.id === savedExpense.id ? savedExpense : item))
@@ -278,6 +326,8 @@ export default function Expenses() {
         throw new Error(errorData.message || "Error al borrar el gasto");
       }
       if (!isActive()) return;
+      setAvailableReminders((current) => current.map((reminder) => reminder.expenseId === expense.id
+        ? { ...reminder, status: "PENDING", expenseId: null } : reminder));
       setExpenses((current) => current.filter((item) => item.id !== expense.id));
     } catch (deleteError) {
       if (!isActive()) return;
@@ -429,22 +479,18 @@ export default function Expenses() {
             <Field id="expense-cost" label="Coste (€)">
               <Input type="number" step="0.01" {...fieldProps("cost")} name="cost" value={formData.cost} onChange={handleInputChange} required placeholder="0.00" className="fl-field-amount tabular-nums" />
             </Field>
-            {formData.type === "maintenance" && (
-              <fieldset className="fl-maintenance">
-                <legend>Programar próxima revisión</legend>
-                <div className="fl-form-grid">
-                  <Field id="expense-nextMaintenanceKm" label="Kilometraje previsto">
-                    <Input type="number" {...fieldProps("nextMaintenanceKm")} name="nextMaintenanceKm" value={formData.nextMaintenanceKm} onChange={handleInputChange} placeholder="Ej: 330000" />
-                  </Field>
-                  <Field id="expense-nextMaintenanceDate" label="Fecha estimada">
-                    <Input type="date" {...fieldProps("nextMaintenanceDate")} name="nextMaintenanceDate" value={formData.nextMaintenanceDate} onChange={handleInputChange} />
-                  </Field>
-                </div>
-              </fieldset>
-            )}
+            {formData.type === "maintenance" ? <div className="space-y-3">
+              <Field id="expense-maintenanceReminderId" label="Recordatorio asociado (opcional)">
+                <CustomSelect appearance="atlantic" {...fieldProps("maintenanceReminderId")} value={formData.maintenanceReminderId}
+                  onChange={(value) => handleSelectChange("maintenanceReminderId", value)} disabled={remindersLoading || !!remindersError}
+                  options={[{ value: "", label: "Sin vincular a un recordatorio" }, ...availableReminders.filter((item) => item.status === "PENDING" || item.expenseId === editingExpense?.id).map((item) => ({ value: item.id, label: item.title }))]} />
+              </Field>
+              {remindersError ? <div><p role="alert" className="fl-feedback-error">{remindersError}</p><Button id="expense-reminders-retry" type="button" variant="outline" className="mt-3" onClick={() => { retryingReminders.current = true; setRemindersAttempt((current) => current + 1); }} disabled={submitting}>Reintentar</Button></div> : remindersLoading ? <p role="status" className="fl-supporting">Consultando recordatorios...</p> : <p className="fl-supporting">Al guardar, el recordatorio seleccionado quedará realizado. Los demás seguirán pendientes.</p>}
+              <Button asChild variant="link"><Link to={`/vehicles/${selectedVehicle.id}/reminders`}>Gestionar recordatorios</Link></Button>
+            </div> : formData.maintenanceReminderId ? <p className="fl-supporting">Al guardar con esta categoría se desvinculará el recordatorio y volverá a estar pendiente.</p> : null}
             <div className="fl-dialog-footer">
               <Button type="button" variant="outline" onClick={closeFormDialog}>Cancelar</Button>
-              <Button type="submit" pending={submitting} pendingLabel="Guardando..." disabled={submitting} aria-busy={submitting}>
+              <Button type="submit" pending={submitting} pendingLabel="Guardando..." disabled={submitting || (formData.type === "maintenance" && (remindersLoading || !!remindersError))} aria-busy={submitting}>
                 {editingExpense ? "Guardar cambios" : "Guardar gasto"}
               </Button>
             </div>

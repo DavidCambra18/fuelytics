@@ -27,6 +27,7 @@ import com.fuelytics.backend.dto.AlertResponseDTO;
 import com.fuelytics.backend.entity.FuelEntry;
 import com.fuelytics.backend.entity.Expense;
 import com.fuelytics.backend.entity.enums.VehicleType;
+import com.fuelytics.backend.entity.enums.ExpenseType;
 
 @Service
 public class VehicleService {
@@ -350,6 +351,7 @@ public class VehicleService {
         List<Expense> expenses = expenseRepository.findByVehicleIdOrderByDateDesc(vehicleId);
 
         return expenses.stream()
+                .filter(e -> e.getType() == ExpenseType.maintenance)
                 .filter(e -> (e.getNextMaintenanceKm() != null && e.getNextMaintenanceKm() > 0)
                         || e.getNextMaintenanceDate() != null)
                 .map(e -> {
@@ -359,7 +361,7 @@ public class VehicleService {
                     dto.setDescription(e.getDescription());
                     dto.setNextMaintenanceDate(e.getNextMaintenanceDate());
 
-                    Integer difference = e.getNextMaintenanceKm() != null
+                    Integer difference = e.getNextMaintenanceKm() != null && e.getNextMaintenanceKm() > 0
                             ? e.getNextMaintenanceKm() - currentOdometer
                             : null;
                     Long remainingDays = e.getNextMaintenanceDate() != null

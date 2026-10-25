@@ -25,6 +25,14 @@ public class ExpenseDTO {
     private BigDecimal cost;
     @Positive(message = "El identificador del neumático no es válido")
     private Integer tireSetId;
+    @Positive(message = "El recordatorio no es válido")
+    private Integer maintenanceReminderId;
+    private boolean maintenanceReminderSpecified;
+
+    public Integer getMaintenanceReminderId() { return maintenanceReminderId; }
+    public void setMaintenanceReminderId(Integer value) { maintenanceReminderId = value; maintenanceReminderSpecified = true; }
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean isMaintenanceReminderSpecified() { return maintenanceReminderSpecified; }
     @PositiveOrZero(message = "El próximo mantenimiento no puede ser negativo")
     private Integer nextMaintenanceKm;
     private java.time.LocalDate nextMaintenanceDate;

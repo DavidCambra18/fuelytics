@@ -196,6 +196,20 @@ CREATE TABLE expenses (
   FOREIGN KEY (tire_set_id) REFERENCES tire_sets(id) ON DELETE SET NULL
 );
 
+-- REMINDERS
+CREATE TABLE reminders (
+  id SERIAL PRIMARY KEY,
+  vehicle_id INT NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+  title VARCHAR(120) NOT NULL,
+  notes VARCHAR(500),
+  target_odometer INT CHECK (target_odometer > 0),
+  target_date DATE,
+  completed_expense_id INT UNIQUE REFERENCES expenses(id) ON DELETE SET NULL,
+  legacy_expense_id INT UNIQUE REFERENCES expenses(id) ON DELETE SET NULL,
+  CONSTRAINT chk_reminder_schedule CHECK (target_odometer IS NOT NULL OR target_date IS NOT NULL)
+);
+CREATE INDEX idx_reminders_vehicle ON reminders(vehicle_id, id DESC);
+
 -- BADGES
 CREATE TABLE badges (
   id SERIAL PRIMARY KEY,
